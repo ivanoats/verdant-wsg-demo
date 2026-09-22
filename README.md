@@ -27,4 +27,10 @@ Output lands in `dist/` — that's the Netlify publish directory (see `netlify.t
 - "Geometric growth" art (`scripts/art.mjs`): inline SVG built from the system's own shapes, every fill a color token, so it recolors with the theme and costs no requests; it grows in once, only when motion is allowed
 - The page-weight numbers on the home page are measured by `scripts/stats.mjs` on every build, never hand-typed
 
+## Offline cache strategy
+
+The production worker precaches only the tiny offline shell: `/`, `/components.html`, `/404.html`, `/offline.html`, the manifest, the favicon, and the hashed CSS/JS assets. That eager list is intentionally small because there are only two navigable pages to keep available on a first offline visit after install.
+
+Pretty URLs are normalized onto the canonical HTML cache entries (`/components` → `/components.html`), so installation does not download the same page twice under alias URLs. Online navigations stay network-first and refresh the canonical cached page; offline misses that do not map to a known route fall back to the dedicated offline page instead of silently showing the homepage at the wrong URL.
+
 See the site itself for the full decision-to-guideline mapping.
