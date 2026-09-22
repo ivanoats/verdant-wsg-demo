@@ -51,6 +51,7 @@ export default defineConfig({
           ink: {
             DEFAULT: { value: { base: '#1c1a15', _dark: '#f1ede2' } },
             muted: { value: { base: '#5b5548', _dark: '#b6ae9c' } },
+            placeholder: { value: { base: '#75726a', _dark: '#8d8a81' } },
           },
           accent: {
             DEFAULT: { value: { base: '#2f6b4a', _dark: '#7fcfa3' } },
@@ -111,6 +112,7 @@ export default defineConfig({
             fontSize: 'body', lineHeight: 'body', fontFamily: 'sans',
             paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border',
             borderRadius: 'sm', background: 'surface.200', color: 'ink',
+            _placeholder: { color: 'ink.placeholder', opacity: '1' },
             _focusVisible: { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '1px', borderColor: 'transparent' },
           },
         },
@@ -147,7 +149,12 @@ export default defineConfig({
   globalCss: {
     'html': { colorScheme: 'light dark' },
     'body': { margin: '0', background: 'surface.100', color: 'ink', fontFamily: 'sans', fontSize: 'body', lineHeight: 'body' },
-    'a': { color: 'accent' },
+    'a': {
+      color: 'accent',
+      textDecoration: 'underline',
+      textUnderlineOffset: '0.15em',
+      textDecorationThickness: '0.08em',
+    },
     'a:hover': { color: 'accent.strong' },
     ':focus-visible': { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '2px' },
     '@keyframes spin': { to: { transform: 'rotate(360deg)' } },
