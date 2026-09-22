@@ -58,6 +58,16 @@ export default defineConfig({
             ink: { value: { base: '#ffffff', _dark: '#10241a' } },
           },
           focusRing: { value: { base: '#a5670a', _dark: '#e8a83e' } },
+          // Illustration-only greens: the "verdant" in Verdant. Never text or
+          // UI state — they're chosen for lushness, not 4.5:1 contrast.
+          foliage: {
+            DEFAULT: { value: { base: '#3ca24a', _dark: '#45ad55' } },
+            far: { value: { base: '#cdeaae', _dark: '#1c3a22' } },
+            mid: { value: { base: '#9ed65f', _dark: '#2d6b34' } },
+            deep: { value: { base: '#1f6a31', _dark: '#2a7d3a' } },
+            bright: { value: { base: '#6fcd4f', _dark: '#86dc62' } },
+          },
+          sunlight: { value: { base: '#f4b63f', _dark: '#e8a83e' } },
           positive: { value: { base: '#1f7a6c', _dark: '#5cc9b7' } },
           critical: { value: { base: '#c1440e', _dark: '#ff8f5e' } },
         },
@@ -146,6 +156,8 @@ export default defineConfig({
     // inside prefers-reduced-motion: no-preference (see scripts/art.mjs).
     '@keyframes leafGrow': { from: { transform: 'scale(0)' }, to: { transform: 'scale(1)' } },
     '@keyframes stemGrow': { from: { transform: 'scaleY(0)' }, to: { transform: 'scaleY(1)' } },
+    '@keyframes hillRise': { from: { opacity: '0', transform: 'translateY(40px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
+    '@keyframes sprout': { from: { transform: 'scale(0.2)', opacity: '0' }, to: { transform: 'scale(1)', opacity: '1' } },
     '@keyframes sunRise': { from: { opacity: '0', transform: 'translateY(24px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
     '.switchTrack .knob': {
       position: 'absolute', top: '2px', left: '2px', width: '20px', height: '20px',
