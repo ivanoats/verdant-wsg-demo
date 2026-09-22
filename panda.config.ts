@@ -87,7 +87,7 @@ export default defineConfig({
           base: {
             fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em',
             paddingBlock: '2', paddingInline: '4', borderRadius: 'md', border: '1px solid transparent',
-            cursor: 'pointer', outlineOffset: '2px', display: 'inline-block',
+            cursor: 'pointer', outlineOffset: '2px', display: 'inline-block', textDecorationLine: 'none',
             _motionSafe: { transition: 'background-color 120ms ease, border-color 120ms ease' },
             _disabled: { opacity: '0.5', cursor: 'not-allowed' },
           },
