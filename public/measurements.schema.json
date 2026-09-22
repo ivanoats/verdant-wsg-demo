@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://verdant-wsg-demo.netlify.app/measurements.schema.json",
+  "title": "Verdant build measurements",
+  "type": "object",
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "generatedAt",
+    "publicSummaryDate",
+    "units",
+    "encoding",
+    "method",
+    "budgets",
+    "resourceSets",
+    "metrics"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "./measurements.schema.json"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "generatedAt": {
+      "type": "string"
+    },
+    "publicSummaryDate": {
+      "type": "string"
+    },
+    "units": {
+      "type": "object",
+      "required": ["bytes", "display", "kibibyte"],
+      "properties": {
+        "bytes": { "const": "bytes" },
+        "display": { "const": "KiB" },
+        "kibibyte": { "const": 1024 }
+      },
+      "additionalProperties": false
+    },
+    "encoding": {
+      "type": "object",
+      "required": ["estimatedArtifacts", "measuredTransfer"],
+      "properties": {
+        "estimatedArtifacts": { "type": "string" },
+        "measuredTransfer": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "method": {
+      "type": "object",
+      "required": ["estimates", "localTransferMeasurements", "cacheConditions"],
+      "properties": {
+        "estimates": { "type": "string" },
+        "localTransferMeasurements": { "type": "string" },
+        "cacheConditions": {
+          "type": "object",
+          "required": ["coldFirstSession", "warmRepeatVisit"],
+          "properties": {
+            "coldFirstSession": { "type": "string" },
+            "warmRepeatVisit": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "budgets": {
+      "type": "object",
+      "required": [
+        "initialRenderEstimateBytes",
+        "offlineShellEstimateBytes",
+        "coldFirstSessionTransferBytes",
+        "warmRepeatVisitTransferBytes"
+      ],
+      "properties": {
+        "initialRenderEstimateBytes": { "type": "integer", "minimum": 0 },
+        "offlineShellEstimateBytes": { "type": "integer", "minimum": 0 },
+        "coldFirstSessionTransferBytes": { "type": "integer", "minimum": 0 },
+        "warmRepeatVisitTransferBytes": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "resourceSets": {
+      "type": "object",
+      "required": ["initialRenderUrls", "pageLinkedUrls", "offlineShellUrls"],
+      "properties": {
+        "initialRenderUrls": { "$ref": "#/$defs/urlArray" },
+        "pageLinkedUrls": { "$ref": "#/$defs/urlArray" },
+        "offlineShellUrls": { "$ref": "#/$defs/urlArray" }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "initialRenderEstimate",
+        "offlineShellEstimate",
+        "localObservedTransfers",
+        "productionNetworkTransfers"
+      ],
+      "properties": {
+        "initialRenderEstimate": { "$ref": "#/$defs/estimatedMetric" },
+        "offlineShellEstimate": { "$ref": "#/$defs/estimatedMetric" },
+        "localObservedTransfers": {
+          "type": "object",
+          "required": ["coldFirstSession", "warmRepeatVisit"],
+          "properties": {
+            "coldFirstSession": { "$ref": "#/$defs/measuredMetric" },
+            "warmRepeatVisit": { "$ref": "#/$defs/measuredMetric" }
+          },
+          "additionalProperties": false
+        },
+        "productionNetworkTransfers": {
+          "type": "object",
+          "required": ["coldFirstSession", "warmRepeatVisit"],
+          "properties": {
+            "coldFirstSession": { "$ref": "#/$defs/unmeasuredMetric" },
+            "warmRepeatVisit": { "$ref": "#/$defs/unmeasuredMetric" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "urlArray": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "estimatedMetric": {
+      "type": "object",
+      "required": ["kind", "bytes", "urls", "kib"],
+      "properties": {
+        "kind": { "const": "estimate" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "urls": { "$ref": "#/$defs/urlArray" },
+        "kib": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "measuredMetric": {
+      "type": "object",
+      "required": ["kind", "bytes", "kib", "requests"],
+      "properties": {
+        "kind": { "const": "measurement" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "kib": { "type": "number", "minimum": 0 },
+        "requests": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/request" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "unmeasuredMetric": {
+      "type": "object",
+      "required": ["kind", "reason"],
+      "properties": {
+        "kind": { "const": "unmeasured" },
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "request": {
+      "type": "object",
+      "required": ["url", "statusCode", "transferBytes", "source", "cache"],
+      "properties": {
+        "url": { "type": "string" },
+        "statusCode": { "type": "integer" },
+        "transferBytes": { "type": "integer", "minimum": 0 },
+        "source": { "type": "string" },
+        "cache": { "type": "string" },
+        "label": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -9,6 +9,7 @@ const DIST = 'dist'
 const INDEX = `${DIST}/index.html`
 const SW = `${DIST}/sw.js`
 const REPORT = `${DIST}/measurements.json`
+const REPORT_SCHEMA = `${DIST}/measurements.schema.json`
 const DISPLAY_DATE = new Date().toISOString().slice(0, 10)
 const VERSION_PLACEHOLDER = '__VERSION__'
 const PLACEHOLDERS = {
@@ -30,6 +31,7 @@ const swTemplate = readFileSync(SW, 'utf8')
 
 assertPlaceholders(indexTemplate, Object.values(PLACEHOLDERS))
 if (!swTemplate.includes(VERSION_PLACEHOLDER)) throw new Error(`Expected ${SW} to include ${VERSION_PLACEHOLDER}`)
+if (!existsSync(REPORT_SCHEMA)) throw new Error(`Expected ${REPORT_SCHEMA} to exist`)
 
 const shellUrls = readShell(swTemplate)
 if (!shellUrls.length) throw new Error('Offline shell list is empty')
@@ -117,8 +119,8 @@ function renderSw(template, indexHtml) {
 }
 
 async function collectMetrics({ indexHtml, swJs, port, shellUrls }) {
-  const homeAssets = readHomeAssets(indexHtml)
-  const initialRenderUrls = unique(['/', ...homeAssets.stylesheets, ...homeAssets.scripts])
+  const pageResources = readPageResources(indexHtml)
+  const initialRenderUrls = unique(['/', ...pageResources.renderBlockingUrls, ...pageResources.deferredScriptUrls])
   const offlineShellUrls = unique(['/sw.js', ...shellUrls])
 
   if (!initialRenderUrls.length) throw new Error('No initial render assets were detected')
@@ -139,7 +141,7 @@ async function collectMetrics({ indexHtml, swJs, port, shellUrls }) {
 
   const coldRequests = []
   coldRequests.push(await requestOnce(port, '/'))
-  for (const url of [...homeAssets.stylesheets, ...homeAssets.scripts, ...homeAssets.manifests, ...homeAssets.icons]) {
+  for (const url of pageResources.pageLinkedUrls) {
     coldRequests.push(await requestOnce(port, url))
   }
   coldRequests.push(await requestOnce(port, '/sw.js'))
@@ -149,7 +151,7 @@ async function collectMetrics({ indexHtml, swJs, port, shellUrls }) {
 
   const warmRequests = []
   warmRequests.push(await requestOnce(port, '/'))
-  for (const url of [...homeAssets.stylesheets, ...homeAssets.scripts, ...homeAssets.manifests, ...homeAssets.icons]) {
+  for (const url of pageResources.pageLinkedUrls) {
     warmRequests.push({
       url,
       statusCode: 200,
@@ -191,11 +193,17 @@ async function collectMetrics({ indexHtml, swJs, port, shellUrls }) {
       coldFirstSession: 'Empty caches, no service worker installed, then /sw.js registers and precaches the offline shell with cache: reload.',
       warmRepeatVisit: 'Repeat visit to / after a successful install with the service worker controlling the page and the shell already cached.',
     },
+    resourceSets: {
+      initialRenderUrls,
+      pageLinkedUrls: pageResources.pageLinkedUrls,
+      offlineShellUrls,
+    },
   }
 }
 
 function buildReport(metrics) {
   return {
+    $schema: './measurements.schema.json',
     schemaVersion: 1,
     generatedAt: metrics.measuredAt,
     publicSummaryDate: metrics.displayDate,
@@ -207,7 +215,7 @@ function buildReport(metrics) {
     encoding: metrics.encoding,
     method: {
       estimates: 'Local Brotli q11 compression of finalized dist files.',
-      measurements: 'Local HTTP requests with Accept-Encoding: br; totals count response-body bytes only and exclude headers.',
+      localTransferMeasurements: 'Local HTTP requests against finalized output with Accept-Encoding: br; totals count response-body bytes only and exclude headers.',
       cacheConditions: metrics.assumptions,
     },
     budgets: {
@@ -216,21 +224,40 @@ function buildReport(metrics) {
       coldFirstSessionTransferBytes: metrics.coldFirstSessionTransfer.bytes,
       warmRepeatVisitTransferBytes: metrics.warmRepeatVisitTransfer.bytes,
     },
+    resourceSets: metrics.resourceSets,
     metrics: {
       initialRenderEstimate: metrics.initialRenderEstimate,
       offlineShellEstimate: metrics.offlineShellEstimate,
-      coldFirstSessionTransfer: metrics.coldFirstSessionTransfer,
-      warmRepeatVisitTransfer: metrics.warmRepeatVisitTransfer,
+      localObservedTransfers: {
+        coldFirstSession: metrics.coldFirstSessionTransfer,
+        warmRepeatVisit: metrics.warmRepeatVisitTransfer,
+      },
+      productionNetworkTransfers: {
+        coldFirstSession: {
+          kind: 'unmeasured',
+          reason: 'Requires deployed-host response headers and runtime cache behavior owned by #21.',
+        },
+        warmRepeatVisit: {
+          kind: 'unmeasured',
+          reason: 'Requires deployed-host response headers and runtime cache behavior owned by #21.',
+        },
+      },
     },
   }
 }
 
-function readHomeAssets(html) {
+function readPageResources(html) {
+  const renderBlockingUrls = readMatches(html, /<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)
+  const deferredScriptUrls = readMatches(html, /<script[^>]+src="([^"]+)"/g)
+  const metadataUrls = [
+    ...readMatches(html, /<link[^>]+rel="manifest"[^>]+href="([^"]+)"/g),
+    ...readMatches(html, /<link[^>]+rel="icon"[^>]+href="([^"]+)"/g),
+  ]
   return {
-    stylesheets: readMatches(html, /<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g),
-    scripts: readMatches(html, /<script[^>]+src="([^"]+)"/g),
-    manifests: readMatches(html, /<link[^>]+rel="manifest"[^>]+href="([^"]+)"/g),
-    icons: readMatches(html, /<link[^>]+rel="icon"[^>]+href="([^"]+)"/g),
+    renderBlockingUrls,
+    deferredScriptUrls,
+    metadataUrls,
+    pageLinkedUrls: unique([...renderBlockingUrls, ...deferredScriptUrls, ...metadataUrls]),
   }
 }
 

@@ -6,13 +6,18 @@ The home page promotes the system; `/components.html` is the live component gall
 
 ## Build
 
-````
+```
 npm install
 npm run dev     # http://localhost:4321 — rebuilds on save and reloads the browser
 npm run build   # panda codegen -> generate HTML -> panda cssgen -> hash final asset names -> measure finalized assets and transfer
-````
+```
 
 Output lands in `dist/` — that's the Netlify publish directory (see `netlify.toml`).
+
+`npm run build` also publishes the measurement artifacts that CI can consume:
+
+- `dist/measurements.json` — finalized build report with byte budgets, derived resource sets, local transfer observations, and explicitly unmeasured production-network fields
+- `dist/measurements.schema.json` — JSON Schema for the report shape
 
 ## What's deliberately in here
 
@@ -25,6 +30,6 @@ Output lands in `dist/` — that's the Netlify publish directory (see `netlify.t
 - Content-hashed CSS/JS under `/assets/` (`scripts/fingerprint.mjs`), cached for a year; pages are network-first in the service worker, so a deploy never mixes new HTML with old CSS
 - No third-party scripts, no analytics, no web fonts, no icon font
 - "Geometric growth" art (`scripts/art.mjs`): inline SVG built from the system's own shapes, every fill a color token, so it recolors with the theme and costs no requests; it grows in once, only when motion is allowed
-- `scripts/stats.mjs` measures finalized assets on every build, writes `dist/measurements.json` for CI budgets, and updates the home-page summary without hand-typed numbers
+- `scripts/stats.mjs` measures finalized assets on every build, writes `dist/measurements.json` plus `dist/measurements.schema.json` for CI budgets, and updates the home-page summary without hand-typed numbers
 
 See the site itself for the full decision-to-guideline mapping.

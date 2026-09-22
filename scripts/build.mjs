@@ -113,7 +113,7 @@ const statsHtml = `
       <div class="${statCss}"><dt class="${statLabelCss}">Cold first session, measured local transfer</dt><dd class="${statValueCss}">__COLD_SESSION_KIB__&nbsp;KiB</dd></div>
       <div class="${statCss}"><dt class="${statLabelCss}">Warm repeat visit, measured local transfer</dt><dd class="${statValueCss}">__WARM_SESSION_KIB__&nbsp;KiB</dd></div>
     </dl>
-    <p class="${statsNoteCss}">Measured __MEASURED_ON__ locally over HTTP with Brotli response bodies in KiB (1024 bytes), excluding headers. Cold includes the service worker install and its duplicate precache fetches; warm is a repeat visit with the shell already cached.</p>
+    <p class="${statsNoteCss}">Measured __MEASURED_ON__ locally over HTTP with Brotli response bodies in KiB (1024 bytes), excluding headers. Cold includes the service worker install and its duplicate precache fetches; warm is a repeat visit with the shell already cached. Production-network transfer is unmeasured here.</p>
   </div>
 </section>`
 
