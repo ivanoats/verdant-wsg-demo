@@ -24,7 +24,8 @@ function copyDir(src, dest) {
 
 const REPO = 'https://github.com/ivanoats/verdant-wsg-demo'
 const WSG_CHECK = 'https://github.com/ivanoats/wsg-check'
-const WSG = 'https://w3c.github.io/sustainableweb-wsg/'
+const WSG = 'https://www.w3.org/TR/web-sustainability-guidelines/'
+const evidenceRecord = JSON.parse(readFileSync('public/wsg-evidence.json', 'utf8'))
 
 // ---- shell ------------------------------------------------------------------
 
@@ -80,10 +81,10 @@ const heroHtml = `
 <section class="${wrapCss}" aria-labelledby="hero-title">
   <div class="${heroCss}">
     <div>
-      <p class="${eyebrowCss}">A design system for the W3C Web Sustainability Guidelines</p>
+      <p class="${eyebrowCss}">A lightweight design-system starter with defaults aligned to selected Web Sustainability Guidelines</p>
       <h1 id="hero-title" class="${heroTitleCss}">Verdant</h1>
-      <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
-      <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, native dark mode, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
+      <p class="${heroTagCss}">Lightweight defaults for small static sites</p>
+      <p class="${heroLedeCss}">Verdant keeps to system fonts, OS color-scheme preferences, and build-time CSS extraction with no browser-side styling runtime. The defaults here are aligned to selected parts of the <a href="${WSG}">WSG</a>, with a dated evidence record instead of a blanket conformance claim.</p>
       <div class="${btnRowCss}">
         <a class="${btnPrimary}" href="/components.html">Browse components</a>
         <a class="${btnSecondary}" href="${REPO}">View source on GitHub</a>
@@ -128,7 +129,7 @@ const stageBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink
 const stages = [
   ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Small enough to hold in your head, so nothing gets a one-off value.'],
   ['sprout', 'Sprout', 'Components', 'Button, card, field, theme toggle and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
-  ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one stylesheet and at most one small deferred script, from the first page on.'],
+  ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one shared stylesheet, and deferred scripts only where a page needs them.'],
   ['canopy', 'Canopy', 'Sites', 'Security headers, cache rules, an offline shell and a real 404 &mdash; the hosting checks, handled before launch.'],
 ]
 const stagesHtml = `
@@ -211,41 +212,50 @@ const paletteHtml = `
   </div>
 </section>`
 
-// ---- index: live scorecard -----------------------------------------------------
+// ---- index: saved WSG evidence --------------------------------------------------
 
 const scoreListCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)' }, gap: '4', listStyle: 'none', margin: '0', padding: '0' })
 const scoreItemCss = card()
 const scoreHeadCss = flex({ justify: 'space-between', align: 'baseline', gap: '3', wrap: 'wrap' })
 const scoreTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0' })
 const scorePassCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'positive', margin: '0' })
-const scorePartCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'critical', margin: '0' })
+const scoreOpenCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'critical', margin: '0' })
+const scorePendingCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted', margin: '0' })
 const scoreBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '8px 0 0' })
+const scoreMetaCss = css({ fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '8px 0 0' })
 const scoreNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', marginTop: '6', maxWidth: '70ch' })
 
-const scores = [
-  ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, one deferred script, nothing render-blocking.'],
-  ['Semantic &amp; standards', true, 'Landmarks, a single h1 with ordered headings, canonical URL and structured data.'],
-  ['Sustainability-specific', true, 'Color-scheme, reduced-motion and reduced-data queries all present; no unused CSS shipped.'],
-  ['Security &amp; maintenance', true, 'CSP, HSTS, Permissions-Policy, nosniff and frame protection; robots.txt and a sitemap.'],
-  ['UX &amp; design', true, 'Labelled fields with autocomplete and inputmode, one visible focus ring, no autoplay, no web fonts.'],
-  ['Hosting &amp; infrastructure', false, 'Offline service worker, cache rules and a custom 404 pass. Green hosting isn&rsquo;t verified by the Green Web Foundation for this Netlify subdomain.'],
-]
+const statusCopy = {
+  verified: { label: '&#10003; Verified', css: scorePassCss },
+  open: { label: '&#9888; Open', css: scoreOpenCss },
+  'not-assessed': { label: '&#9675; Not assessed', css: scorePendingCss },
+  'not-applicable': { label: '&#8212; Not applicable', css: scorePendingCss },
+}
+const verifiedCount = evidenceRecord.entries.filter((entry) => entry.status === 'verified').length
+const openCount = evidenceRecord.entries.filter((entry) => entry.status === 'open').length
+const statusSummary = [
+  verifiedCount ? `${verifiedCount} verified` : '',
+  openCount ? `${openCount} open` : '',
+].filter(Boolean).join(', ')
 const scoreHtml = `
 <section class="${wrapCss} ${sectionCss}" aria-labelledby="score-title">
-  <p class="${eyebrowCss}">Checked live</p>
-  <h2 id="score-title" class="${h2Css}">How the deployed site holds up.</h2>
-  <p class="${introCss}">Audited against the live deploy across the six categories <a href="${WSG_CHECK}">wsg-check</a> scans. Five pass outright; one has a gap we can&rsquo;t fix in code.</p>
+  <p class="${eyebrowCss}">Saved evidence record</p>
+  <h2 id="score-title" class="${h2Css}">Implementation checklist for selected WSG-aligned defaults.</h2>
+  <p class="${introCss}">${evidenceRecord.title} reviewed on ${evidenceRecord.reviewed_on} (${statusSummary}). This section is generated from a saved artifact, not a live deploy audit, and it documents selected evidence rather than full WSG conformance.</p>
   <ul class="${scoreListCss}">
-    ${scores.map(([title, pass, body]) => `
+    ${evidenceRecord.entries.map((entry) => `
     <li class="${scoreItemCss}">
       <div class="${scoreHeadCss}">
-        <h3 class="${scoreTitleCss}">${title}</h3>
-        <p class="${pass ? scorePassCss : scorePartCss}">${pass ? '&#10003; Pass' : '&#9888; Partial'}</p>
+        <h3 class="${scoreTitleCss}">${entry.category}</h3>
+        <p class="${(statusCopy[entry.status] || statusCopy['not-assessed']).css}">${(statusCopy[entry.status] || statusCopy['not-assessed']).label}</p>
       </div>
-      <p class="${scoreBodyCss}">${body}</p>
+      <p class="${scoreBodyCss}">${entry.summary}</p>
+      <p class="${scoreMetaCss}">Reviewed ${entry.date} &middot; ${evidenceRecord.wsg_edition.label} &middot; ${entry.wsg_refs.length ? `WSG refs ${entry.wsg_refs.join(', ')}` : 'No WSG section claimed'}</p>
+      <p class="${scoreMetaCss}">Scope: ${entry.scope}</p>
+      <p class="${scoreMetaCss}">${entry.tool.version ? `Tool: ${entry.tool.name} (${entry.tool.version})` : `Tool: ${entry.tool.name}`} &middot; <a href="${entry.evidence_link}">Evidence link</a></p>
     </li>`).join('')}
   </ul>
-  <p class="${scoreNoteCss}">Status is always a word plus a symbol, never color alone.</p>
+  <p class="${scoreNoteCss}">The card headings follow <a href="${WSG_CHECK}">wsg-check</a>'s scanner categories, not the WSG section structure. Status is always a word plus a symbol, never color alone, and the full record is also available as <a href="/wsg-evidence.json">JSON</a>.</p>
 </section>`
 
 // ---- index: PandaCSS ------------------------------------------------------------
@@ -275,7 +285,7 @@ const pandaHtml = `
       <div>
         <p class="${eyebrowCss}">Built with PandaCSS</p>
         <h2 id="panda-title" class="${h2Css}">Tokens in, only-what-you-use CSS out.</h2>
-        <p class="${introCss}">Verdant maps onto a <a href="https://panda-css.com">PandaCSS</a> config in one file. Panda extracts styles at build time, so the stylesheet grows with your pages &mdash; never with the size of the framework.</p>
+        <p class="${introCss}">Verdant maps onto a <a href="https://panda-css.com">PandaCSS</a> config in one file. Panda extracts styles referenced by the build scripts at build time, so the stylesheet grows with your pages instead of shipping a broad browser-side styling runtime.</p>
         <ul class="${listCss}">
           <li>Semantic tokens carry both themes; <code class="${codeCss}">_dark</code> maps to the OS preference.</li>
           <li>Recipes for button, card, field and switch mirror the component guidelines.</li>
@@ -354,7 +364,7 @@ const breadcrumb = (label) => `
 const footer = () => `
   <footer class="${footerCss}">
     <div class="${wrapCss} ${footerBarCss}">
-      <div class="${footerBrandCss}">${mark(20)}<p class="${footerTextCss}">Verdant &mdash; built by Ivan with PandaCSS, tuned to the W3C Web Sustainability Guidelines.</p></div>
+      <div class="${footerBrandCss}">${mark(20)}<p class="${footerTextCss}">Verdant &mdash; built by Ivan with PandaCSS, with defaults aligned to selected Web Sustainability Guidelines.</p></div>
       <ul class="${footerLinksCss}">
         <li><a href="${WSG_CHECK}">wsg-check</a></li>
         <li><a href="${REPO}">Source</a></li>
@@ -608,15 +618,15 @@ writeFileSync('dist/sw.js', swJs)
 copyDir('public', 'dist')
 
 writeFileSync('dist/index.html', minifyHtml(page({
-  title: 'Verdant — Sustainable Defaults for the Green Web',
-  description: 'Verdant is a small design system where every default satisfies the W3C Web Sustainability Guidelines. Built with PandaCSS.',
+  title: 'Verdant — WSG-aligned static site starter',
+  description: 'Verdant is a lightweight design-system starter with defaults aligned to selected Web Sustainability Guidelines. Built with PandaCSS.',
   path: '/',
   active: 'home',
   jsonLd: {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Verdant',
-    description: 'A small design system where every default satisfies the W3C Web Sustainability Guidelines.',
+    description: 'A lightweight design-system starter with defaults aligned to selected Web Sustainability Guidelines.',
     url: 'https://verdant-wsg-demo.netlify.app/',
   },
   bodyHtml: heroHtml + statsHtml + stagesHtml + paletteHtml + scoreHtml + pandaHtml + ctaHtml,

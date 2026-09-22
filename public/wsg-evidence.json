@@ -1,0 +1,93 @@
+{
+  "title": "Verdant WSG evidence snapshot",
+  "kind": "implementation-checklist",
+  "reviewed_on": "2026-09-22",
+  "wsg_edition": {
+    "label": "W3C Web Sustainability Guidelines TR snapshot reviewed on 2026-09-22",
+    "uri": "https://www.w3.org/TR/web-sustainability-guidelines/"
+  },
+  "scope": "Selected implementation evidence for the homepage and shared static assets in this repository. This record is not a live deployment audit and does not claim full WSG conformance.",
+  "entries": [
+    {
+      "category": "Performance & efficiency",
+      "scanner_category": "wsg-check category",
+      "wsg_refs": ["3.2", "3.4"],
+      "status": "verified",
+      "date": "2026-09-22",
+      "scope": "Generated homepage HTML, shared stylesheet, and deferred scripts in repository build output.",
+      "tool": {
+        "name": "npm run build",
+        "version": "Node 20 + PandaCSS 1.12.1"
+      },
+      "summary": "The homepage build outputs one shared stylesheet and one deferred service-worker registration script. The component gallery adds a second deferred script for the theme toggle, so script counts vary by page.",
+      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/scripts/build.mjs"
+    },
+    {
+      "category": "Semantic & standards",
+      "scanner_category": "wsg-check category",
+      "wsg_refs": ["3.2"],
+      "status": "verified",
+      "date": "2026-09-22",
+      "scope": "Generated page structure and metadata for the homepage and component gallery.",
+      "tool": {
+        "name": "npm run build",
+        "version": "Node 20 + PandaCSS 1.12.1"
+      },
+      "summary": "Generated pages include landmarks, a skip link, a single h1 per page, a canonical URL, and JSON-LD website metadata.",
+      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/scripts/build.mjs"
+    },
+    {
+      "category": "Selected WSG-aligned defaults",
+      "scanner_category": "Not a WSG section",
+      "wsg_refs": ["2.10", "3.9"],
+      "status": "verified",
+      "date": "2026-09-22",
+      "scope": "Defaults shown in the generated pages and PandaCSS output.",
+      "tool": {
+        "name": "Manual source review"
+      },
+      "summary": "Color-scheme, reduced-motion, and reduced-data behaviors are implemented for selected components and decorative assets. This snapshot documents those defaults only, not every WSG requirement.",
+      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/panda.config.ts"
+    },
+    {
+      "category": "Security & maintenance",
+      "scanner_category": "wsg-check category",
+      "wsg_refs": ["3.2"],
+      "status": "verified",
+      "date": "2026-09-22",
+      "scope": "Versioned static assets plus repository-managed Netlify headers and crawl files.",
+      "tool": {
+        "name": "Manual source review"
+      },
+      "summary": "The repo includes CSP, HSTS, Permissions-Policy, nosniff, cache rules, robots.txt, and a sitemap. Deployed responses still depend on the hosting platform applying those files as configured.",
+      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/public/_headers"
+    },
+    {
+      "category": "UX & design",
+      "scanner_category": "wsg-check category",
+      "wsg_refs": ["2.10", "3.9"],
+      "status": "verified",
+      "date": "2026-09-22",
+      "scope": "Generated form, focus, theme, and motion examples in the component gallery.",
+      "tool": {
+        "name": "npm run build",
+        "version": "Node 20 + PandaCSS 1.12.1"
+      },
+      "summary": "The component gallery demonstrates labelled fields with autocomplete and inputmode, a visible focus style, no autoplay media, and system-font defaults.",
+      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/scripts/build.mjs"
+    },
+    {
+      "category": "Hosting & infrastructure",
+      "scanner_category": "wsg-check category",
+      "wsg_refs": [],
+      "status": "open",
+      "date": "2026-09-22",
+      "scope": "Live deployment behavior outside the repository build output.",
+      "tool": {
+        "name": "Not assessed in-repo"
+      },
+      "summary": "Green hosting provenance, CDN compression behavior, and final live-response headers need external verification. The repo can prepare assets and configuration, but it cannot prove deployed infrastructure outcomes on its own.",
+      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/netlify.toml"
+    }
+  ]
+}

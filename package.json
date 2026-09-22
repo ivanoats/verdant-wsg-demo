@@ -2,7 +2,7 @@
   "name": "verdant-site",
   "version": "1.0.0",
   "private": true,
-  "description": "Verdant design system, demoed as a static site built to score well on the W3C Web Sustainability Guidelines. Styled with PandaCSS.",
+  "description": "Verdant design system, demoed as a lightweight static site starter with defaults aligned to selected Web Sustainability Guidelines. Styled with PandaCSS.",
   "type": "module",
   "scripts": {
     "predev": "panda codegen",

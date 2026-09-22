@@ -21,7 +21,7 @@ export const tone = {
 const veinCss = css({ fill: 'none', stroke: 'surface.200', strokeWidth: '1.5px', strokeLinecap: 'round', opacity: '0.55' })
 const veinOnTileCss = css({ fill: 'none', stroke: 'foliage', strokeWidth: '1.5px', strokeLinecap: 'round' })
 
-// ---- one-time grow-in, only when motion is allowed (no loops, WSG 2.17).
+// ---- one-time grow-in, only when motion is allowed (no loops, WSG 2.10).
 // Every delay is its own literal call so Panda can extract it statically.
 const rise = [
   css({ _motionSafe: { animation: 'hillRise 700ms cubic-bezier(.2,.8,.2,1) 0ms both' } }),

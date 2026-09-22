@@ -10,7 +10,7 @@ export default defineConfig({
   outdir: 'styled-system',
 
   // Dark mode is driven by the OS preference, full stop — this is the WSG
-  // check (3.12) a scanner looks for. The ThemeToggle demo does not use a
+  // media-query guidance (3.9) a scanner looks for. The ThemeToggle demo does not use a
   // Panda condition at all: it overrides the same CSS custom properties
   // inline at runtime, which always wins over a stylesheet rule without
   // needing a second selector-based condition to fight the cascade with.
@@ -168,13 +168,13 @@ export default defineConfig({
     },
     '.switchTrack[aria-checked="true"] .knob': { transform: 'translateX(20px)' },
     // Decorative-only art is dropped for anyone who's asked to save data —
-    // it costs bytes and carries no content (WSG 3.12's third preference query).
+    // it costs bytes and carries no content (WSG 3.9's reduced-data preference query).
     '@media (prefers-reduced-data: reduce)': {
       '.decor': { display: 'none' },
     },
   },
   // No staticCss block on purpose: every class in the generated stylesheet
   // comes from a real call in scripts/build.mjs. Force-generating a wide
-  // utility surface "just in case" is exactly the CSS-redundancy WSG 4.2/4.3
-  // checks flag — extraction only emits what's actually used.
+  // utility surface "just in case" is exactly the CSS-redundancy WSG 3.2/3.4
+  // guidance tries to avoid — extraction only emits referenced styles.
 })

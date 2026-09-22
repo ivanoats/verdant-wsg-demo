@@ -1,14 +1,16 @@
 // Post-build: measure what the homepage actually costs and print it on the
 // page, so the numbers in the stats band are never hand-typed or stale.
-// Sizes are Brotli (quality 11), the encoding Netlify serves these files with.
+// Sizes are estimated with Brotli (quality 11) for like-for-like comparisons;
+// live transfer encoding still depends on the deployed host/CDN response.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { brotliCompressSync, constants } from 'node:zlib'
 
 const br = (path) =>
   brotliCompressSync(readFileSync(path), { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length
 
-// Everything a first visit to / downloads: the page, its stylesheet, its one
-// script, the icon and the manifest. (sw.js installs after load and is left out.)
+// Everything a first visit to / downloads from this build: the page, its
+// stylesheet, its deferred service-worker registration script, the icon, and
+// the manifest. (sw.js installs after load and is left out.)
 const homeFiles = ['dist/index.html', 'dist/styles.css', 'dist/sw-register.js', 'dist/favicon.svg', 'dist/manifest.json']
 const kb = (bytes) => (bytes / 1024).toFixed(1)
 
