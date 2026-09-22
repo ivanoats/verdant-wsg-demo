@@ -453,12 +453,17 @@ const proseLinkCss = css({
 const demoVisitedCss = css({ color: 'accent.strong' })
 const demoFocusCss = css({ outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '2px' })
 const demoPrimaryHoverCss = css({ background: 'accent.strong' })
+const demoPressedCss = css({ background: 'accent.strong' })
 const inputErrorCss = css({ borderColor: 'critical' })
+const inputFillCss = css({ width: '100%' })
+const inputReadOnlyCss = css({ background: 'surface.100', color: 'ink.muted' })
 const inputSuccessCss = css({ borderColor: 'positive' })
 const successTextCss = css({ fontSize: 'bodySm', color: 'positive', margin: '0' })
 const errorTextCss = css({ fontSize: 'bodySm', color: 'critical', margin: '0' })
 const previewStackCss = vstack({ gap: '4', alignItems: 'stretch' })
 const loadingFrameCss = css({ border: '1px dashed', borderColor: 'border', borderRadius: 'md', padding: '4', display: 'grid', gap: '3', maxWidth: '300px' })
+const switchAriaCheckedCss = css({ '&[aria-checked=true]': { background: 'accent' } })
+const switchDisabledCss = css({ opacity: '0.55', cursor: 'not-allowed' })
 
 const snippet = (label, code) => `
 <details class="${specimenDetailsCss}">
@@ -550,14 +555,14 @@ const proseLink = css({
         <div class="${rowCss}">
           <button class="${btnPrimary}" type="button">Save changes</button>
           <button class="${btnSecondary}" type="button">Cancel</button>
-          <button class="${btnPrimary}" type="button" aria-pressed="true">Updates enabled</button>
+          <button class="${btnPrimary} ${demoPressedCss}" type="button" aria-pressed="true">Updates enabled</button>
         </div>
         <p class="${noteCss}">The pressed example is a toggle button specimen only; ordinary submit buttons should not use <code class="${codeCss}">aria-pressed</code>.</p>`,
       states: [
         stateTile('Default', `<button class="${btnPrimary}" type="button">Run sample scan</button>`),
         stateTile('Hover', `<button class="${btnPrimary} ${demoPrimaryHoverCss}" type="button">Run sample scan</button>`, 'Hover should reinforce the action without changing the label.'),
         stateTile('Focus-visible', `<button class="${btnSecondary} ${demoFocusCss}" type="button">Review changes</button>`, 'Tab to buttons; Space or Enter activates them.'),
-        stateTile('Pressed toggle', `<button class="${btnPrimary}" type="button" aria-pressed="true">Sample alerts on</button>`, 'Use only when the button keeps an on/off state.'),
+        stateTile('Pressed toggle', `<button class="${btnPrimary} ${demoPressedCss}" type="button" aria-pressed="true">Sample alerts on</button>`, 'Use only when the button keeps an on/off state.'),
         stateTile('Disabled', `<button class="${btnPrimary}" type="button" disabled>Scan unavailable</button>`, 'Disabled buttons are skipped by keyboard focus.'),
       ].join(''),
       guidance: [
@@ -582,23 +587,23 @@ const quietButton = button({ variant: 'secondary' })`,
         <form class="${formCss}">
           <div class="${fieldCss}">
             <label class="${labelCss}" for="site-url">Website URL <span aria-hidden="true">*</span></label>
-            <input class="${inputCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com" required aria-describedby="site-url-hint">
+            <input class="${inputCss} ${inputFillCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com" required aria-describedby="site-url-hint">
             <p class="${hintCss}" id="site-url-hint">Use a full <code class="${codeCss}">https://</code> URL for this static example.</p>
           </div>
         </form>`,
       states: [
         stateTile('Required', `
           <label class="${labelCss}" for="site-url-required">Website URL <span aria-hidden="true">*</span></label>
-          <input class="${inputCss}" id="site-url-required" type="url" required aria-describedby="site-url-required-hint" placeholder="https://example.com">
+          <input class="${inputCss} ${inputFillCss}" id="site-url-required" type="url" required aria-describedby="site-url-required-hint" placeholder="https://example.com">
           <p class="${hintCss}" id="site-url-required-hint">Hints match the input width on narrow screens.</p>`),
         stateTile('Error', `
           <label class="${labelCss}" for="site-url-error">Website URL <span aria-hidden="true">*</span></label>
-          <input class="${inputCss} ${inputErrorCss}" id="site-url-error" type="url" aria-invalid="true" aria-describedby="site-url-error-hint site-url-error-note" value="verdant.example">
+          <input class="${inputCss} ${inputFillCss} ${inputErrorCss}" id="site-url-error" type="url" aria-invalid="true" aria-describedby="site-url-error-hint site-url-error-note" value="verdant.example">
           <p class="${hintCss}" id="site-url-error-hint">Provide a reachable sample URL.</p>
           <p class="${errorTextCss}" id="site-url-error-note">&#9888; Add <code class="${codeCss}">https://</code> so the address is complete.</p>`),
         stateTile('Read-only success', `
           <label class="${labelCss}" for="site-url-readonly">Website URL</label>
-          <input class="${inputCss} ${inputSuccessCss}" id="site-url-readonly" type="url" readonly aria-describedby="site-url-readonly-note" value="https://verdant.example">
+          <input class="${inputCss} ${inputFillCss} ${inputReadOnlyCss} ${inputSuccessCss}" id="site-url-readonly" type="url" readonly aria-describedby="site-url-readonly-note" value="https://verdant.example">
           <p class="${successTextCss}" id="site-url-readonly-note">&#10003; Sample target saved for the next review.</p>`),
       ].join(''),
       guidance: [
@@ -626,7 +631,7 @@ const successField = css({ borderColor: 'positive' })`,
           <div>
             <p class="${captionCss}">Live specimen</p>
             <div class="${switchRowCss}">
-              <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" id="theme-switch">
+              <button type="button" class="${switchOffCss} ${switchAriaCheckedCss}" role="switch" aria-checked="false" id="theme-switch">
                 <span class="knob"></span>
               </button>
               <label class="${labelCss}" for="theme-switch">Dark theme override</label>
@@ -637,21 +642,21 @@ const successField = css({ borderColor: 'positive' })`,
       states: [
         stateTile('Off', `
           <div class="${switchRowCss}">
-            <button type="button" class="${switchOffCss}" role="switch" aria-checked="false">
+            <button type="button" class="${switchOffCss} ${switchAriaCheckedCss}" role="switch" aria-checked="false">
               <span class="knob"></span>
             </button>
             <span class="${captionCss}">Motion follows system</span>
           </div>`),
         stateTile('On', `
           <div class="${switchRowCss}">
-            <button type="button" class="${switchOnCss}" role="switch" aria-checked="true">
+            <button type="button" class="${switchOnCss} ${switchAriaCheckedCss}" role="switch" aria-checked="true">
               <span class="knob"></span>
             </button>
             <span class="${captionCss}">Dark override enabled</span>
           </div>`, 'Use <code class="' + codeCss + '">aria-checked</code> to expose state.'),
         stateTile('Disabled', `
           <div class="${switchRowCss}">
-            <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" disabled>
+            <button type="button" class="${switchOffCss} ${switchAriaCheckedCss} ${switchDisabledCss}" role="switch" aria-checked="false" disabled>
               <span class="knob"></span>
             </button>
             <span class="${captionCss}">Locked by policy</span>

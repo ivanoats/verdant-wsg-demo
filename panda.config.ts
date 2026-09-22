@@ -92,21 +92,8 @@ export default defineConfig({
           },
           variants: {
             variant: {
-              primary: {
-                background: 'accent',
-                color: 'accent.ink',
-                _hover: { background: 'accent.strong' },
-                _active: { background: 'accent.strong' },
-                '&[aria-pressed="true"]': { background: 'accent.strong' },
-              },
-              secondary: {
-                background: 'transparent',
-                color: 'ink',
-                borderColor: 'border',
-                _hover: { borderColor: 'accent', color: 'accent' },
-                _active: { borderColor: 'accent', color: 'accent' },
-                '&[aria-pressed="true"]': { borderColor: 'accent', color: 'accent' },
-              },
+              primary: { background: 'accent', color: 'accent.ink', _hover: { background: 'accent.strong' } },
+              secondary: { background: 'transparent', color: 'ink', borderColor: 'border', _hover: { borderColor: 'accent', color: 'accent' } },
             },
           },
           defaultVariants: { variant: 'primary' },
@@ -123,8 +110,7 @@ export default defineConfig({
           base: {
             fontSize: 'body', lineHeight: 'body', fontFamily: 'sans',
             paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border',
-            borderRadius: 'sm', background: 'surface.200', color: 'ink', width: '100%',
-            _readOnly: { background: 'surface.100', color: 'ink.muted' },
+            borderRadius: 'sm', background: 'surface.200', color: 'ink',
             _focusVisible: { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '1px', borderColor: 'transparent' },
           },
         },
@@ -134,7 +120,6 @@ export default defineConfig({
             position: 'relative', width: '44px', height: '24px', borderRadius: 'full',
             background: 'border', border: 'none', cursor: 'pointer', padding: '0', flex: 'none',
             _motionSafe: { transition: 'background-color 150ms ease' },
-            _disabled: { opacity: '0.55', cursor: 'not-allowed' },
           },
           variants: {
             on: { true: { background: 'accent' } },
@@ -181,7 +166,6 @@ export default defineConfig({
     '@media (prefers-reduced-motion: no-preference)': {
       '.switchTrack .knob': { transition: 'transform 150ms ease' },
     },
-    '.switchTrack[aria-checked="true"]': { background: 'var(--colors-accent)' },
     '.switchTrack[aria-checked="true"] .knob': { transform: 'translateX(20px)' },
     // Decorative-only art is dropped for anyone who's asked to save data —
     // it costs bytes and carries no content (WSG 3.12's third preference query).
