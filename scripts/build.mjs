@@ -224,6 +224,7 @@ const scorePendingCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight
 const scoreBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '8px 0 0' })
 const scoreMetaCss = css({ fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '8px 0 0' })
 const scoreNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', marginTop: '6', maxWidth: '70ch' })
+const scoreLinksCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '16px 0 0', maxWidth: '70ch' })
 
 const statusCopy = {
   verified: { label: '&#10003; Verified', css: scorePassCss },
@@ -231,6 +232,7 @@ const statusCopy = {
   'not-assessed': { label: '&#9675; Not assessed', css: scorePendingCss },
   'not-applicable': { label: '&#8212; Not applicable', css: scorePendingCss },
 }
+const linkSummary = (records = []) => records.map((record) => `<a href="${record.href}">${record.label}</a>`).join(', ')
 const verifiedCount = evidenceRecord.entries.filter((entry) => entry.status === 'verified').length
 const openCount = evidenceRecord.entries.filter((entry) => entry.status === 'open').length
 const statusSummary = [
@@ -242,6 +244,7 @@ const scoreHtml = `
   <p class="${eyebrowCss}">Saved evidence record</p>
   <h2 id="score-title" class="${h2Css}">Implementation checklist for selected WSG-aligned defaults.</h2>
   <p class="${introCss}">${evidenceRecord.title} reviewed on ${evidenceRecord.reviewed_on} (${statusSummary}). This section is generated from a saved artifact, not a live deploy audit, and it documents selected evidence rather than full WSG conformance.</p>
+  <p class="${scoreLinksCss}">Linked records: ${linkSummary(evidenceRecord.related_records)}</p>
   <ul class="${scoreListCss}">
     ${evidenceRecord.entries.map((entry) => `
     <li class="${scoreItemCss}">
@@ -253,6 +256,7 @@ const scoreHtml = `
       <p class="${scoreMetaCss}">Reviewed ${entry.date} &middot; ${evidenceRecord.wsg_edition.label} &middot; ${entry.wsg_refs.length ? `WSG refs ${entry.wsg_refs.join(', ')}` : 'No WSG section claimed'}</p>
       <p class="${scoreMetaCss}">Scope: ${entry.scope}</p>
       <p class="${scoreMetaCss}">${entry.tool.version ? `Tool: ${entry.tool.name} (${entry.tool.version})` : `Tool: ${entry.tool.name}`} &middot; <a href="${entry.evidence_link}">Evidence link</a></p>
+      ${entry.linked_records?.length ? `<p class="${scoreMetaCss}">Linked records: ${linkSummary(entry.linked_records)}</p>` : ''}
     </li>`).join('')}
   </ul>
   <p class="${scoreNoteCss}">The card headings follow <a href="${WSG_CHECK}">wsg-check</a>'s scanner categories, not the WSG section structure. Status is always a word plus a symbol, never color alone, and the full record is also available as <a href="/wsg-evidence.json">JSON</a>.</p>

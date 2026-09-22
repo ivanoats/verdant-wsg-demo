@@ -6,21 +6,49 @@
     "label": "W3C Web Sustainability Guidelines TR snapshot reviewed on 2026-09-22",
     "uri": "https://www.w3.org/TR/web-sustainability-guidelines/"
   },
-  "scope": "Selected implementation evidence for the homepage and shared static assets in this repository. This record is not a live deployment audit and does not claim full WSG conformance.",
+  "scope": "Selected implementation evidence for the homepage and shared static assets in this repository. This record is not a live deployment audit, does not claim full WSG conformance, and links to related records that own broader hosting, transfer-size, and reduced-data validation.",
+  "related_records": [
+    {
+      "label": "Issue #18 — homepage script delivery",
+      "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/18"
+    },
+    {
+      "label": "Issue #19 — measured and estimated byte reporting",
+      "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/19"
+    },
+    {
+      "label": "Issue #20 — reduced-data behavior descriptions",
+      "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/20"
+    },
+    {
+      "label": "Issue #26 — broader hosting and governance evidence",
+      "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/26"
+    }
+  ],
   "entries": [
     {
       "category": "Performance & efficiency",
       "scanner_category": "wsg-check category",
       "wsg_refs": ["3.2", "3.4"],
-      "status": "verified",
+      "status": "open",
       "date": "2026-09-22",
-      "scope": "Generated homepage HTML, shared stylesheet, and deferred scripts in repository build output.",
+      "scope": "Repository build output and measurement wiring, not final deployed transfer totals or future script-delivery changes.",
       "tool": {
         "name": "npm run build",
         "version": "Node 20 + PandaCSS 1.12.1"
       },
-      "summary": "The homepage build outputs one shared stylesheet and one deferred service-worker registration script. The component gallery adds a second deferred script for the theme toggle, so script counts vary by page.",
-      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/scripts/build.mjs"
+      "summary": "The repo build generates the homepage HTML, a shared stylesheet, and local compressed-size estimates. Final byte reporting and script-delivery conclusions are tracked in linked records rather than fixed here.",
+      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/scripts/stats.mjs",
+      "linked_records": [
+        {
+          "label": "Issue #18",
+          "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/18"
+        },
+        {
+          "label": "Issue #19",
+          "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/19"
+        }
+      ]
     },
     {
       "category": "Semantic & standards",
@@ -40,27 +68,39 @@
       "category": "Selected WSG-aligned defaults",
       "scanner_category": "Not a WSG section",
       "wsg_refs": ["2.10", "3.9"],
-      "status": "verified",
+      "status": "open",
       "date": "2026-09-22",
       "scope": "Defaults shown in the generated pages and PandaCSS output.",
       "tool": {
         "name": "Manual source review"
       },
-      "summary": "Color-scheme, reduced-motion, and reduced-data behaviors are implemented for selected components and decorative assets. This snapshot documents those defaults only, not every WSG requirement.",
-      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/panda.config.ts"
+      "summary": "Color-scheme and reduced-motion defaults are implemented in the generated UI. Reduced-data behavior is currently limited and is described in linked records rather than treated as broad conformance evidence here.",
+      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/panda.config.ts",
+      "linked_records": [
+        {
+          "label": "Issue #20",
+          "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/20"
+        }
+      ]
     },
     {
       "category": "Security & maintenance",
       "scanner_category": "wsg-check category",
       "wsg_refs": ["3.2"],
-      "status": "verified",
+      "status": "open",
       "date": "2026-09-22",
-      "scope": "Versioned static assets plus repository-managed Netlify headers and crawl files.",
+      "scope": "Repository-managed static assets and configuration files, not human-reviewed governance or hosting assurances.",
       "tool": {
         "name": "Manual source review"
       },
-      "summary": "The repo includes CSP, HSTS, Permissions-Policy, nosniff, cache rules, robots.txt, and a sitemap. Deployed responses still depend on the hosting platform applying those files as configured.",
-      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/public/_headers"
+      "summary": "The repo includes CSP, HSTS, Permissions-Policy, nosniff, cache rules, robots.txt, and a sitemap. Broader hosting and governance evidence remains linked work, and deployed responses still depend on the platform applying these files as configured.",
+      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/public/_headers",
+      "linked_records": [
+        {
+          "label": "Issue #26",
+          "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/26"
+        }
+      ]
     },
     {
       "category": "UX & design",
