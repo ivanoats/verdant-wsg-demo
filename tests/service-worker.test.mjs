@@ -5,7 +5,9 @@ import { readFileSync } from 'node:fs'
 
 const swSource = readFileSync('dist/sw.js', 'utf8')
 const offlineCacheContract = JSON.parse(readFileSync('dist/offline-cache.json', 'utf8'))
-const currentCache = `verdant-shell-${swSource.match(/var CACHE = PREFIX \+ '([^']+)'/)[1]}`
+const cacheVersionMatch = swSource.match(/var CACHE = PREFIX \+ '([^']+)'/)
+assert.ok(cacheVersionMatch, 'dist/sw.js should define the service worker cache version with the expected template')
+const currentCache = `verdant-shell-${cacheVersionMatch[1]}`
 
 const loadWorker = ({ fetchImpl = async () => ({ ok: true, clone() { return this } }), stores = {} } = {}) => {
   const listeners = {}

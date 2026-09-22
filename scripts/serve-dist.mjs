@@ -14,10 +14,35 @@ const TYPES = {
   '.txt': 'text/plain; charset=utf-8',
 }
 
+const send = (res, status, body) => {
+  const ext = extname(body.path || '')
+  res.writeHead(status, { 'content-type': TYPES[ext] || 'application/octet-stream', 'cache-control': 'no-store' })
+  res.end(body.contents)
+}
+
+const badRequest = (res) => {
+  res.writeHead(400, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' })
+  res.end('Bad request')
+}
+
+const resolvePath = (pathname) => {
+  let path
+  try {
+    path = normalize(`.${decodeURIComponent(pathname)}`)
+  } catch {
+    return null
+  }
+  if (path === '..' || path.startsWith('../') || path.startsWith('..\\') || path.startsWith('/') || path.startsWith('\\') || /^[A-Za-z]:/.test(path)) {
+    return false
+  }
+  if (path === './' || path === '.') return 'index.html'
+  return path.endsWith('/') ? `${path}index.html` : path
+}
+
 createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost')
-  let path = normalize(decodeURIComponent(url.pathname)).replace(/^((\.\.[/\\])+)/, '')
-  if (path.endsWith('/')) path += 'index.html'
+  const path = resolvePath(url.pathname)
+  if (path === null || path === false) return badRequest(res)
   let file = join(DIST, path)
   try {
     await stat(file)
@@ -27,9 +52,7 @@ createServer(async (req, res) => {
       catch { file = join(DIST, '404.html') }
     } else file = join(DIST, '404.html')
   }
-  const ext = extname(file)
-  res.writeHead(file.endsWith('404.html') ? 404 : 200, { 'content-type': TYPES[ext] || 'application/octet-stream', 'cache-control': 'no-store' })
-  res.end(await readFile(file))
+  send(res, file.endsWith('404.html') ? 404 : 200, { path: file, contents: await readFile(file) })
 }).listen(PORT, () => {
   console.log(`Serving dist on http://127.0.0.1:${PORT}`)
 })

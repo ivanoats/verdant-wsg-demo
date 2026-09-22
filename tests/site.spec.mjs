@@ -18,7 +18,7 @@ test('a11y affordances stay visible at narrow widths', async ({ page }) => {
   const field = page.getByLabel('Website URL')
   const describedBy = await field.getAttribute('aria-describedby')
   expect(describedBy).toBeTruthy()
-  for (const id of describedBy.split(/\s+/)) await expect(page.locator(`#${id}`)).toContainText(/scan|required|field/i)
+  for (const id of describedBy.split(/\s+/).filter(Boolean)) await expect(page.locator(`#${id}`)).toContainText(/scan|required|field/i)
 
   const placeholder = await field.evaluate((input) => {
     const placeholderStyle = window.getComputedStyle(input, '::placeholder')
