@@ -20,8 +20,10 @@ export const themeTokens = {
   critical: { light: '#c1440e', dark: '#ff8f5e' },
 }
 
+const hasChildren = (key) => Object.keys(themeTokens).some((candidate) => candidate.startsWith(`${key}.`))
+
 const nestToken = (root, key, value) => {
-  const parts = key.split('.')
+  const parts = key.includes('.') ? key.split('.') : hasChildren(key) ? [key, 'DEFAULT'] : [key]
   let cursor = root
   for (const part of parts.slice(0, -1)) {
     cursor[part] ||= {}

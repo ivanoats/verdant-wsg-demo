@@ -44,7 +44,10 @@ const headerActionsCss = flex({ align: 'center', gap: '4', wrap: 'wrap' })
 const navListCss = hstack({ gap: { base: '3', md: '6' }, listStyle: 'none', margin: '0', padding: '0' })
 const navLinkCss = css({ textDecoration: 'none', fontSize: 'bodySm', fontWeight: '600', color: 'ink', _hover: { color: 'accent' } })
 const navLinkActiveCss = css({ textDecoration: 'underline', textUnderlineOffset: '6px', textDecorationThickness: '2px', fontSize: 'bodySm', fontWeight: '600', color: 'accent' })
-const themePrefCss = flex({ gap: '2', align: 'center', wrap: 'wrap' })
+const themePrefCss = css({
+  display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px',
+  border: '0', margin: '0', padding: '0',
+})
 const themePrefLegendCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted', margin: '0', padding: '0' })
 const themePrefOptionCss = css({
   display: 'inline-flex', alignItems: 'center', gap: '2',
@@ -93,7 +96,7 @@ const heroHtml = `
       <p class="${eyebrowCss}">A design system for the W3C Web Sustainability Guidelines</p>
       <h1 id="hero-title" class="${heroTitleCss}">Verdant</h1>
       <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
-      <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, native dark mode, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
+      <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, a system-aware theme preference, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
       <div class="${btnRowCss}">
         <a class="${btnPrimary}" href="/components.html">Browse components</a>
         <a class="${btnSecondary}" href="${REPO}">View source on GitHub</a>
@@ -137,7 +140,7 @@ const stageBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink
 
 const stages = [
   ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Small enough to hold in your head, so nothing gets a one-off value.'],
-  ['sprout', 'Sprout', 'Components', 'Button, card, field, theme toggle and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
+  ['sprout', 'Sprout', 'Components', 'Button, card, field, theme preference, switch specimen and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
   ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one stylesheet and two small same-origin scripts, from the first page on.'],
   ['canopy', 'Canopy', 'Sites', 'Security headers, cache rules, an offline shell and a real 404 &mdash; the hosting checks, handled before launch.'],
 ]
@@ -166,22 +169,22 @@ const paletteGridCss = css({
 const swatchItemCss = hstack({ gap: '3', alignItems: 'center' })
 // A leaf is a square with two opposite corners fully rounded.
 const sw = {
-  'surface-100': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.100' }),
-  'surface-200': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.200' }),
+  'surface.100': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.100' }),
+  'surface.200': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.200' }),
   border: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'border' }),
   ink: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink' }),
-  'ink-muted': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.muted' }),
+  'ink.muted': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.muted' }),
   accent: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent' }),
-  'accent-strong': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.strong' }),
-  'accent-ink': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.ink' }),
-  'focus-ring': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'focusRing' }),
+  'accent.strong': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.strong' }),
+  'accent.ink': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.ink' }),
+  focusRing: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'focusRing' }),
   positive: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'positive' }),
   critical: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'critical' }),
   foliage: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage' }),
-  'foliage-far': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.far' }),
-  'foliage-mid': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.mid' }),
-  'foliage-deep': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.deep' }),
-  'foliage-bright': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.bright' }),
+  'foliage.far': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.far' }),
+  'foliage.mid': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.mid' }),
+  'foliage.deep': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.deep' }),
+  'foliage.bright': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.bright' }),
   sunlight: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'sunlight' }),
 }
 const swatchNameCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
@@ -189,10 +192,11 @@ const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'labe
 const paletteGroupCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 4px' })
 const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '62ch' })
 const paletteGapCss = css({ marginTop: '12' })
+const tokenLabel = (name) => name.replace(/\./g, '-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
 const swatches = (list) => list.map((name) => `
       <li class="${swatchItemCss}">
         <span class="${sw[name]}" aria-hidden="true"></span>
-        <span><span class="${swatchNameCss}">${name.replace(/\./g, '-')}</span><span class="${swatchHexCss}">Light ${themeTokens[name].light}</span><span class="${swatchHexCss}">Dark ${themeTokens[name].dark}</span></span>
+        <span><span class="${swatchNameCss}">${tokenLabel(name)}</span><span class="${swatchHexCss}">Light ${themeTokens[name].light}</span><span class="${swatchHexCss}">Dark ${themeTokens[name].dark}</span></span>
       </li>`).join('')
 const paletteHtml = `
 <section id="palette" class="${bandCss}" aria-labelledby="palette-title">
@@ -444,7 +448,7 @@ const decorCss = css({ display: 'block' })
 const componentsBody = `
 <div class="${wrapCss} ${compMainCss}">
   <h1 class="${compTitleCss}">Components</h1>
-  <p class="${ledeCss}">Five patterns, each demonstrating one WSG-relevant behavior live rather than just describing it.</p>
+  <p class="${ledeCss}">Five component patterns, plus the site-wide theme preference in the header, each demonstrating one WSG-relevant behavior live rather than just describing it.</p>
 
   <section class="${compSectionCss}">
     <h2 class="${compH2Css}">Buttons</h2>
