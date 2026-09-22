@@ -111,18 +111,8 @@ export default defineConfig({
             fontSize: 'body', lineHeight: 'body', fontFamily: 'sans',
             paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border',
             borderRadius: 'sm', background: 'surface.200', color: 'ink',
+            _placeholder: { color: 'ink.muted', opacity: '1' },
             _focusVisible: { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '1px', borderColor: 'transparent' },
-          },
-        },
-        switchTrack: {
-          className: 'switchTrack',
-          base: {
-            position: 'relative', width: '44px', height: '24px', borderRadius: 'full',
-            background: 'border', border: 'none', cursor: 'pointer', padding: '0', flex: 'none',
-            _motionSafe: { transition: 'background-color 150ms ease' },
-          },
-          variants: {
-            on: { true: { background: 'accent' } },
           },
         },
         spinner: {
@@ -130,14 +120,12 @@ export default defineConfig({
           base: {
             width: '28px', height: '28px', borderRadius: 'full',
             border: '3px solid', borderColor: 'border', borderTopColor: 'accent',
-            _motionSafe: { animation: 'spin 900ms linear infinite' },
           },
         },
         skeleton: {
           className: 'skeleton',
           base: {
             borderRadius: 'sm', background: 'border', opacity: '0.5',
-            _motionSafe: { animation: 'pulse 1400ms ease-in-out infinite' },
           },
         },
       },
@@ -159,14 +147,10 @@ export default defineConfig({
     '@keyframes hillRise': { from: { opacity: '0', transform: 'translateY(40px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
     '@keyframes sprout': { from: { transform: 'scale(0.2)', opacity: '0' }, to: { transform: 'scale(1)', opacity: '1' } },
     '@keyframes sunRise': { from: { opacity: '0', transform: 'translateY(24px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
-    '.switchTrack .knob': {
-      position: 'absolute', top: '2px', left: '2px', width: '20px', height: '20px',
-      borderRadius: 'var(--radii-full)', background: 'var(--colors-surface-200)',
-    },
     '@media (prefers-reduced-motion: no-preference)': {
-      '.switchTrack .knob': { transition: 'transform 150ms ease' },
+      '[data-motion-demo][data-running="true"] .spinner': { animation: 'spin 900ms linear 3' },
+      '[data-motion-demo][data-running="true"] .skeleton': { animation: 'pulse 1400ms ease-in-out 2' },
     },
-    '.switchTrack[aria-checked="true"] .knob': { transform: 'translateX(20px)' },
     // Decorative-only art is dropped for anyone who's asked to save data —
     // it costs bytes and carries no content (WSG 3.12's third preference query).
     '@media (prefers-reduced-data: reduce)': {

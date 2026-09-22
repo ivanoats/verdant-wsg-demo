@@ -6,7 +6,7 @@ import { writeFileSync, mkdirSync, readFileSync, readdirSync, statSync } from 'n
 import { join } from 'node:path'
 import { css } from '../styled-system/css/index.mjs'
 import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
-import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../styled-system/recipes/index.mjs'
+import { button, card, fieldInput, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
 
 // A hand-rolled recursive copy: some mounted/virtual filesystems choke on
@@ -51,6 +51,9 @@ const footerBarCss = flex({ paddingBlock: '6', align: 'center', justify: 'space-
 const footerBrandCss = hstack({ gap: '2' })
 const footerTextCss = css({ color: 'ink.muted', fontSize: 'label', lineHeight: 'label', margin: '0' })
 const footerLinksCss = hstack({ gap: '4', listStyle: 'none', margin: '0', padding: '0', fontSize: 'label' })
+const themeControlCss = hstack({ gap: '2', alignItems: 'center' })
+const themeLabelCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted' })
+const themeSelectCss = fieldInput()
 
 // ---- shared type & blocks ------------------------------------------------------
 
@@ -60,6 +63,13 @@ const eyebrowCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '60
 const h2Css = css({ fontSize: { base: 'displayMd', md: 'displayLg' }, lineHeight: { base: 'displayMd', md: 'displayLg' }, fontWeight: '700', margin: '0 0 12px', maxWidth: '24ch' })
 const introCss = css({ color: 'ink.muted', margin: '0 0 32px', maxWidth: '62ch' })
 const codeCss = css({ fontFamily: 'mono', fontSize: 'label' })
+const proseLinkCss = css({
+  color: 'accent',
+  textDecoration: 'underline',
+  textUnderlineOffset: '0.16em',
+  textDecorationThickness: '0.08em',
+  _hover: { color: 'accent.strong' },
+})
 const btnPrimary = button({ variant: 'primary' })
 const btnSecondary = button({ variant: 'secondary' })
 const btnRowCss = flex({ gap: '3', wrap: 'wrap', marginTop: '6' })
@@ -83,9 +93,9 @@ const heroHtml = `
       <p class="${eyebrowCss}">A design system for the W3C Web Sustainability Guidelines</p>
       <h1 id="hero-title" class="${heroTitleCss}">Verdant</h1>
       <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
-      <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, native dark mode, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
+      <p class="${heroLedeCss}">Every default already satisfies the <a class="${proseLinkCss}" href="${WSG}">WSG</a>: system fonts, native dark mode, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
       <div class="${btnRowCss}">
-        <a class="${btnPrimary}" href="/components.html">Browse components</a>
+        <a class="${btnPrimary}" href="/components">Browse components</a>
         <a class="${btnSecondary}" href="${REPO}">View source on GitHub</a>
       </div>
     </div>
@@ -127,7 +137,7 @@ const stageBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink
 
 const stages = [
   ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Small enough to hold in your head, so nothing gets a one-off value.'],
-  ['sprout', 'Sprout', 'Components', 'Button, card, field, theme toggle and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
+  ['sprout', 'Sprout', 'Components', 'Button, card, field, theme preference and motion preview &mdash; each one demonstrates a WSG behavior live rather than just describing it.'],
   ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one stylesheet and at most one small deferred script, from the first page on.'],
   ['canopy', 'Canopy', 'Sites', 'Security headers, cache rules, an offline shell and a real 404 &mdash; the hosting checks, handled before launch.'],
 ]
@@ -176,16 +186,22 @@ const sw = {
 }
 const swatchNameCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
 const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '4px 0 0' })
-const palette = [
+const palettePairs = [
   ['accent', '#2f6b4a', '#7fcfa3'], ['accent-strong', '#234f38', '#5fb98c'], ['positive', '#1f7a6c', '#5cc9b7'],
   ['focus-ring', '#a5670a', '#e8a83e'], ['critical', '#c1440e', '#ff8f5e'], ['accent-ink', '#ffffff', '#10241a'],
   ['ink', '#1c1a15', '#f1ede2'], ['ink-muted', '#5b5548', '#b6ae9c'], ['border', '#93866c', '#726b53'],
   ['surface-200', '#ffffff', '#1e1c15'], ['surface-100', '#faf8f3', '#15140f'],
 ]
-const foliage = [
+const foliagePairs = [
   ['foliage-bright', '#6fcd4f', '#86dc62'], ['foliage', '#3ca24a', '#45ad55'], ['foliage-deep', '#1f6a31', '#2a7d3a'],
   ['foliage-mid', '#9ed65f', '#2d6b34'], ['foliage-far', '#cdeaae', '#1c3a22'], ['sunlight', '#f4b63f', '#e8a83e'],
 ]
+const palette = palettePairs
+const foliage = foliagePairs
+const themePalettes = {
+  light: Object.fromEntries([...palettePairs, ...foliagePairs].map(([name, light]) => [name.replace(/-/g, '.').replace('focus.ring', 'focusRing'), light])),
+  dark: Object.fromEntries([...palettePairs, ...foliagePairs].map(([name, , dark]) => [name.replace(/-/g, '.').replace('focus.ring', 'focusRing'), dark])),
+}
 const paletteGroupCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 4px' })
 const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '62ch' })
 const paletteGapCss = css({ marginTop: '12' })
@@ -234,7 +250,7 @@ const scoreHtml = `
 <section class="${wrapCss} ${sectionCss}" aria-labelledby="score-title">
   <p class="${eyebrowCss}">Checked live</p>
   <h2 id="score-title" class="${h2Css}">How the deployed site holds up.</h2>
-  <p class="${introCss}">Audited against the live deploy across the six categories <a href="${WSG_CHECK}">wsg-check</a> scans. Five pass outright; one has a gap we can&rsquo;t fix in code.</p>
+  <p class="${introCss}">Audited against the live deploy across the six categories <a class="${proseLinkCss}" href="${WSG_CHECK}">wsg-check</a> scans. Five pass outright; one has a gap we can&rsquo;t fix in code.</p>
   <ul class="${scoreListCss}">
     ${scores.map(([title, pass, body]) => `
     <li class="${scoreItemCss}">
@@ -275,7 +291,7 @@ const pandaHtml = `
       <div>
         <p class="${eyebrowCss}">Built with PandaCSS</p>
         <h2 id="panda-title" class="${h2Css}">Tokens in, only-what-you-use CSS out.</h2>
-        <p class="${introCss}">Verdant maps onto a <a href="https://panda-css.com">PandaCSS</a> config in one file. Panda extracts styles at build time, so the stylesheet grows with your pages &mdash; never with the size of the framework.</p>
+        <p class="${introCss}">Verdant maps onto a <a class="${proseLinkCss}" href="https://panda-css.com">PandaCSS</a> config in one file. Panda extracts styles at build time, so the stylesheet grows with your pages &mdash; never with the size of the framework.</p>
         <ul class="${listCss}">
           <li>Semantic tokens carry both themes; <code class="${codeCss}">_dark</code> maps to the OS preference.</li>
           <li>Recipes for button, card, field and switch mirror the component guidelines.</li>
@@ -317,7 +333,7 @@ const ctaHtml = `
     <p class="${ctaBodyCss}">Clone the repo, copy <code class="${codeCss}">panda.config.ts</code>, and keep the checklist. Everything else is optional &mdash; which is the point.</p>
     <div class="${btnRowCss}">
       <a class="${ctaBtnCss}" href="${REPO}">Get the source</a>
-      <a class="${ctaLinkCss}" href="/components.html">See the components</a>
+      <a class="${ctaLinkCss}" href="/components">See the components</a>
     </div>
   </div>
 </section>`
@@ -333,11 +349,19 @@ const nav = (active) => {
       <a class="${wordmarkCss}" href="/">${mark(28)}<span>Verdant</span></a>
       <nav aria-label="Primary">
         <ul class="${navListCss}">
-          ${link('components', '/components.html', 'Components')}
+          ${link('components', '/components', 'Components')}
           ${link('palette', '/#palette', 'Palette')}
           ${link('github', REPO, 'GitHub')}
         </ul>
       </nav>
+      <div class="${themeControlCss}">
+        <label class="${themeLabelCss}" for="theme-preference">Theme</label>
+        <select class="${themeSelectCss}" id="theme-preference" data-theme-preference>
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
     </div>
   </header>`
 }
@@ -384,11 +408,11 @@ ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script
 <a class="${skipLinkCss}" href="#main">Skip to content</a>
 ${nav(active)}
 ${active === 'components' ? breadcrumb('Components') : ''}
-<main id="main">
+<main id="main" tabindex="-1">
 ${bodyHtml}
 </main>
 ${footer()}
-${['/sw-register.js', ...scripts].map((s) => `<script src="${s}" defer></script>`).join('\n')}
+${['/site-ui.js', '/sw-register.js', ...scripts].map((s) => `<script src="${s}" defer></script>`).join('\n')}
 </body>
 </html>
 `
@@ -414,11 +438,10 @@ const fieldCss = vstack({ gap: '1', alignItems: 'flex-start', width: '100%' })
 const labelCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600' })
 const hintCss = css({ fontSize: 'bodySm', color: 'ink.muted', margin: '0' })
 const inputCss = fieldInput()
-const switchRowCss = flex({ align: 'center', gap: '3' })
-const switchOffCss = switchTrack()
 const noteCss = css({ marginTop: '3', fontSize: 'label', color: 'ink.muted', maxWidth: '60ch' })
 const motionRowCss = flex({ align: 'center', gap: '6', wrap: 'wrap' })
 const motionGroupCss = vstack({ gap: '2', alignItems: 'flex-start' })
+const motionDemoCss = vstack({ gap: '4', alignItems: 'flex-start' })
 const spinnerCss = spinner()
 // Widths live in classes, not style="" — the CSP's style-src 'self' blocks
 // inline style attributes, which silently collapsed these bars before.
@@ -462,34 +485,32 @@ const componentsBody = `
     <form class="${formCss}">
       <div class="${fieldCss}">
         <label class="${labelCss}" for="site-url">Website URL</label>
-        <input class="${inputCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com">
-        <p class="${hintCss}">One field &mdash; enough to run a scan, nothing else required.</p>
+        <input class="${inputCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" aria-describedby="site-url-hint" placeholder="https://example.com">
+        <p class="${hintCss}" id="site-url-hint">One field &mdash; enough to run a scan, nothing else required.</p>
       </div>
     </form>
   </section>
 
   <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">Theme toggle</h2>
-    <div class="${switchRowCss}">
-      <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" id="theme-switch">
-        <span class="knob"></span>
-      </button>
-      <label class="${labelCss}" for="theme-switch">Dark theme</label>
-    </div>
-    <p class="${noteCss}">This page already switches with your OS. The toggle overrides that by setting the same tokens on the root through the CSSOM &mdash; it never fights the stylesheet for priority.</p>
+    <h2 class="${compH2Css}">Theme preference</h2>
+    <p class="${ledeCss}">The site-wide control in the header offers System, Light, and Dark modes. System follows live OS changes; explicit choices persist as you move between pages.</p>
   </section>
 
   <section class="${compSectionCss}">
     <h2 class="${compH2Css}">Motion</h2>
-    <div class="${motionRowCss}">
-      <div class="${motionGroupCss}">
-        <div class="${spinnerCss}" role="status" aria-label="Scanning"></div>
-        <span class="${captionCss}">Spinner</span>
-      </div>
-      <div class="${motionGroupCss}">
-        <div class="${skeletonWideCss}"></div>
-        <div class="${skeletonNarrowCss}"></div>
-        <span class="${captionCss}">Skeleton</span>
+    <div class="${motionDemoCss}">
+      <button type="button" class="${btnSecondary}" id="motion-preview" data-motion-preview>Preview loading motion</button>
+      <p class="${noteCss}" id="motion-status" aria-live="polite">Animations stay still until you preview them.</p>
+      <div class="${motionRowCss}" data-motion-demo data-running="false">
+        <div class="${motionGroupCss}">
+          <div class="${spinnerCss}" role="status" aria-label="Scanning"></div>
+          <span class="${captionCss}">Spinner</span>
+        </div>
+        <div class="${motionGroupCss}">
+          <div class="${skeletonWideCss}"></div>
+          <div class="${skeletonNarrowCss}"></div>
+          <span class="${captionCss}">Skeleton</span>
+        </div>
       </div>
     </div>
   </section>
@@ -509,30 +530,113 @@ const notFoundBody = `
 <div class="${wrapCss} ${nfCss}">
   ${seedlingArt()}
   <h1 class="${compTitleCss}">Page not found</h1>
-  <p class="${ledeCss}">Nothing has grown here yet. <a href="/">Back to the overview</a>, or <a href="/components.html">browse the components</a>.</p>
+  <p class="${ledeCss}">Nothing has grown here yet. <a class="${proseLinkCss}" href="/">Back to the overview</a>, or <a class="${proseLinkCss}" href="/components">browse the components</a>.</p>
+</div>`
+
+const offlineBody = `
+<div class="${wrapCss} ${nfCss}">
+  ${seedlingArt()}
+  <h1 class="${compTitleCss}">Offline for now</h1>
+  <p class="${ledeCss}">This route is not in the offline shell yet. Try <a class="${proseLinkCss}" href="/">the overview</a> or <a class="${proseLinkCss}" href="/components">the components gallery</a> again when you are back online.</p>
 </div>`
 
 // ---- scripts ---------------------------------------------------------------------
 
-const themeToggleJs = `(function () {
-  var LIGHT = { "surface.100": "#faf8f3", "surface.200": "#ffffff", "border": "#93866c", "ink": "#1c1a15", "ink.muted": "#5b5548", "accent": "#2f6b4a", "accent.strong": "#234f38", "accent.ink": "#ffffff", "focusRing": "#a5670a", "positive": "#1f7a6c", "critical": "#c1440e", "foliage": "#3ca24a", "foliage.far": "#cdeaae", "foliage.mid": "#9ed65f", "foliage.deep": "#1f6a31", "foliage.bright": "#6fcd4f", "sunlight": "#f4b63f" };
-  var DARK = { "surface.100": "#15140f", "surface.200": "#1e1c15", "border": "#726b53", "ink": "#f1ede2", "ink.muted": "#b6ae9c", "accent": "#7fcfa3", "accent.strong": "#5fb98c", "accent.ink": "#10241a", "focusRing": "#e8a83e", "positive": "#5cc9b7", "critical": "#ff8f5e", "foliage": "#45ad55", "foliage.far": "#1c3a22", "foliage.mid": "#2d6b34", "foliage.deep": "#2a7d3a", "foliage.bright": "#86dc62", "sunlight": "#e8a83e" };
-  function varName(key) { return "--colors-" + key.replace(/\\./g, "-"); }
-  function apply(map) {
-    var root = document.documentElement;
-    Object.keys(map).forEach(function (k) { root.style.setProperty(varName(k), map[k]); });
+const siteUiJs = `(function () {
+  var KEY = 'verdant-theme';
+  var PALETTES = ${JSON.stringify(themePalettes)};
+  var modes = { system: true, light: true, dark: true };
+  var root = document.documentElement;
+  var controls = Array.prototype.slice.call(document.querySelectorAll('[data-theme-preference]'));
+  var scheme = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function varName(key) { return '--colors-' + key.replace(/\\./g, '-'); }
+  function clearTheme() {
+    Object.keys(PALETTES.light).forEach(function (key) { root.style.removeProperty(varName(key)); });
+    root.style.colorScheme = 'light dark';
   }
-  var btn = document.getElementById("theme-switch");
-  if (!btn) return;
-  // Reflect the OS-driven theme that's already on screen, so the switch
-  // never lies about the current state before it's touched.
-  var forcedDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  btn.setAttribute("aria-checked", String(forcedDark));
-  btn.addEventListener("click", function () {
-    forcedDark = !forcedDark;
-    btn.setAttribute("aria-checked", String(forcedDark));
-    apply(forcedDark ? DARK : LIGHT);
+  function paint(mode) {
+    if (mode === 'system') return clearTheme();
+    var palette = PALETTES[mode];
+    Object.keys(palette).forEach(function (key) { root.style.setProperty(varName(key), palette[key]); });
+    root.style.colorScheme = mode;
+  }
+  function readMode() {
+    try {
+      var value = window.localStorage.getItem(KEY) || 'system';
+      return modes[value] ? value : 'system';
+    } catch (_) {
+      return 'system';
+    }
+  }
+  function writeMode(mode) {
+    try {
+      if (mode === 'system') window.localStorage.removeItem(KEY);
+      else window.localStorage.setItem(KEY, mode);
+    } catch (_) {}
+  }
+  function sync(mode) {
+    var resolved = mode === 'system' ? (scheme && scheme.matches ? 'dark' : 'light') : mode;
+    root.dataset.themePreference = mode;
+    root.dataset.themeResolved = resolved;
+    paint(mode);
+    controls.forEach(function (control) { control.value = mode; });
+  }
+  var mode = readMode();
+  sync(mode);
+  controls.forEach(function (control) {
+    control.addEventListener('change', function () {
+      mode = modes[control.value] ? control.value : 'system';
+      writeMode(mode);
+      sync(mode);
+    });
   });
+  if (scheme) {
+    var refresh = function () { if (mode === 'system') sync(mode); };
+    if (scheme.addEventListener) scheme.addEventListener('change', refresh);
+    else if (scheme.addListener) scheme.addListener(refresh);
+  }
+
+  var button = document.querySelector('[data-motion-preview]');
+  var demo = document.querySelector('[data-motion-demo]');
+  var status = document.getElementById('motion-status');
+  var reduceMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  if (!button || !demo || !status) return;
+  var timer = null;
+  function setMotionEnabled(enabled) {
+    demo.dataset.running = enabled ? 'true' : 'false';
+    button.disabled = enabled;
+    button.textContent = enabled ? 'Previewing loading motion…' : 'Preview loading motion';
+    status.textContent = enabled ? 'Animating for a short preview.' : 'Animations stay still until you preview them.';
+  }
+  function syncMotionPreference() {
+    if (reduceMotion && reduceMotion.matches) {
+      clearTimeout(timer);
+      timer = null;
+      demo.dataset.running = 'false';
+      button.disabled = true;
+      button.textContent = 'Motion stays off when reduced motion is on';
+      status.textContent = 'Reduced motion is on, so the loading demos stay static.';
+      return;
+    }
+    if (timer) return;
+    button.disabled = false;
+    button.textContent = 'Preview loading motion';
+    status.textContent = 'Animations stay still until you preview them.';
+  }
+  button.addEventListener('click', function () {
+    if (reduceMotion && reduceMotion.matches) return;
+    clearTimeout(timer);
+    setMotionEnabled(true);
+    timer = window.setTimeout(function () {
+      timer = null;
+      setMotionEnabled(false);
+    }, 3200);
+  });
+  if (reduceMotion) {
+    if (reduceMotion.addEventListener) reduceMotion.addEventListener('change', syncMotionPreference);
+    else if (reduceMotion.addListener) reduceMotion.addListener(syncMotionPreference);
+  }
+  syncMotionPreference();
 })();
 `
 
@@ -550,8 +654,21 @@ const swJs = `// Verdant — offline shell.
 // Pages: network first, so HTML is always the deployed version when online;
 // the cached copy is only a fallback. Assets: hashed filenames, so a cached
 // copy can never be stale — cache first is safe.
-var CACHE = 'verdant-__VERSION__';
+var PREFIX = 'verdant-shell-';
+var CACHE = PREFIX + '__VERSION__';
 var SHELL = __SHELL__;
+self.addEventListener('message', function (event) {
+  if (event.data === 'verdant:skip-waiting') self.skipWaiting();
+});
+function routeKey(url) {
+  var path = new URL(url).pathname;
+  if (path === '/') return '/';
+  if (path === '/components' || path === '/components/') return '/components.html';
+  if (path === '/404' || path === '/404/') return '/404.html';
+  if (path === '/offline' || path === '/offline/') return '/offline.html';
+  if (/\\.html$/.test(path)) return path;
+  return null;
+}
 self.addEventListener('install', function (event) {
   // cache: 'reload' skips the HTTP cache, so the new shell is never
   // assembled from an older deploy's files.
@@ -562,28 +679,22 @@ self.addEventListener('install', function (event) {
 });
 self.addEventListener('activate', function (event) {
   event.waitUntil(caches.keys().then(function (keys) {
-    var old = keys.filter(function (k) { return k !== CACHE; });
+    var old = keys.filter(function (k) { return k.indexOf(PREFIX) === 0 && k !== CACHE; });
     return Promise.all(old.map(function (k) { return caches.delete(k); }))
-      .then(function () { return self.clients.claim(); })
-      .then(function () {
-        // An update (not a first install): reload open tabs once so they
-        // don't keep showing a page from the previous deploy.
-        if (!old.length) return;
-        return self.clients.matchAll({ type: 'window' }).then(function (tabs) {
-          tabs.forEach(function (tab) { tab.navigate(tab.url); });
-        });
-      });
+      .then(function () { return self.clients.claim(); });
   }));
 });
 self.addEventListener('fetch', function (event) {
   var req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   if (req.mode === 'navigate') {
+    var key = routeKey(req.url);
     event.respondWith(fetch(req).then(function (res) {
-      if (res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
+      if (res.ok && key) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(key, copy); }); }
       return res;
     }).catch(function () {
-      return caches.match(req).then(function (hit) { return hit || caches.match('/'); });
+      if (!key) return caches.match('/offline.html');
+      return caches.match(key).then(function (hit) { return hit || caches.match('/offline.html'); });
     }));
     return;
   }
@@ -602,7 +713,7 @@ const minifyHtml = (html) => {
 // ---- write ---------------------------------------------------------------------
 
 mkdirSync('dist', { recursive: true })
-writeFileSync('dist/theme-toggle.js', themeToggleJs)
+writeFileSync('dist/site-ui.js', siteUiJs)
 writeFileSync('dist/sw-register.js', swRegisterJs)
 writeFileSync('dist/sw.js', swJs)
 copyDir('public', 'dist')
@@ -624,11 +735,10 @@ writeFileSync('dist/index.html', minifyHtml(page({
 
 writeFileSync('dist/components.html', minifyHtml(page({
   title: 'Components — Verdant',
-  description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, theme toggle, and motion patterns.',
-  path: '/components.html',
+  description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, theme preferences, and motion patterns.',
+  path: '/components',
   active: 'components',
   bodyHtml: componentsBody,
-  scripts: ['/theme-toggle.js'],
 })))
 
 writeFileSync('dist/404.html', minifyHtml(page({
@@ -639,4 +749,12 @@ writeFileSync('dist/404.html', minifyHtml(page({
   bodyHtml: notFoundBody,
 })))
 
-console.log('Wrote dist/index.html, dist/components.html, dist/404.html')
+writeFileSync('dist/offline.html', minifyHtml(page({
+  title: 'Offline — Verdant',
+  description: 'A fallback page for routes that are not available offline yet.',
+  path: '/offline',
+  active: '',
+  bodyHtml: offlineBody,
+})))
+
+console.log('Wrote dist/index.html, dist/components.html, dist/404.html, dist/offline.html')

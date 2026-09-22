@@ -46,7 +46,7 @@ async function build() {
   // would re-run every time; codegen only runs when panda.config.ts changes.
   // (`npm run dev` puts node_modules/.bin on PATH, so `panda` resolves.)
   const ok = (!needCodegen || await run('panda codegen --silent')) &&
-    await run('node scripts/build.mjs && panda cssgen -m --lightningcss --silent -o dist/styles.css && node scripts/stats.mjs && node scripts/fingerprint.mjs')
+    await run('node scripts/build.mjs && panda cssgen -m --lightningcss --silent -o dist/styles.css && node scripts/finalize.mjs')
   needCodegen = false
   building = false
   if (ok) {
@@ -93,6 +93,10 @@ createServer(async (req, res) => {
     if ((await stat(file)).isDirectory()) file = join(file, 'index.html')
     send(res, 200, extname(file), await readFile(file))
   } catch {
+    if (!extname(file)) {
+      try { send(res, 200, '.html', await readFile(`${file}.html`)); return }
+      catch {}
+    }
     try { send(res, 404, '.html', await readFile(join(DIST, '404.html'))) }
     catch { send(res, 404, '.txt', 'Not found') }
   }
