@@ -8,7 +8,7 @@
     "predev": "panda codegen",
     "dev": "node scripts/dev.mjs",
     "prebuild": "panda codegen",
-    "build": "node scripts/build.mjs && panda cssgen -m --lightningcss -o dist/styles.css && node scripts/stats.mjs && node scripts/fingerprint.mjs"
+    "build": "node scripts/build.mjs && panda cssgen -m --lightningcss -o dist/styles.css && node scripts/fingerprint.mjs && node scripts/stats.mjs"
   },
   "license": "ISC",
   "devDependencies": {
