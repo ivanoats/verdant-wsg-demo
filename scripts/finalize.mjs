@@ -12,7 +12,6 @@ const REPORT_SCHEMA = `${DIST}/measurements.schema.json`
 const ASSETS = ['styles.css', 'site-ui.js', 'sw-register.js']
 const PLACEHOLDERS = { home: '__HOME_KB__', css: '__CSS_KB__' }
 const QUALITY = 11
-const DISPLAY_DATE = new Date().toISOString().slice(0, 10)
 const VERSION_PLACEHOLDER = '__VERSION__'
 
 const hash = (buf) => createHash('sha256').update(buf).digest('hex').slice(0, 10)
@@ -75,15 +74,17 @@ writeFileSync(SW, sw)
 const currentFiles = { indexHtml: finalIndex, swJs: sw }
 const server = createServer((req, res) => serve(req, res, currentFiles))
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
-const { port } = server.address()
+const address = server.address()
+if (!address || typeof address === 'string') throw new Error('Expected local measurement server to expose an address object')
+const { port } = address
 
 try {
-  const metrics = await collectMetrics({ contract, currentFiles, port })
+  const metrics = await collectMetrics({ currentFiles, port, shell })
   writeFileSync(REPORT, `${JSON.stringify(buildReport(metrics), null, 2)}\n`)
   console.log(`Fingerprinted ${ASSETS.length} assets; service worker version ${version}`)
   console.log(`Measured initial render ${metrics.displayKib.initialRender} KiB br; offline shell ${metrics.displayKib.offlineShell} KiB br`)
 } finally {
-  server.close()
+  await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
 }
 
 function buildCanonicalSourceFiles(cacheContract) {
@@ -114,10 +115,13 @@ function offlineShellUrls() {
   return unique(['/sw.js', ...shell])
 }
 
-async function collectMetrics({ currentFiles: files, port }) {
+async function collectMetrics({ currentFiles: files, port, shell }) {
+  const generatedAt = new Date().toISOString()
   const pageResources = readPageResources(files.indexHtml)
-  const initialRender = unique(['/', ...pageResources.renderBlockingUrls, ...pageResources.deferredScriptUrls])
   const pageLinked = unique([...pageResources.renderBlockingUrls, ...pageResources.deferredScriptUrls, ...pageResources.metadataUrls])
+  const nonMetadataPageLinked = unique([...pageResources.renderBlockingUrls, ...pageResources.deferredScriptUrls])
+  const metadataUrls = pageResources.metadataUrls
+  const initialRender = unique(['/', ...pageLinked])
   const offlineShell = unique(['/sw.js', ...shell])
 
   const initialRenderEstimateBytes = sum(initialRender.map((url) => br(readUrl(url, files))))
@@ -125,20 +129,27 @@ async function collectMetrics({ currentFiles: files, port }) {
 
   const coldRequests = []
   coldRequests.push(await requestOnce(port, '/'))
-  for (const url of pageLinked) coldRequests.push(await requestOnce(port, url))
+  for (const url of nonMetadataPageLinked) coldRequests.push(await requestOnce(port, url))
+  for (const url of metadataUrls) coldRequests.push(await requestOnce(port, url))
   coldRequests.push(await requestOnce(port, '/sw.js'))
-  for (const url of shell) coldRequests.push(await requestOnce(port, url, { label: 'service-worker-precache', cache: 'reload' }))
+  const alreadyFetched = new Set(['/', ...pageLinked])
+  for (const url of shell.filter((shellUrl) => !alreadyFetched.has(shellUrl))) {
+    coldRequests.push(await requestOnce(port, url, { label: 'service-worker-precache', cache: 'reload' }))
+  }
 
   const warmRequests = []
   warmRequests.push(await requestOnce(port, '/'))
-  for (const url of pageLinked) {
+  for (const url of nonMetadataPageLinked) {
     warmRequests.push({ url, statusCode: 200, transferBytes: 0, source: 'service-worker-cache', cache: 'warm-shell' })
+  }
+  for (const url of metadataUrls) {
+    warmRequests.push(await requestOnce(port, url, { headers: { 'If-None-Match': etag(readUrl(url, files)) }, cache: 'http-revalidate' }))
   }
   warmRequests.push(await requestOnce(port, '/sw.js', { headers: { 'If-None-Match': etag(readUrl('/sw.js', files)) } }))
 
   return {
-    generatedAt: new Date().toISOString(),
-    publicSummaryDate: DISPLAY_DATE,
+    generatedAt,
+    publicSummaryDate: generatedAt.slice(0, 10),
     displayKib: {
       initialRender: kibText(initialRenderEstimateBytes),
       offlineShell: kibText(offlineShellEstimateBytes),
@@ -152,7 +163,7 @@ async function collectMetrics({ currentFiles: files, port }) {
     resourceSets: {
       initialRenderUrls: initialRender,
       pageLinkedUrls: pageLinked,
-      offlineShellUrls: readShell(files.swJs),
+      offlineShellUrls: offlineShell,
     },
   }
 }
@@ -220,12 +231,6 @@ function readMatches(text, pattern) {
   return [...text.matchAll(pattern)].map((match) => match[1])
 }
 
-function readShell(swText) {
-  const match = swText.match(/var SHELL = (\[[^\n;]+\])/)
-  if (!match) throw new Error('Could not read offline shell list from dist/sw.js')
-  return JSON.parse(match[1])
-}
-
 function contentType(path) {
   if (path.endsWith('.html') || path === '/') return 'text/html; charset=utf-8'
   if (path.endsWith('.css')) return 'text/css; charset=utf-8'
@@ -249,7 +254,17 @@ function shouldCompress(path) {
 
 function serve(req, res, files) {
   const url = new URL(req.url, 'http://127.0.0.1')
-  const body = readUrl(url.pathname, files)
+  let body
+  try {
+    body = readUrl(url.pathname, files)
+  } catch {
+    res.writeHead(404, {
+      'cache-control': 'no-store',
+      'content-type': 'text/plain; charset=utf-8',
+    })
+    res.end('Not found')
+    return
+  }
   const entityTag = etag(body)
   const headers = {
     'cache-control': cacheControl(url.pathname),

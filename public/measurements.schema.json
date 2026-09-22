@@ -19,8 +19,8 @@
   "properties": {
     "$schema": { "const": "./measurements.schema.json" },
     "schemaVersion": { "const": 1 },
-    "generatedAt": { "type": "string" },
-    "publicSummaryDate": { "type": "string" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "publicSummaryDate": { "type": "string", "format": "date" },
     "units": {
       "type": "object",
       "required": ["bytes", "display", "kibibyte"],

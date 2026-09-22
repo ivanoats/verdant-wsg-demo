@@ -39,6 +39,14 @@ function copyDir(src, dest) {
 const REPO = 'https://github.com/ivanoats/verdant-wsg-demo'
 const WSG_CHECK = 'https://github.com/ivanoats/wsg-check'
 const WSG = 'https://w3c.github.io/sustainableweb-wsg/'
+const offlineCacheContract = JSON.parse(readFileSync('public/offline-cache.json', 'utf8'))
+const workerRouteMap = Object.fromEntries([
+  ...new Set([
+    '/',
+    ...(offlineCacheContract.canonicalCacheKeys || []),
+    ...Object.keys(offlineCacheContract.routeAliases || {}),
+  ]),
+].map((path) => [path, offlineCacheContract.routeAliases?.[path] || path]))
 
 // ---- shell ------------------------------------------------------------------
 
@@ -664,16 +672,14 @@ const swJs = `// Verdant — offline shell.
 var PREFIX = 'verdant-shell-';
 var CACHE = PREFIX + '__VERSION__';
 var SHELL = __SHELL__;
+self.__ROUTE_MAP__ = ${JSON.stringify(workerRouteMap)};
 self.addEventListener('message', function (event) {
   if (event.data === 'verdant:skip-waiting') self.skipWaiting();
 });
 function routeKey(url) {
   var path = new URL(url).pathname;
   path = path.replace(/\\/+$/, '') || '/';
-  if (path === '/' || path === '/index.html') return '/';
-  if (path === '/components' || path === '/components.html') return '/components';
-  if (path === '/404' || path === '/404/') return '/404.html';
-  if (path === '/offline' || path === '/offline.html') return '/offline.html';
+  if (self.__ROUTE_MAP__[path]) return self.__ROUTE_MAP__[path];
   if (/\\.html$/.test(path)) return path;
   return null;
 }

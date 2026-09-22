@@ -4,21 +4,21 @@
   "report": "dist/measurements.json",
   "schema": "dist/measurements.schema.json",
   "baselines": {
-    "initialRenderEstimateKiB": 17.3,
+    "initialRenderEstimateKiB": 17.7,
     "offlineShellEstimateKiB": 23.3,
-    "coldFirstSessionTransferKiB": 46.5,
+    "coldFirstSessionTransferKiB": 28.9,
     "warmRepeatVisitTransferKiB": 9.3
   },
   "thresholds": {
     "initialRenderEstimateKiB": 18.5,
     "offlineShellEstimateKiB": 24.5,
-    "coldFirstSessionTransferKiB": 49.0,
+    "coldFirstSessionTransferKiB": 31.0,
     "warmRepeatVisitTransferKiB": 11.0
   },
   "rationale": {
     "initialRenderEstimateKiB": "Keep the homepage first render within about 1 KiB of the reviewed compressed baseline from the finalized measurement report.",
     "offlineShellEstimateKiB": "Allow about 1.2 KiB of headroom above the reviewed offline shell estimate while #21 finalizes the update UI and canonical route contract.",
-    "coldFirstSessionTransferKiB": "Budget the first-session local transfer measurement with moderate headroom so the CI check tracks meaningful regressions without freezing implementation details from #19.",
+    "coldFirstSessionTransferKiB": "Budget the first-session local transfer measurement with modest headroom now that duplicate shell requests are no longer counted during precache simulation.",
     "warmRepeatVisitTransferKiB": "Keep the warm repeat-visit transfer small while acknowledging that deployed-host caching behavior remains unmeasured until upstream integration completes."
   },
   "blockedOn": {

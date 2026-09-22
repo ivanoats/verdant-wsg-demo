@@ -18,7 +18,9 @@ test('a11y affordances stay visible at narrow widths', async ({ page }) => {
   const field = page.getByLabel('Website URL')
   const describedBy = await field.getAttribute('aria-describedby')
   expect(describedBy).toBeTruthy()
-  for (const id of describedBy.split(/\s+/).filter(Boolean)) await expect(page.locator(`#${id}`)).toContainText(/scan|required|field/i)
+  for (const id of describedBy.trim().split(/\s+/).filter(Boolean)) {
+    await expect(page.locator(`#${id}`)).toContainText(/scan|required|field/i)
+  }
 
   const placeholder = await field.evaluate((input) => {
     const placeholderStyle = window.getComputedStyle(input, '::placeholder')
@@ -83,10 +85,10 @@ test('motion preview is bounded and reduced-motion safe', async ({ page }) => {
   await expect(status).toBeVisible()
 
   await button.click()
-  await expect.poll(async () => button.isDisabled()).toBe(true)
+  await expect(button).toBeDisabled()
   await expect(page.getByText(/animating for a short preview|preview runs once/i)).toBeVisible()
   await page.waitForTimeout(3400)
-  await expect.poll(async () => button.isDisabled()).toBe(false)
+  await expect(button).toBeEnabled()
   await expect(page.getByText(/animations stay still until you preview them\.|preview runs once, then stops automatically\./i)).toBeVisible()
 
   await page.emulateMedia({ reducedMotion: 'reduce' })
