@@ -1,4 +1,5 @@
 import { defineConfig } from '@pandacss/dev'
+import { explicitThemeVars, semanticColorTokens } from './scripts/theme.mjs'
 
 export default defineConfig({
   preflight: true,
@@ -43,33 +44,7 @@ export default defineConfig({
       },
       semanticTokens: {
         colors: {
-          surface: {
-            100: { value: { base: '#faf8f3', _dark: '#15140f' } },
-            200: { value: { base: '#ffffff', _dark: '#1e1c15' } },
-          },
-          border: { value: { base: '#93866c', _dark: '#726b53' } },
-          ink: {
-            DEFAULT: { value: { base: '#1c1a15', _dark: '#f1ede2' } },
-            muted: { value: { base: '#5b5548', _dark: '#b6ae9c' } },
-          },
-          accent: {
-            DEFAULT: { value: { base: '#2f6b4a', _dark: '#7fcfa3' } },
-            strong: { value: { base: '#234f38', _dark: '#5fb98c' } },
-            ink: { value: { base: '#ffffff', _dark: '#10241a' } },
-          },
-          focusRing: { value: { base: '#a5670a', _dark: '#e8a83e' } },
-          // Illustration-only greens: the "verdant" in Verdant. Never text or
-          // UI state — they're chosen for lushness, not 4.5:1 contrast.
-          foliage: {
-            DEFAULT: { value: { base: '#3ca24a', _dark: '#45ad55' } },
-            far: { value: { base: '#cdeaae', _dark: '#1c3a22' } },
-            mid: { value: { base: '#9ed65f', _dark: '#2d6b34' } },
-            deep: { value: { base: '#1f6a31', _dark: '#2a7d3a' } },
-            bright: { value: { base: '#6fcd4f', _dark: '#86dc62' } },
-          },
-          sunlight: { value: { base: '#f4b63f', _dark: '#e8a83e' } },
-          positive: { value: { base: '#1f7a6c', _dark: '#5cc9b7' } },
-          critical: { value: { base: '#c1440e', _dark: '#ff8f5e' } },
+          ...semanticColorTokens,
         },
         shadows: {
           sm: {
@@ -146,6 +121,10 @@ export default defineConfig({
 
   globalCss: {
     'html': { colorScheme: 'light dark' },
+    'html[data-theme-override="light"]': { ...explicitThemeVars.light },
+    'html[data-theme-override="dark"]': { ...explicitThemeVars.dark },
+    'html[data-theme-resolved="light"]': { colorScheme: 'light' },
+    'html[data-theme-resolved="dark"]': { colorScheme: 'dark' },
     'body': { margin: '0', background: 'surface.100', color: 'ink', fontFamily: 'sans', fontSize: 'body', lineHeight: 'body' },
     'a': { color: 'accent' },
     'a:hover': { color: 'accent.strong' },

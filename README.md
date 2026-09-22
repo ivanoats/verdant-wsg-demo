@@ -17,7 +17,7 @@ Output lands in `dist/` — that's the Netlify publish directory (see `netlify.t
 ## What's deliberately in here
 
 - Zero web fonts (`system-ui` stack)
-- Dark theme via `prefers-color-scheme`, no separate stylesheet
+- System/Light/Dark theme preference from one token source, with `prefers-color-scheme` as the no-JS default and no separate stylesheet
 - Every animation gated behind `prefers-reduced-motion: no-preference`
 - Decorative image dropped under `prefers-reduced-data: reduce`
 - Landmarks (`main`, `nav`, skip link), a labelled form field, one consistent focus ring

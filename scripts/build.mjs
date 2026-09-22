@@ -8,6 +8,7 @@ import { css } from '../styled-system/css/index.mjs'
 import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
 import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
+import { illustrationPaletteOrder, interfacePaletteOrder, themePreferenceStorageKey, themeTokenCount, themeTokens } from './theme.mjs'
 
 // A hand-rolled recursive copy: some mounted/virtual filesystems choke on
 // Node's native cpSync fast paths (fcopyfile/clonefile), so this sticks to
@@ -39,9 +40,18 @@ const wrapCss = css({ maxWidth: '1080px', marginX: 'auto', paddingInline: { base
 const headerCss = css({ borderBottom: '1px solid', borderColor: 'border' })
 const barCss = flex({ paddingBlock: '3', align: 'center', justify: 'space-between', gap: '4', wrap: 'wrap' })
 const wordmarkCss = hstack({ gap: '2', color: 'ink', textDecoration: 'none', fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '700' })
+const headerActionsCss = flex({ align: 'center', gap: '4', wrap: 'wrap' })
 const navListCss = hstack({ gap: { base: '3', md: '6' }, listStyle: 'none', margin: '0', padding: '0' })
 const navLinkCss = css({ textDecoration: 'none', fontSize: 'bodySm', fontWeight: '600', color: 'ink', _hover: { color: 'accent' } })
 const navLinkActiveCss = css({ textDecoration: 'underline', textUnderlineOffset: '6px', textDecorationThickness: '2px', fontSize: 'bodySm', fontWeight: '600', color: 'accent' })
+const themePrefCss = flex({ gap: '2', align: 'center', wrap: 'wrap' })
+const themePrefLegendCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted', margin: '0', padding: '0' })
+const themePrefOptionCss = css({
+  display: 'inline-flex', alignItems: 'center', gap: '2',
+  paddingBlock: '1', paddingInline: '3', border: '1px solid', borderColor: 'border',
+  borderRadius: 'full', background: 'surface.200', fontSize: 'label', lineHeight: 'label', fontWeight: '600',
+})
+const themePrefRadioCss = css({ margin: '0', accentColor: 'accent' })
 
 const breadcrumbListCss = hstack({ gap: '1', listStyle: 'none', margin: '0', paddingTop: '3', paddingInline: '0', fontSize: 'label', color: 'ink.muted' })
 const breadcrumbLinkCss = css({ color: 'ink.muted' })
@@ -109,7 +119,7 @@ const statsHtml = `
     <div class="${statCss}"><dt class="${statLabelCss}">This whole page, compressed &mdash; art included</dt><dd class="${statValueCss}">__HOME_KB__&nbsp;KB</dd></div>
     <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
     <div class="${statCss}"><dt class="${statLabelCss}">Stylesheet, extracted to only the rules in use</dt><dd class="${statValueCss}">__CSS_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Color tokens, each with a light and dark value</dt><dd class="${statValueCss}">17&thinsp;&times;&thinsp;2</dd></div>
+    <div class="${statCss}"><dt class="${statLabelCss}">Color tokens, each with a light and dark value</dt><dd class="${statValueCss}">${themeTokenCount}&thinsp;&times;&thinsp;2</dd></div>
   </dl>
 </section>`
 
@@ -128,7 +138,7 @@ const stageBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink
 const stages = [
   ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Small enough to hold in your head, so nothing gets a one-off value.'],
   ['sprout', 'Sprout', 'Components', 'Button, card, field, theme toggle and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
-  ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one stylesheet and at most one small deferred script, from the first page on.'],
+  ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one stylesheet and two small same-origin scripts, from the first page on.'],
   ['canopy', 'Canopy', 'Sites', 'Security headers, cache rules, an offline shell and a real 404 &mdash; the hosting checks, handled before launch.'],
 ]
 const stagesHtml = `
@@ -176,37 +186,27 @@ const sw = {
 }
 const swatchNameCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
 const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '4px 0 0' })
-const palette = [
-  ['accent', '#2f6b4a', '#7fcfa3'], ['accent-strong', '#234f38', '#5fb98c'], ['positive', '#1f7a6c', '#5cc9b7'],
-  ['focus-ring', '#a5670a', '#e8a83e'], ['critical', '#c1440e', '#ff8f5e'], ['accent-ink', '#ffffff', '#10241a'],
-  ['ink', '#1c1a15', '#f1ede2'], ['ink-muted', '#5b5548', '#b6ae9c'], ['border', '#93866c', '#726b53'],
-  ['surface-200', '#ffffff', '#1e1c15'], ['surface-100', '#faf8f3', '#15140f'],
-]
-const foliage = [
-  ['foliage-bright', '#6fcd4f', '#86dc62'], ['foliage', '#3ca24a', '#45ad55'], ['foliage-deep', '#1f6a31', '#2a7d3a'],
-  ['foliage-mid', '#9ed65f', '#2d6b34'], ['foliage-far', '#cdeaae', '#1c3a22'], ['sunlight', '#f4b63f', '#e8a83e'],
-]
 const paletteGroupCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 4px' })
 const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '62ch' })
 const paletteGapCss = css({ marginTop: '12' })
-const swatches = (list) => list.map(([name, light, dark]) => `
+const swatches = (list) => list.map((name) => `
       <li class="${swatchItemCss}">
         <span class="${sw[name]}" aria-hidden="true"></span>
-        <span><span class="${swatchNameCss}">${name}</span><span class="${swatchHexCss}">Light ${light}</span><span class="${swatchHexCss}">Dark ${dark}</span></span>
+        <span><span class="${swatchNameCss}">${name.replace(/\./g, '-')}</span><span class="${swatchHexCss}">Light ${themeTokens[name].light}</span><span class="${swatchHexCss}">Dark ${themeTokens[name].dark}</span></span>
       </li>`).join('')
 const paletteHtml = `
 <section id="palette" class="${bandCss}" aria-labelledby="palette-title">
   <div class="${wrapCss} ${sectionCss}">
     <p class="${eyebrowCss}">Palette</p>
     <h2 id="palette-title" class="${h2Css}">Seventeen colors, two seasons.</h2>
-    <p class="${introCss}">One token set with a light and a dark value each, switched by <code class="${codeCss}">prefers-color-scheme</code> &mdash; no second stylesheet. Flip your OS theme and the valley above turns to night.</p>
+    <p class="${introCss}">One token set with a light and a dark value each. System mode follows <code class="${codeCss}">prefers-color-scheme</code>; explicit Light and Dark choices reuse the same tokens without a second stylesheet.</p>
     <h3 class="${paletteGroupCss}">Interface</h3>
     <p class="${paletteGroupNoteCss}">Text, controls and state. Every text pair clears 4.5:1 in both themes.</p>
-    <ul class="${paletteGridCss}">${swatches(palette)}
+    <ul class="${paletteGridCss}">${swatches(interfacePaletteOrder)}
     </ul>
     <h3 class="${paletteGroupCss} ${paletteGapCss}">Illustration</h3>
     <p class="${paletteGroupNoteCss}">Hills, leaves, grass and sun. Picked for lushness, not contrast, so they never carry text or meaning.</p>
-    <ul class="${paletteGridCss}">${swatches(foliage)}
+    <ul class="${paletteGridCss}">${swatches(illustrationPaletteOrder)}
     </ul>
   </div>
 </section>`
@@ -223,7 +223,7 @@ const scoreBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink
 const scoreNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', marginTop: '6', maxWidth: '70ch' })
 
 const scores = [
-  ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, one deferred script, nothing render-blocking.'],
+  ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, two small same-origin scripts, nothing third-party.'],
   ['Semantic &amp; standards', true, 'Landmarks, a single h1 with ordered headings, canonical URL and structured data.'],
   ['Sustainability-specific', true, 'Color-scheme, reduced-motion and reduced-data queries all present; no unused CSS shipped.'],
   ['Security &amp; maintenance', true, 'CSP, HSTS, Permissions-Policy, nosniff and frame protection; robots.txt and a sitemap.'],
@@ -327,17 +327,30 @@ const ctaHtml = `
 const nav = (active) => {
   const link = (key, href, label) =>
     `<li><a class="${active === key ? navLinkActiveCss : navLinkCss}" href="${href}"${active === key ? ' aria-current="page"' : ''}>${label}</a></li>`
+  const themeOption = (value, label) => `
+          <label class="${themePrefOptionCss}" for="theme-pref-${value}">
+            <input class="${themePrefRadioCss}" type="radio" id="theme-pref-${value}" name="theme-preference" value="${value}"${value === 'system' ? ' checked' : ''}>
+            <span>${label}</span>
+          </label>`
   return `
   <header class="${headerCss}">
     <div class="${wrapCss} ${barCss}">
       <a class="${wordmarkCss}" href="/">${mark(28)}<span>Verdant</span></a>
-      <nav aria-label="Primary">
-        <ul class="${navListCss}">
-          ${link('components', '/components.html', 'Components')}
-          ${link('palette', '/#palette', 'Palette')}
-          ${link('github', REPO, 'GitHub')}
-        </ul>
-      </nav>
+      <div class="${headerActionsCss}">
+        <nav aria-label="Primary">
+          <ul class="${navListCss}">
+            ${link('components', '/components.html', 'Components')}
+            ${link('palette', '/#palette', 'Palette')}
+            ${link('github', REPO, 'GitHub')}
+          </ul>
+        </nav>
+        <fieldset class="${themePrefCss}" aria-label="Theme preference">
+          <legend class="${themePrefLegendCss}">Theme</legend>
+          ${themeOption('system', 'System')}
+          ${themeOption('light', 'Light')}
+          ${themeOption('dark', 'Dark')}
+        </fieldset>
+      </div>
     </div>
   </header>`
 }
@@ -375,8 +388,9 @@ const page = ({ title, description, path, active, jsonLd, bodyHtml, scripts = []
 <meta property="og:type" content="website">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2f6b4a" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#15140f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="${themeTokens['surface.100'].light}" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="${themeTokens['surface.100'].dark}" media="(prefers-color-scheme: dark)">
+<script src="/theme-toggle.js"></script>
 <link rel="stylesheet" href="/styles.css">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>` : ''}
 </head>
@@ -416,6 +430,7 @@ const hintCss = css({ fontSize: 'bodySm', color: 'ink.muted', margin: '0' })
 const inputCss = fieldInput()
 const switchRowCss = flex({ align: 'center', gap: '3' })
 const switchOffCss = switchTrack()
+const switchOnCss = switchTrack({ on: true })
 const noteCss = css({ marginTop: '3', fontSize: 'label', color: 'ink.muted', maxWidth: '60ch' })
 const motionRowCss = flex({ align: 'center', gap: '6', wrap: 'wrap' })
 const motionGroupCss = vstack({ gap: '2', alignItems: 'flex-start' })
@@ -469,14 +484,14 @@ const componentsBody = `
   </section>
 
   <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">Theme toggle</h2>
+    <h2 class="${compH2Css}">Switch specimen</h2>
     <div class="${switchRowCss}">
-      <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" id="theme-switch">
+      <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" aria-labelledby="specimen-switch-label" id="theme-switch">
         <span class="knob"></span>
       </button>
-      <label class="${labelCss}" for="theme-switch">Dark theme</label>
+      <span class="${labelCss}" id="specimen-switch-label">Email alerts</span>
     </div>
-    <p class="${noteCss}">This page already switches with your OS. The toggle overrides that by setting the same tokens on the root through the CSSOM &mdash; it never fights the stylesheet for priority.</p>
+    <p class="${noteCss}">Demonstration only: the site-wide System/Light/Dark preference lives in the header. This specimen keeps its checked track and knob in sync with its own state.</p>
   </section>
 
   <section class="${compSectionCss}">
@@ -515,24 +530,71 @@ const notFoundBody = `
 // ---- scripts ---------------------------------------------------------------------
 
 const themeToggleJs = `(function () {
-  var LIGHT = { "surface.100": "#faf8f3", "surface.200": "#ffffff", "border": "#93866c", "ink": "#1c1a15", "ink.muted": "#5b5548", "accent": "#2f6b4a", "accent.strong": "#234f38", "accent.ink": "#ffffff", "focusRing": "#a5670a", "positive": "#1f7a6c", "critical": "#c1440e", "foliage": "#3ca24a", "foliage.far": "#cdeaae", "foliage.mid": "#9ed65f", "foliage.deep": "#1f6a31", "foliage.bright": "#6fcd4f", "sunlight": "#f4b63f" };
-  var DARK = { "surface.100": "#15140f", "surface.200": "#1e1c15", "border": "#726b53", "ink": "#f1ede2", "ink.muted": "#b6ae9c", "accent": "#7fcfa3", "accent.strong": "#5fb98c", "accent.ink": "#10241a", "focusRing": "#e8a83e", "positive": "#5cc9b7", "critical": "#ff8f5e", "foliage": "#45ad55", "foliage.far": "#1c3a22", "foliage.mid": "#2d6b34", "foliage.deep": "#2a7d3a", "foliage.bright": "#86dc62", "sunlight": "#e8a83e" };
-  function varName(key) { return "--colors-" + key.replace(/\\./g, "-"); }
-  function apply(map) {
-    var root = document.documentElement;
-    Object.keys(map).forEach(function (k) { root.style.setProperty(varName(k), map[k]); });
+  var STORAGE_KEY = ${JSON.stringify(themePreferenceStorageKey)};
+  var OVERRIDE_ATTR = "data-theme-override";
+  var PREFERENCE_ATTR = "data-theme-preference";
+  var RESOLVED_ATTR = "data-theme-resolved";
+  var SWITCH_OFF = ${JSON.stringify(switchOffCss)};
+  var SWITCH_ON = ${JSON.stringify(switchOnCss)};
+  var media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  function systemTheme() {
+    return media && media.matches ? "dark" : "light";
   }
-  var btn = document.getElementById("theme-switch");
-  if (!btn) return;
-  // Reflect the OS-driven theme that's already on screen, so the switch
-  // never lies about the current state before it's touched.
-  var forcedDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  btn.setAttribute("aria-checked", String(forcedDark));
-  btn.addEventListener("click", function () {
-    forcedDark = !forcedDark;
-    btn.setAttribute("aria-checked", String(forcedDark));
-    apply(forcedDark ? DARK : LIGHT);
+  function readPreference() {
+    try {
+      var saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved === "light" || saved === "dark") return saved;
+    } catch (_) {}
+    return "system";
+  }
+  function persistPreference(value) {
+    try {
+      if (value === "system") window.localStorage.removeItem(STORAGE_KEY);
+      else window.localStorage.setItem(STORAGE_KEY, value);
+    } catch (_) {}
+  }
+  function applyPreference(value) {
+    var resolved = value === "system" ? systemTheme() : value;
+    var root = document.documentElement;
+    root.setAttribute(PREFERENCE_ATTR, value);
+    root.setAttribute(RESOLVED_ATTR, resolved);
+    if (value === "system") root.removeAttribute(OVERRIDE_ATTR);
+    else root.setAttribute(OVERRIDE_ATTR, value);
+    return resolved;
+  }
+  var currentPreference = readPreference();
+  applyPreference(currentPreference);
+  document.addEventListener("DOMContentLoaded", function () {
+    var radios = document.querySelectorAll('input[name="theme-preference"]');
+    for (var i = 0; i < radios.length; i += 1) {
+      radios[i].checked = radios[i].value === currentPreference;
+      radios[i].addEventListener("change", function (event) {
+        currentPreference = event.target.value;
+        persistPreference(currentPreference);
+        applyPreference(currentPreference);
+      });
+    }
+    var btn = document.getElementById("theme-switch");
+    if (btn) {
+      var specimenOn = btn.getAttribute("aria-checked") === "true";
+      var renderSwitch = function () {
+        btn.className = specimenOn ? SWITCH_ON : SWITCH_OFF;
+        btn.setAttribute("aria-checked", String(specimenOn));
+      };
+      renderSwitch();
+      btn.addEventListener("click", function () {
+        specimenOn = !specimenOn;
+        renderSwitch();
+      });
+    }
   });
+  if (media) {
+    var onSystemChange = function () {
+      if (currentPreference === "system") applyPreference("system");
+    };
+    if (typeof media.addEventListener === "function") media.addEventListener("change", onSystemChange);
+    else if (typeof media.addListener === "function") media.addListener(onSystemChange);
+  }
 })();
 `
 
@@ -624,11 +686,10 @@ writeFileSync('dist/index.html', minifyHtml(page({
 
 writeFileSync('dist/components.html', minifyHtml(page({
   title: 'Components — Verdant',
-  description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, theme toggle, and motion patterns.',
+  description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, a switch specimen, and motion patterns.',
   path: '/components.html',
   active: 'components',
   bodyHtml: componentsBody,
-  scripts: ['/theme-toggle.js'],
 })))
 
 writeFileSync('dist/404.html', minifyHtml(page({
