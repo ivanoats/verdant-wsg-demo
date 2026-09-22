@@ -45,7 +45,7 @@ createServer(async (req, res) => {
   if (path === null || path === false) return badRequest(res)
   let file = join(DIST, path)
   try {
-    await stat(file)
+    if ((await stat(file)).isDirectory()) file = join(file, 'index.html')
   } catch {
     if (!extname(file)) {
       try { file = `${file}.html`; await stat(file) }
