@@ -8,6 +8,7 @@ import { css } from '../styled-system/css/index.mjs'
 import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
 import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
+import { themeColorTokens, runtimeThemeMaps, paletteSections, verifiedPairings, publicTokenScope } from './tokens.mjs'
 
 // A hand-rolled recursive copy: some mounted/virtual filesystems choke on
 // Node's native cpSync fast paths (fcopyfile/clonefile), so this sticks to
@@ -126,7 +127,7 @@ const stageTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', font
 const stageBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0' })
 
 const stages = [
-  ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Small enough to hold in your head, so nothing gets a one-off value.'],
+  ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Those are the reusable public tokens; the landing page still documents its few display-size one-offs separately.'],
   ['sprout', 'Sprout', 'Components', 'Button, card, field, theme toggle and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
   ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one stylesheet and at most one small deferred script, from the first page on.'],
   ['canopy', 'Canopy', 'Sites', 'Security headers, cache rules, an offline shell and a real 404 &mdash; the hosting checks, handled before launch.'],
@@ -147,67 +148,159 @@ const stagesHtml = `
   </ol>
 </section>`
 
-// ---- index: palette, as leaves ----------------------------------------------------
+// ---- index: palette, pairings and token scope --------------------------------------
 
 const paletteGridCss = css({
-  display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(176px, 1fr))',
-  gap: { base: '4', md: '6' }, listStyle: 'none', margin: '0', padding: '0',
+  display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' },
+  gap: '4', listStyle: 'none', margin: '0', padding: '0',
 })
-const swatchItemCss = hstack({ gap: '3', alignItems: 'center' })
-// A leaf is a square with two opposite corners fully rounded.
-const sw = {
-  'surface-100': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.100' }),
-  'surface-200': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.200' }),
-  border: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'border' }),
-  ink: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink' }),
-  'ink-muted': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.muted' }),
-  accent: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent' }),
-  'accent-strong': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.strong' }),
-  'accent-ink': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.ink' }),
-  'focus-ring': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'focusRing' }),
-  positive: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'positive' }),
-  critical: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'critical' }),
-  foliage: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage' }),
-  'foliage-far': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.far' }),
-  'foliage-mid': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.mid' }),
-  'foliage-deep': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.deep' }),
-  'foliage-bright': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.bright' }),
-  sunlight: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'sunlight' }),
-}
-const swatchNameCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
-const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '4px 0 0' })
-const palette = [
-  ['accent', '#2f6b4a', '#7fcfa3'], ['accent-strong', '#234f38', '#5fb98c'], ['positive', '#1f7a6c', '#5cc9b7'],
-  ['focus-ring', '#a5670a', '#e8a83e'], ['critical', '#c1440e', '#ff8f5e'], ['accent-ink', '#ffffff', '#10241a'],
-  ['ink', '#1c1a15', '#f1ede2'], ['ink-muted', '#5b5548', '#b6ae9c'], ['border', '#93866c', '#726b53'],
-  ['surface-200', '#ffffff', '#1e1c15'], ['surface-100', '#faf8f3', '#15140f'],
-]
-const foliage = [
-  ['foliage-bright', '#6fcd4f', '#86dc62'], ['foliage', '#3ca24a', '#45ad55'], ['foliage-deep', '#1f6a31', '#2a7d3a'],
-  ['foliage-mid', '#9ed65f', '#2d6b34'], ['foliage-far', '#cdeaae', '#1c3a22'], ['sunlight', '#f4b63f', '#e8a83e'],
-]
+const swatchCardCss = card()
+const swatchNameCss = css({ fontFamily: 'mono', fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', margin: '0' })
+const swatchThemeGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: '3', marginTop: '3' })
+const swatchThemeTileCss = css({
+  display: 'grid', gridTemplateColumns: '48px 1fr', gap: '3', alignItems: 'center',
+  border: '1px solid', borderColor: 'border', borderRadius: 'sm', padding: '3', background: 'surface.100',
+})
+const swatchThemeLabelCss = css({ display: 'block', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
+const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', marginTop: '4px' })
+const pairingGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: '4', listStyle: 'none', margin: '0', padding: '0' })
+const pairingCardCss = card()
+const pairingTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0' })
+const pairingTokenCss = css({ fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', margin: '8px 0 0' })
+const pairingBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '8px 0 0' })
+const pairingMetaCss = css({ fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '12px 0 0' })
+const scopeGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: '4' })
+const scopeCardCss = card()
+const scopeTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 8px' })
+const scopeBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 12px' })
+const scopeListCss = css({ margin: '0', paddingLeft: '20px', color: 'ink.muted', '& li + li': { marginTop: '2' } })
+const scopeCodeCss = css({ fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink' })
 const paletteGroupCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 4px' })
-const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '62ch' })
+const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '68ch' })
 const paletteGapCss = css({ marginTop: '12' })
-const swatches = (list) => list.map(([name, light, dark]) => `
-      <li class="${swatchItemCss}">
-        <span class="${sw[name]}" aria-hidden="true"></span>
-        <span><span class="${swatchNameCss}">${name}</span><span class="${swatchHexCss}">Light ${light}</span><span class="${swatchHexCss}">Dark ${dark}</span></span>
+
+const hexToRgb = (hex) => [0, 2, 4].map((offset) => parseInt(hex.slice(offset + 1, offset + 3), 16) / 255)
+const relativeLuminance = (hex) => {
+  const [r, g, b] = hexToRgb(hex).map((channel) => (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4))
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+const contrast = (foreground, background) => {
+  const [lighter, darker] = [relativeLuminance(foreground), relativeLuminance(background)].sort((a, b) => b - a)
+  return (lighter + 0.05) / (darker + 0.05)
+}
+const formatRatio = (ratio) => `${ratio.toFixed(2)}:1`
+const tokenCode = (token) => `<code class="${codeCss}">${token}</code>`
+const leafSwatch = (fill, stroke) => `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true" focusable="false"><path d="M8 40V14c0-3.3 2.7-6 6-6h26v26c0 3.3-2.7 6-6 6H8Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/></svg>`
+const swatchTile = (themeLabel, fill, stroke) => `
+        <div class="${swatchThemeTileCss}">
+          ${leafSwatch(fill, stroke)}
+          <span><span class="${swatchThemeLabelCss}">${themeLabel}</span><span class="${swatchHexCss}">${fill}</span></span>
+        </div>`
+const swatches = (keys) => keys.map((key) => {
+  const token = themeColorTokens[key]
+  return `
+      <li class="${swatchCardCss}">
+        <p class="${swatchNameCss}">${key}</p>
+        <div class="${swatchThemeGridCss}">
+          ${swatchTile('Light', token.light, runtimeThemeMaps.light.border)}
+          ${swatchTile('Dark', token.dark, runtimeThemeMaps.dark.border)}
+        </div>
+      </li>`
+}).join('')
+
+const evaluatedPairings = verifiedPairings.map((pairing) => {
+  const lightContrast = contrast(runtimeThemeMaps.light[pairing.foreground], runtimeThemeMaps.light[pairing.background])
+  const darkContrast = contrast(runtimeThemeMaps.dark[pairing.foreground], runtimeThemeMaps.dark[pairing.background])
+  if (lightContrast < pairing.minimum || darkContrast < pairing.minimum) {
+    throw new Error(`Verified pairing failed ${pairing.title}: ${formatRatio(lightContrast)} light / ${formatRatio(darkContrast)} dark`)
+  }
+  return { ...pairing, lightContrast, darkContrast }
+})
+const pairingGroups = [
+  {
+    key: 'text',
+    title: 'Verified text pairings',
+    note: 'Measured from the shared theme tokens at build time. These are the approved readable combinations — not every token can be mixed freely.',
+  },
+  {
+    key: 'functional',
+    title: 'Verified functional boundaries',
+    note: 'Borders and focus indicators target at least 3:1 non-text contrast against the surfaces they appear on.',
+  },
+]
+const pairingCards = (category) => evaluatedPairings
+  .filter((pairing) => pairing.category === category)
+  .map((pairing) => `
+      <li class="${pairingCardCss}">
+        <h4 class="${pairingTitleCss}">${pairing.title}</h4>
+        <p class="${pairingTokenCss}">${tokenCode(pairing.foreground)} on ${tokenCode(pairing.background)}</p>
+        <p class="${pairingBodyCss}">${pairing.note}</p>
+        <p class="${pairingMetaCss}">Light ${formatRatio(pairing.lightContrast)} &middot; Dark ${formatRatio(pairing.darkContrast)} &middot; Target ${pairing.minimum}:1</p>
       </li>`).join('')
+
+const tokenList = (items) => items.map((item) => `<code class="${scopeCodeCss}">${item}</code>`).join(', ')
+const scopeList = (items) => items.map((item) => `<li>${item}</li>`).join('')
+const typographyList = publicTokenScope.typography.sizes
+  .map(({ token, fontSize, lineHeight }) => `<li><code class="${scopeCodeCss}">${token}</code> &mdash; ${fontSize} / ${lineHeight}</li>`)
+  .join('')
+
 const paletteHtml = `
 <section id="palette" class="${bandCss}" aria-labelledby="palette-title">
   <div class="${wrapCss} ${sectionCss}">
     <p class="${eyebrowCss}">Palette</p>
-    <h2 id="palette-title" class="${h2Css}">Seventeen colors, two seasons.</h2>
-    <p class="${introCss}">One token set with a light and a dark value each, switched by <code class="${codeCss}">prefers-color-scheme</code> &mdash; no second stylesheet. Flip your OS theme and the valley above turns to night.</p>
-    <h3 class="${paletteGroupCss}">Interface</h3>
-    <p class="${paletteGroupNoteCss}">Text, controls and state. Every text pair clears 4.5:1 in both themes.</p>
-    <ul class="${paletteGridCss}">${swatches(palette)}
-    </ul>
-    <h3 class="${paletteGroupCss} ${paletteGapCss}">Illustration</h3>
-    <p class="${paletteGroupNoteCss}">Hills, leaves, grass and sun. Picked for lushness, not contrast, so they never carry text or meaning.</p>
-    <ul class="${paletteGridCss}">${swatches(foliage)}
-    </ul>
+    <h2 id="palette-title" class="${h2Css}">Seventeen colors, shown in both themes.</h2>
+    <p class="${introCss}">One token set with a light and a dark value each, switched by <code class="${codeCss}">prefers-color-scheme</code> &mdash; no second stylesheet. The light and dark swatches below are rendered side by side so neither theme relies on color alone.</p>
+    ${paletteSections.map((section, index) => `
+    <h3 class="${paletteGroupCss}${index ? ` ${paletteGapCss}` : ''}">${section.title}</h3>
+    <p class="${paletteGroupNoteCss}">${section.note}</p>
+    <ul class="${paletteGridCss}">${swatches(section.keys)}</ul>`).join('')}
+    ${pairingGroups.map(({ key, title, note }) => `
+    <h3 class="${paletteGroupCss} ${paletteGapCss}">${title}</h3>
+    <p class="${paletteGroupNoteCss}">${note}</p>
+    <ul class="${pairingGridCss}">${pairingCards(key)}</ul>`).join('')}
+  </div>
+</section>`
+
+const tokensHtml = `
+<section class="${wrapCss} ${sectionCss}" aria-labelledby="tokens-title">
+  <p class="${eyebrowCss}">Public token scope</p>
+  <h2 id="tokens-title" class="${h2Css}">What Verdant publishes, inherits, and keeps page-specific.</h2>
+  <p class="${introCss}">The palette above defines the supported color API. These cards document the rest of the token surface so adopters can tell reusable design tokens from Panda defaults and demo-only layout values.</p>
+  <div class="${scopeGridCss}">
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Colors</h3>
+      <p class="${scopeBodyCss}">Interface colors are the public text, control and status tokens. Illustration colors stay public for artwork only.</p>
+      <ul class="${scopeListCss}">
+        <li>Interface: ${tokenList(paletteSections[0].keys)}</li>
+        <li>Illustration only: ${tokenList(paletteSections[1].keys)}</li>
+      </ul>
+    </section>
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Spacing</h3>
+      <p class="${scopeBodyCss}">Public spacing tokens follow a 4px rhythm.</p>
+      <ul class="${scopeListCss}">${scopeList(publicTokenScope.spacing.map(({ token, value }) => `<code class="${scopeCodeCss}">${token}</code> &mdash; ${value}`))}</ul>
+    </section>
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Radii</h3>
+      <p class="${scopeBodyCss}">Rounded corners stay on four reusable steps.</p>
+      <ul class="${scopeListCss}">${scopeList(publicTokenScope.radii.map(({ token, value }) => `<code class="${scopeCodeCss}">${token}</code> &mdash; ${value}`))}</ul>
+    </section>
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Typography</h3>
+      <p class="${scopeBodyCss}">System fonts plus six public size/line-height pairs.</p>
+      <ul class="${scopeListCss}">
+        ${scopeList(publicTokenScope.typography.families.map(({ token, value }) => `<code class="${scopeCodeCss}">${token}</code> &mdash; ${value}`))}
+        ${typographyList}
+      </ul>
+    </section>
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Layout &amp; breakpoints</h3>
+      <p class="${scopeBodyCss}">Verdant keeps its public token surface small, so responsive and page-art values are called out separately here.</p>
+      <ul class="${scopeListCss}">
+        ${scopeList(publicTokenScope.layout.inherited)}
+        ${scopeList(publicTokenScope.layout.pageSpecific)}
+      </ul>
+    </section>
   </div>
 </section>`
 
@@ -258,14 +351,13 @@ const preCss = css({
 })
 const listCss = css({ margin: '0', paddingLeft: '20px', listStyle: 'disc', color: 'ink.muted', '& li + li': { marginTop: '2' } })
 const pandaSnippet = `// panda.config.ts
+import { semanticColorTokens } from './scripts/tokens.mjs'
+
 conditions: {
   dark: '@media (prefers-color-scheme: dark)',
 },
-theme: { extend: { semanticTokens: { colors: {
-  accent: { value: { base: '#2f6b4a', _dark: '#7fcfa3' } },
-  // …the other sixteen, same shape
-} } } },
-// No staticCss: ship only the rules pages use.`
+theme: { extend: { semanticTokens: { colors: semanticColorTokens } } },
+// Build docs and the runtime theme map from the same token file.`
 const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 const pandaHtml = `
@@ -515,9 +607,9 @@ const notFoundBody = `
 // ---- scripts ---------------------------------------------------------------------
 
 const themeToggleJs = `(function () {
-  var LIGHT = { "surface.100": "#faf8f3", "surface.200": "#ffffff", "border": "#93866c", "ink": "#1c1a15", "ink.muted": "#5b5548", "accent": "#2f6b4a", "accent.strong": "#234f38", "accent.ink": "#ffffff", "focusRing": "#a5670a", "positive": "#1f7a6c", "critical": "#c1440e", "foliage": "#3ca24a", "foliage.far": "#cdeaae", "foliage.mid": "#9ed65f", "foliage.deep": "#1f6a31", "foliage.bright": "#6fcd4f", "sunlight": "#f4b63f" };
-  var DARK = { "surface.100": "#15140f", "surface.200": "#1e1c15", "border": "#726b53", "ink": "#f1ede2", "ink.muted": "#b6ae9c", "accent": "#7fcfa3", "accent.strong": "#5fb98c", "accent.ink": "#10241a", "focusRing": "#e8a83e", "positive": "#5cc9b7", "critical": "#ff8f5e", "foliage": "#45ad55", "foliage.far": "#1c3a22", "foliage.mid": "#2d6b34", "foliage.deep": "#2a7d3a", "foliage.bright": "#86dc62", "sunlight": "#e8a83e" };
-  function varName(key) { return "--colors-" + key.replace(/\\./g, "-"); }
+  var LIGHT = ${JSON.stringify(runtimeThemeMaps.light)};
+  var DARK = ${JSON.stringify(runtimeThemeMaps.dark)};
+  function varName(key) { return "--colors-" + key.replace(/\./g, "-"); }
   function apply(map) {
     var root = document.documentElement;
     Object.keys(map).forEach(function (k) { root.style.setProperty(varName(k), map[k]); });
@@ -535,6 +627,7 @@ const themeToggleJs = `(function () {
   });
 })();
 `
+
 
 const swRegisterJs = `if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
@@ -619,7 +712,7 @@ writeFileSync('dist/index.html', minifyHtml(page({
     description: 'A small design system where every default satisfies the W3C Web Sustainability Guidelines.',
     url: 'https://verdant-wsg-demo.netlify.app/',
   },
-  bodyHtml: heroHtml + statsHtml + stagesHtml + paletteHtml + scoreHtml + pandaHtml + ctaHtml,
+  bodyHtml: heroHtml + statsHtml + stagesHtml + paletteHtml + tokensHtml + scoreHtml + pandaHtml + ctaHtml,
 })))
 
 writeFileSync('dist/components.html', minifyHtml(page({

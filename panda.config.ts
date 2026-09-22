@@ -1,4 +1,5 @@
 import { defineConfig } from '@pandacss/dev'
+import { fontFamilyTokens, spacingTokens, radiiTokens, fontSizeTokens, lineHeightTokens, semanticColorTokens } from './scripts/tokens.mjs'
 
 export default defineConfig({
   preflight: true,
@@ -21,56 +22,16 @@ export default defineConfig({
   theme: {
     extend: {
       tokens: {
-        fonts: {
-          sans: { value: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' },
-          mono: { value: 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace' },
-        },
-        spacing: {
-          1: { value: '4px' }, 2: { value: '8px' }, 3: { value: '12px' }, 4: { value: '16px' },
-          6: { value: '24px' }, 8: { value: '32px' }, 12: { value: '48px' },
-        },
-        radii: {
-          sm: { value: '4px' }, md: { value: '8px' }, lg: { value: '16px' }, full: { value: '999px' },
-        },
-        fontSizes: {
-          displayLg: { value: '32px' }, displayMd: { value: '24px' }, displaySm: { value: '20px' },
-          body: { value: '16px' }, bodySm: { value: '14px' }, label: { value: '13px' },
-        },
-        lineHeights: {
-          displayLg: { value: '40px' }, displayMd: { value: '32px' }, displaySm: { value: '28px' },
-          body: { value: '24px' }, bodySm: { value: '20px' }, label: { value: '16px' },
-        },
+        fonts: Object.fromEntries(Object.entries(fontFamilyTokens).map(([key, value]) => [key, { value }])),
+        spacing: Object.fromEntries(Object.entries(spacingTokens).map(([key, value]) => [key, { value }])),
+        radii: Object.fromEntries(Object.entries(radiiTokens).map(([key, value]) => [key, { value }])),
+        fontSizes: Object.fromEntries(Object.entries(fontSizeTokens).map(([key, value]) => [key, { value }])),
+        lineHeights: Object.fromEntries(Object.entries(lineHeightTokens).map(([key, value]) => [key, { value }])),
       },
       semanticTokens: {
-        colors: {
-          surface: {
-            100: { value: { base: '#faf8f3', _dark: '#15140f' } },
-            200: { value: { base: '#ffffff', _dark: '#1e1c15' } },
-          },
-          border: { value: { base: '#93866c', _dark: '#726b53' } },
-          ink: {
-            DEFAULT: { value: { base: '#1c1a15', _dark: '#f1ede2' } },
-            muted: { value: { base: '#5b5548', _dark: '#b6ae9c' } },
-          },
-          accent: {
-            DEFAULT: { value: { base: '#2f6b4a', _dark: '#7fcfa3' } },
-            strong: { value: { base: '#234f38', _dark: '#5fb98c' } },
-            ink: { value: { base: '#ffffff', _dark: '#10241a' } },
-          },
-          focusRing: { value: { base: '#a5670a', _dark: '#e8a83e' } },
-          // Illustration-only greens: the "verdant" in Verdant. Never text or
-          // UI state — they're chosen for lushness, not 4.5:1 contrast.
-          foliage: {
-            DEFAULT: { value: { base: '#3ca24a', _dark: '#45ad55' } },
-            far: { value: { base: '#cdeaae', _dark: '#1c3a22' } },
-            mid: { value: { base: '#9ed65f', _dark: '#2d6b34' } },
-            deep: { value: { base: '#1f6a31', _dark: '#2a7d3a' } },
-            bright: { value: { base: '#6fcd4f', _dark: '#86dc62' } },
-          },
-          sunlight: { value: { base: '#f4b63f', _dark: '#e8a83e' } },
-          positive: { value: { base: '#1f7a6c', _dark: '#5cc9b7' } },
-          critical: { value: { base: '#c1440e', _dark: '#ff8f5e' } },
-        },
+        // Illustration-only greens: the "verdant" in Verdant. Never text or
+        // UI state — they're chosen for lushness, not 4.5:1 contrast.
+        colors: semanticColorTokens,
         shadows: {
           sm: {
             value: {
