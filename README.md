@@ -14,6 +14,10 @@ npm run build   # panda codegen -> generate HTML -> panda cssgen (minified, ligh
 
 Output lands in `dist/` — that's the Netlify publish directory (see `netlify.toml`).
 
+## Validation record
+
+Manual cross-browser, accessibility, and usability validation planning/status is tracked in [`VALIDATION.md`](./VALIDATION.md).
+
 ## What's deliberately in here
 
 - Zero web fonts (`system-ui` stack)
