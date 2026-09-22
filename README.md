@@ -9,7 +9,7 @@ The home page promotes the system; `/components.html` is the live component gall
 ```
 npm install
 npm run dev     # http://localhost:4321 — rebuilds on save and reloads the browser
-npm run build   # panda codegen -> generate HTML -> panda cssgen (minified, lightningcss) -> measure & print page weight
+npm run build   # panda codegen -> generate HTML -> panda cssgen (minified, lightningcss) -> measure page weight -> hash asset names
 ```
 
 Output lands in `dist/` — that's the Netlify publish directory (see `netlify.toml`).
@@ -21,7 +21,8 @@ Output lands in `dist/` — that's the Netlify publish directory (see `netlify.t
 - Every animation gated behind `prefers-reduced-motion: no-preference`
 - Decorative image dropped under `prefers-reduced-data: reduce`
 - Landmarks (`main`, `nav`, skip link), a labelled form field, one consistent focus ring
-- Security headers, caching directives, and a minimal offline service worker in `public/` / `_headers`
+- Security headers, caching directives, and an offline service worker in `public/` / `_headers`
+- Content-hashed CSS/JS under `/assets/` (`scripts/fingerprint.mjs`), cached for a year; pages are network-first in the service worker, so a deploy never mixes new HTML with old CSS
 - No third-party scripts, no analytics, no web fonts, no icon font
 - "Geometric growth" art (`scripts/art.mjs`): inline SVG built from the system's own shapes, every fill a color token, so it recolors with the theme and costs no requests; it grows in once, only when motion is allowed
 - The page-weight numbers on the home page are measured by `scripts/stats.mjs` on every build, never hand-typed

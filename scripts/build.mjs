@@ -543,32 +543,51 @@ const swRegisterJs = `if ('serviceWorker' in navigator) {
 }
 `
 
-const swJs = `// Verdant — minimal offline shell. Cache the pages and their assets on
-// install; serve cache-first, fall back to network, fall back to the cached
-// page for navigations when both fail. Bump CACHE whenever the shell changes.
-var CACHE = 'verdant-v2';
-var SHELL = ['/', '/index.html', '/components.html', '/404.html', '/styles.css', '/theme-toggle.js', '/sw-register.js', '/favicon.svg', '/manifest.json'];
+// The service worker is written as a template: scripts/fingerprint.mjs fills
+// in __VERSION__ (a hash of every shipped file, so each deploy changes sw.js
+// and the browser installs the new worker) and __SHELL__ (the hashed URLs).
+const swJs = `// Verdant — offline shell.
+// Pages: network first, so HTML is always the deployed version when online;
+// the cached copy is only a fallback. Assets: hashed filenames, so a cached
+// copy can never be stale — cache first is safe.
+var CACHE = 'verdant-__VERSION__';
+var SHELL = __SHELL__;
 self.addEventListener('install', function (event) {
-  event.waitUntil(caches.open(CACHE).then(function (cache) { return cache.addAll(SHELL); }));
+  // cache: 'reload' skips the HTTP cache, so the new shell is never
+  // assembled from an older deploy's files.
+  event.waitUntil(caches.open(CACHE).then(function (cache) {
+    return cache.addAll(SHELL.map(function (u) { return new Request(u, { cache: 'reload' }); }));
+  }));
   self.skipWaiting();
 });
 self.addEventListener('activate', function (event) {
-  event.waitUntil(
-    caches.keys().then(function (keys) {
-      return Promise.all(keys.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); }));
-    })
-  );
-  self.clients.claim();
+  event.waitUntil(caches.keys().then(function (keys) {
+    var old = keys.filter(function (k) { return k !== CACHE; });
+    return Promise.all(old.map(function (k) { return caches.delete(k); }))
+      .then(function () { return self.clients.claim(); })
+      .then(function () {
+        // An update (not a first install): reload open tabs once so they
+        // don't keep showing a page from the previous deploy.
+        if (!old.length) return;
+        return self.clients.matchAll({ type: 'window' }).then(function (tabs) {
+          tabs.forEach(function (tab) { tab.navigate(tab.url); });
+        });
+      });
+  }));
 });
 self.addEventListener('fetch', function (event) {
-  if (event.request.method !== 'GET') return;
-  event.respondWith(
-    caches.match(event.request).then(function (cached) {
-      return cached || fetch(event.request).catch(function () {
-        if (event.request.mode === 'navigate') return caches.match('/index.html');
-      });
-    })
-  );
+  var req = event.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  if (req.mode === 'navigate') {
+    event.respondWith(fetch(req).then(function (res) {
+      if (res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
+      return res;
+    }).catch(function () {
+      return caches.match(req).then(function (hit) { return hit || caches.match('/'); });
+    }));
+    return;
+  }
+  event.respondWith(caches.match(req).then(function (hit) { return hit || fetch(req); }));
 });
 `
 
