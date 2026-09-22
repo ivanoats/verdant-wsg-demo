@@ -25,6 +25,8 @@ function copyDir(src, dest) {
 const REPO = 'https://github.com/ivanoats/verdant-wsg-demo'
 const WSG_CHECK = 'https://github.com/ivanoats/wsg-check'
 const WSG = 'https://w3c.github.io/sustainableweb-wsg/'
+const COMPONENTS_ROUTE = '/components'
+const COMPONENTS_FILE = '/components.html'
 
 // ---- shell ------------------------------------------------------------------
 
@@ -85,7 +87,7 @@ const heroHtml = `
       <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
       <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, native dark mode, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
       <div class="${btnRowCss}">
-        <a class="${btnPrimary}" href="/components.html">Browse components</a>
+        <a class="${btnPrimary}" href="${COMPONENTS_ROUTE}">Browse components</a>
         <a class="${btnSecondary}" href="${REPO}">View source on GitHub</a>
       </div>
     </div>
@@ -317,7 +319,7 @@ const ctaHtml = `
     <p class="${ctaBodyCss}">Clone the repo, copy <code class="${codeCss}">panda.config.ts</code>, and keep the checklist. Everything else is optional &mdash; which is the point.</p>
     <div class="${btnRowCss}">
       <a class="${ctaBtnCss}" href="${REPO}">Get the source</a>
-      <a class="${ctaLinkCss}" href="/components.html">See the components</a>
+      <a class="${ctaLinkCss}" href="${COMPONENTS_ROUTE}">See the components</a>
     </div>
   </div>
 </section>`
@@ -333,7 +335,7 @@ const nav = (active) => {
       <a class="${wordmarkCss}" href="/">${mark(28)}<span>Verdant</span></a>
       <nav aria-label="Primary">
         <ul class="${navListCss}">
-          ${link('components', '/components.html', 'Components')}
+          ${link('components', COMPONENTS_ROUTE, 'Components')}
           ${link('palette', '/#palette', 'Palette')}
           ${link('github', REPO, 'GitHub')}
         </ul>
@@ -536,14 +538,14 @@ const notFoundBody = `
 <div class="${wrapCss} ${nfCss}">
   ${seedlingArt()}
   <h1 class="${compTitleCss}">Page not found</h1>
-  <p class="${ledeCss}">Nothing has grown here yet. <a href="/">Back to the overview</a>, or <a href="/components.html">browse the components</a>.</p>
+  <p class="${ledeCss}">Nothing has grown here yet. <a href="/">Back to the overview</a>, or <a href="${COMPONENTS_ROUTE}">browse the components</a>.</p>
 </div>`
 
 const offlineBody = `
 <div class="${wrapCss} ${nfCss}">
   ${seedlingArt()}
   <h1 class="${compTitleCss}">Offline for now</h1>
-  <p class="${ledeCss}">This page isn&rsquo;t cached yet, and the network is out of reach. You can still open the <a href="/">overview</a> or the <a href="/components.html">component gallery</a>, which are saved for offline use after installation.</p>
+  <p class="${ledeCss}">This page isn&rsquo;t cached yet, and the network is out of reach. You can still open the <a href="/">overview</a> or the <a href="${COMPONENTS_ROUTE}">component gallery</a>, which are saved for offline use after installation.</p>
 </div>`
 
 // ---- scripts ---------------------------------------------------------------------
@@ -634,7 +636,7 @@ self.addEventListener('message', function (event) {
 function normalizePage(pathname) {
   if (pathname === '/' || pathname === '/index.html') return '/';
   pathname = pathname.replace(/\\/+$/, '');
-  if (pathname === '/components' || pathname === '/components.html') return '/components.html';
+  if (pathname === '${COMPONENTS_ROUTE}' || pathname === '${COMPONENTS_FILE}') return '${COMPONENTS_ROUTE}';
   if (pathname === '/404' || pathname === '/404.html') return '/404.html';
   if (pathname === '/offline' || pathname === '/offline.html') return '/offline.html';
   return null;
@@ -711,7 +713,7 @@ writeFileSync('dist/index.html', minifyHtml(page({
 writeFileSync('dist/components.html', minifyHtml(page({
   title: 'Components — Verdant',
   description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, theme toggle, and motion patterns.',
-  path: '/components.html',
+  path: COMPONENTS_ROUTE,
   active: 'components',
   bodyHtml: componentsBody,
   scripts: ['/theme-toggle.js'],

@@ -93,8 +93,13 @@ createServer(async (req, res) => {
     if ((await stat(file)).isDirectory()) file = join(file, 'index.html')
     send(res, 200, extname(file), await readFile(file))
   } catch {
-    try { send(res, 404, '.html', await readFile(join(DIST, '404.html'))) }
-    catch { send(res, 404, '.txt', 'Not found') }
+    try {
+      if (!extname(file)) send(res, 200, '.html', await readFile(`${file}.html`))
+      else throw new Error('not found')
+    } catch {
+      try { send(res, 404, '.html', await readFile(join(DIST, '404.html'))) }
+      catch { send(res, 404, '.txt', 'Not found') }
+    }
   }
 }).listen(PORT, () => {
   console.log(`Verdant dev server → http://localhost:${PORT}  (watching scripts/, public/, panda.config.ts)`)

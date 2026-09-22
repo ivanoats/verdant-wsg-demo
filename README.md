@@ -2,7 +2,7 @@
 
 A small static site that puts the [Verdant design system](https://claude.ai/artifact/1hu6m4apzrfeM9s8nWcmxf) on the web, built so it scores well against the W3C [Web Sustainability Guidelines](https://w3c.github.io/sustainableweb-wsg/) — checked with [wsg-check](https://github.com/ivanoats/wsg-check).
 
-The home page promotes the system; `/components.html` is the live component gallery. Both are styled entirely with [PandaCSS](https://panda-css.com): tokens and recipes in `panda.config.ts`, a small build script (`scripts/build.mjs`) that generates the HTML and lets Panda statically extract exactly the CSS those pages use — no runtime CSS-in-JS, no unused utility classes shipped.
+The home page promotes the system; `/components` is the public component-gallery route, backed by the generated `components.html` file. Both are styled entirely with [PandaCSS](https://panda-css.com): tokens and recipes in `panda.config.ts`, a small build script (`scripts/build.mjs`) that generates the HTML and lets Panda statically extract exactly the CSS those pages use — no runtime CSS-in-JS, no unused utility classes shipped.
 
 ## Build
 
@@ -29,8 +29,20 @@ Output lands in `dist/` — that's the Netlify publish directory (see `netlify.t
 
 ## Offline cache strategy
 
-The production worker precaches only the tiny offline shell: `/`, `/components.html`, `/404.html`, `/offline.html`, the manifest, the favicon, and the hashed CSS/JS assets. That eager list is intentionally small because there are only two navigable pages to keep available on a first offline visit after install.
+The production worker precaches only the tiny offline shell:
 
-Pretty URLs are normalized onto the canonical HTML cache entries (`/components` → `/components.html`), so installation does not download the same page twice under alias URLs. Online navigations stay network-first and refresh the canonical cached page; offline misses that do not map to a known route fall back to the dedicated offline page instead of silently showing the homepage at the wrong URL.
+- `/`
+- `/components`
+- `/404.html`
+- `/offline.html`
+- `/manifest.json`
+- `/favicon.svg`
+- hashed `/assets/*.css` and `/assets/*.js`
+
+That eager list is intentionally small because there are only two navigable pages to keep available on a cold offline first visit after installation.
+
+`/components` is the public route and the homepage link users follow first. The worker normalizes both `/components` and `/components.html` onto that public cache key, so installation does not download the gallery twice under alias URLs. Online navigations stay network-first and refresh the canonical cached page; offline misses that do not map to a known route fall back to the dedicated offline page instead of silently showing the homepage at the wrong URL.
+
+`public/offline-cache.json` publishes the same intended cache keys, route aliases, and update policy for related measurement, copy, and test work.
 
 See the site itself for the full decision-to-guideline mapping.
