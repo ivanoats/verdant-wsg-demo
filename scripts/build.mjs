@@ -82,7 +82,7 @@ const heroHtml = `
     <div>
       <p class="${eyebrowCss}">A design system for the W3C Web Sustainability Guidelines</p>
       <h1 id="hero-title" class="${heroTitleCss}">Verdant</h1>
-      <p class="${heroTagCss}">Sustainable by default, not by cleanup.</p>
+      <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
       <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, native dark mode, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
       <div class="${btnRowCss}">
         <a class="${btnPrimary}" href="/components.html">Browse components</a>
@@ -570,7 +570,7 @@ writeFileSync('dist/sw.js', swJs)
 copyDir('public', 'dist')
 
 writeFileSync('dist/index.html', minifyHtml(page({
-  title: 'Verdant — a design system for a lighter web',
+  title: 'Verdant — Sustainable Defaults for the Green Web',
   description: 'Verdant is a small design system where every default satisfies the W3C Web Sustainability Guidelines. Built with PandaCSS.',
   path: '/',
   active: 'home',
