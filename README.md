@@ -8,6 +8,7 @@ The home page promotes the system; `/components.html` is the live component gall
 
 ```
 npm install
+npm run dev     # http://localhost:4321 — rebuilds on save and reloads the browser
 npm run build   # panda codegen -> generate HTML -> panda cssgen (minified, lightningcss) -> measure & print page weight
 ```
 

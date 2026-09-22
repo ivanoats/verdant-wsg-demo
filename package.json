@@ -5,6 +5,8 @@
   "description": "Verdant design system, demoed as a static site built to score well on the W3C Web Sustainability Guidelines. Styled with PandaCSS.",
   "type": "module",
   "scripts": {
+    "predev": "panda codegen",
+    "dev": "node scripts/dev.mjs",
     "prebuild": "panda codegen",
     "build": "node scripts/build.mjs && panda cssgen -m --lightningcss -o dist/styles.css && node scripts/stats.mjs"
   },
