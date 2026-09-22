@@ -1,0 +1,15 @@
+{
+  "name": "verdant-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Verdant design system, demoed as a static site built to score well on the W3C Web Sustainability Guidelines. Styled with PandaCSS.",
+  "type": "module",
+  "scripts": {
+    "prebuild": "panda codegen",
+    "build": "node scripts/build.mjs && panda cssgen -m --lightningcss -o dist/styles.css"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@pandacss/dev": "^1.12.1"
+  }
+}

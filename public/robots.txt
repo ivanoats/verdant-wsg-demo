@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://verdant-wsg-demo.netlify.app/sitemap.xml

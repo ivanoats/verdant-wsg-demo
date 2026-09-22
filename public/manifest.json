@@ -1,0 +1,12 @@
+{
+  "name": "Verdant — a sustainability-first design system",
+  "short_name": "Verdant",
+  "description": "A small, from-scratch design system built to satisfy the W3C Web Sustainability Guidelines.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf8f3",
+  "theme_color": "#2f6b4a",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
