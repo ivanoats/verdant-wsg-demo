@@ -102,19 +102,14 @@ const statsGridCss = css({
 const statCss = css({ display: 'flex', flexDirection: 'column-reverse', margin: '0' })
 const statValueCss = css({ fontSize: { base: 'displayLg', md: '40px' }, lineHeight: { base: 'displayLg', md: '48px' }, fontWeight: '700', color: 'accent', margin: '0' })
 const statLabelCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '4px 0 0' })
-const statsNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 32px', maxWidth: '70ch' })
-
 const statsHtml = `
 <section class="${bandCss}" aria-label="By the numbers">
-  <div class="${wrapCss}">
-    <dl class="${statsGridCss}">
-      <div class="${statCss}"><dt class="${statLabelCss}">Baseline first view in every browser</dt><dd class="${statValueCss}">__CORE_KB__&nbsp;KB</dd></div>
-      <div class="${statCss}"><dt class="${statLabelCss}">Optional icon + install metadata in supporting browsers</dt><dd class="${statValueCss}">__OPTIONAL_KB__&nbsp;KB</dd></div>
-      <div class="${statCss}"><dt class="${statLabelCss}">Offline shell cached after first load</dt><dd class="${statValueCss}">__OFFLINE_KB__&nbsp;KB</dd></div>
-      <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
-    </dl>
-    <p class="${statsNoteCss}">Browsers with and without <code class="${codeCss}">prefers-reduced-data</code> support get the same <strong>__CORE_REQS__-request</strong> baseline because Verdant&rsquo;s decorative art is inline. Supporting browsers may separately fetch the favicon and web app manifest (<strong>__OPTIONAL_REQS__ requests</strong>); the service worker caches <strong>__OFFLINE_REQS__ files</strong> only after the first load to make offline revisits work.</p>
-  </div>
+  <dl class="${wrapCss} ${statsGridCss}">
+    <div class="${statCss}"><dt class="${statLabelCss}">This whole page, compressed &mdash; art included</dt><dd class="${statValueCss}">__HOME_KB__&nbsp;KB</dd></div>
+    <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
+    <div class="${statCss}"><dt class="${statLabelCss}">Stylesheet, extracted to only the rules in use</dt><dd class="${statValueCss}">__CSS_KB__&nbsp;KB</dd></div>
+    <div class="${statCss}"><dt class="${statLabelCss}">Color tokens, each with a light and dark value</dt><dd class="${statValueCss}">17&thinsp;&times;&thinsp;2</dd></div>
+  </dl>
 </section>`
 
 // ---- index: how it grows ----------------------------------------------------------

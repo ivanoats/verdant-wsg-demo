@@ -23,7 +23,6 @@ Output lands in `dist/` — that's the Netlify publish directory (see `netlify.t
 - Landmarks (`main`, `nav`, skip link), a labelled form field, one consistent focus ring
 - Security headers, caching directives, and an offline service worker in `public/` / `_headers`
 - Content-hashed CSS/JS under `/assets/` (`scripts/fingerprint.mjs`), cached for a year; pages are network-first in the service worker, so a deploy never mixes new HTML with old CSS
-- Optional browser extras (`/favicon.svg`, `/manifest.json`) stay out of the offline shell; `npm run build` prints the shared baseline, the supporting-browser extras and the offline-install bytes separately
 - No third-party scripts, no analytics, no web fonts, no icon font
 - "Geometric growth" art (`scripts/art.mjs`): inline SVG built from the system's own shapes, every fill a color token, so it recolors with the theme and costs no requests; it grows in once, only when motion is allowed
 - The page-weight numbers on the home page are measured by `scripts/stats.mjs` on every build, never hand-typed
