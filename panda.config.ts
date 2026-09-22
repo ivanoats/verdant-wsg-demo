@@ -167,11 +167,6 @@ export default defineConfig({
       '.switchTrack .knob': { transition: 'transform 150ms ease' },
     },
     '.switchTrack[aria-checked="true"] .knob': { transform: 'translateX(20px)' },
-    // Decorative-only art is dropped for anyone who's asked to save data —
-    // it costs bytes and carries no content (WSG 3.12's third preference query).
-    '@media (prefers-reduced-data: reduce)': {
-      '.decor': { display: 'none' },
-    },
   },
   // No staticCss block on purpose: every class in the generated stylesheet
   // comes from a real call in scripts/build.mjs. Force-generating a wide

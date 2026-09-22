@@ -31,8 +31,8 @@ for (const page of PAGES) {
 
 // Everything the offline shell caches, and a version that changes whenever
 // any of it does — so every deploy ships a byte-different sw.js.
-const shell = ['/', '/components.html', '/404.html', ...Object.values(map), '/favicon.svg', '/manifest.json']
-const version = hash(Buffer.concat([...PAGES, ...Object.values(map).map((p) => p.slice(1)), 'favicon.svg', 'manifest.json']
+const shell = ['/', '/components.html', '/404.html', ...Object.values(map)]
+const version = hash(Buffer.concat([...PAGES, ...Object.values(map).map((p) => p.slice(1))]
   .map((f) => readFileSync(`dist/${f}`))))
 const sw = readFileSync('dist/sw.js', 'utf8')
   .replace('__VERSION__', version)

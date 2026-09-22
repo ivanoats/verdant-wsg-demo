@@ -83,7 +83,7 @@ const heroHtml = `
       <p class="${eyebrowCss}">A design system for the W3C Web Sustainability Guidelines</p>
       <h1 id="hero-title" class="${heroTitleCss}">Verdant</h1>
       <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
-      <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, native dark mode, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
+      <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, native dark mode, inline SVG art, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
       <div class="${btnRowCss}">
         <a class="${btnPrimary}" href="/components.html">Browse components</a>
         <a class="${btnSecondary}" href="${REPO}">View source on GitHub</a>
@@ -102,15 +102,19 @@ const statsGridCss = css({
 const statCss = css({ display: 'flex', flexDirection: 'column-reverse', margin: '0' })
 const statValueCss = css({ fontSize: { base: 'displayLg', md: '40px' }, lineHeight: { base: 'displayLg', md: '48px' }, fontWeight: '700', color: 'accent', margin: '0' })
 const statLabelCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '4px 0 0' })
+const statsNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 32px', maxWidth: '70ch' })
 
 const statsHtml = `
 <section class="${bandCss}" aria-label="By the numbers">
-  <dl class="${wrapCss} ${statsGridCss}">
-    <div class="${statCss}"><dt class="${statLabelCss}">This whole page, compressed &mdash; art included</dt><dd class="${statValueCss}">__HOME_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Stylesheet, extracted to only the rules in use</dt><dd class="${statValueCss}">__CSS_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Color tokens, each with a light and dark value</dt><dd class="${statValueCss}">17&thinsp;&times;&thinsp;2</dd></div>
-  </dl>
+  <div class="${wrapCss}">
+    <dl class="${statsGridCss}">
+      <div class="${statCss}"><dt class="${statLabelCss}">Baseline first view in every browser</dt><dd class="${statValueCss}">__CORE_KB__&nbsp;KB</dd></div>
+      <div class="${statCss}"><dt class="${statLabelCss}">Optional icon + install metadata in supporting browsers</dt><dd class="${statValueCss}">__OPTIONAL_KB__&nbsp;KB</dd></div>
+      <div class="${statCss}"><dt class="${statLabelCss}">Offline shell cached after first load</dt><dd class="${statValueCss}">__OFFLINE_KB__&nbsp;KB</dd></div>
+      <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
+    </dl>
+    <p class="${statsNoteCss}">Browsers with and without <code class="${codeCss}">prefers-reduced-data</code> support get the same <strong>__CORE_REQS__-request</strong> baseline because Verdant&rsquo;s decorative art is inline. Supporting browsers may separately fetch the favicon and web app manifest (<strong>__OPTIONAL_REQS__ requests</strong>); the service worker caches <strong>__OFFLINE_REQS__ files</strong> only after the first load to make offline revisits work.</p>
+  </div>
 </section>`
 
 // ---- index: how it grows ----------------------------------------------------------
@@ -225,7 +229,7 @@ const scoreNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink
 const scores = [
   ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, one deferred script, nothing render-blocking.'],
   ['Semantic &amp; standards', true, 'Landmarks, a single h1 with ordered headings, canonical URL and structured data.'],
-  ['Sustainability-specific', true, 'Color-scheme, reduced-motion and reduced-data queries all present; no unused CSS shipped.'],
+  ['Sustainability-specific', true, 'Color-scheme and reduced-motion preferences are respected; decorative art stays inline so the baseline stays lightweight even where reduced-data is unsupported; no unused CSS shipped.'],
   ['Security &amp; maintenance', true, 'CSP, HSTS, Permissions-Policy, nosniff and frame protection; robots.txt and a sitemap.'],
   ['UX &amp; design', true, 'Labelled fields with autocomplete and inputmode, one visible focus ring, no autoplay, no web fonts.'],
   ['Hosting &amp; infrastructure', false, 'Offline service worker, cache rules and a custom 404 pass. Green hosting isn&rsquo;t verified by the Green Web Foundation for this Netlify subdomain.'],
@@ -424,8 +428,6 @@ const spinnerCss = spinner()
 // inline style attributes, which silently collapsed these bars before.
 const skeletonWideCss = `${skeleton()} ${css({ width: '160px', height: '14px' })}`
 const skeletonNarrowCss = `${skeleton()} ${css({ width: '110px', height: '14px' })}`
-const decorCss = css({ display: 'block' })
-
 const componentsBody = `
 <div class="${wrapCss} ${compMainCss}">
   <h1 class="${compTitleCss}">Components</h1>
@@ -494,11 +496,6 @@ const componentsBody = `
     </div>
   </section>
 
-  <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">A decorative image</h2>
-    <p class="${ledeCss}">The Verdant leaf, as a real file: purely decorative, so it carries <code class="${codeCss}">alt=""</code>, explicit dimensions, lazy loading, and drops out entirely for anyone who's asked to save data.</p>
-    <img class="${decorCss} decor" src="/favicon.svg" width="64" height="64" alt="" loading="lazy">
-  </section>
 </div>
 `
 
