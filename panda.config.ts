@@ -1,5 +1,6 @@
 import { defineConfig } from '@pandacss/dev'
-import { fontFamilyTokens, spacingTokens, radiiTokens, fontSizeTokens, lineHeightTokens, semanticColorTokens } from './scripts/tokens.mjs'
+import { fontFamilyTokens, spacingTokens, radiiTokens, fontSizeTokens, lineHeightTokens } from './scripts/tokens.mjs'
+import { semanticColorTokens } from './scripts/theme.mjs'
 
 export default defineConfig({
   preflight: true,

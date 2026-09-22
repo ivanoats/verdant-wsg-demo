@@ -8,7 +8,8 @@ import { css } from '../styled-system/css/index.mjs'
 import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
 import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
-import { themeColorTokens, runtimeThemeMaps, paletteSections, verifiedPairings, publicTokenScope } from './tokens.mjs'
+import { themeTokens, explicitThemeVars, themeTokenCount } from './theme.mjs'
+import { paletteSections, verifiedPairings, publicTokenScope } from './tokens.mjs'
 
 // A hand-rolled recursive copy: some mounted/virtual filesystems choke on
 // Node's native cpSync fast paths (fcopyfile/clonefile), so this sticks to
@@ -110,7 +111,7 @@ const statsHtml = `
     <div class="${statCss}"><dt class="${statLabelCss}">This whole page, compressed &mdash; art included</dt><dd class="${statValueCss}">__HOME_KB__&nbsp;KB</dd></div>
     <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
     <div class="${statCss}"><dt class="${statLabelCss}">Stylesheet, extracted to only the rules in use</dt><dd class="${statValueCss}">__CSS_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Color tokens, each with a light and dark value</dt><dd class="${statValueCss}">17&thinsp;&times;&thinsp;2</dd></div>
+    <div class="${statCss}"><dt class="${statLabelCss}">Color tokens, each with a light and dark value</dt><dd class="${statValueCss}">${themeTokenCount}&thinsp;&times;&thinsp;2</dd></div>
   </dl>
 </section>`
 
@@ -127,7 +128,7 @@ const stageTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', font
 const stageBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0' })
 
 const stages = [
-  ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Those are the reusable public tokens; the landing page still documents its few display-size one-offs separately.'],
+  ['seed', 'Seed', 'Tokens', `${themeTokenCount} colors, a 4px spacing grid, four radii and system type. Those are the reusable public tokens; the landing page still documents its few display-size one-offs separately.`],
   ['sprout', 'Sprout', 'Components', 'Button, card, field, theme toggle and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
   ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one stylesheet and at most one small deferred script, from the first page on.'],
   ['canopy', 'Canopy', 'Sites', 'Security headers, cache rules, an offline shell and a real 404 &mdash; the hosting checks, handled before launch.'],
@@ -196,21 +197,26 @@ const swatchTile = (themeLabel, fill, stroke) => `
           ${leafSwatch(fill, stroke)}
           <span><span class="${swatchThemeLabelCss}">${themeLabel}</span><span class="${swatchHexCss}">${fill}</span></span>
         </div>`
+const themeValueMaps = {
+  light: Object.fromEntries(Object.entries(themeTokens).map(([key, value]) => [key, value.light])),
+  dark: Object.fromEntries(Object.entries(themeTokens).map(([key, value]) => [key, value.dark])),
+}
+
 const swatches = (keys) => keys.map((key) => {
-  const token = themeColorTokens[key]
+  const token = themeTokens[key]
   return `
       <li class="${swatchCardCss}">
         <p class="${swatchNameCss}">${key}</p>
         <div class="${swatchThemeGridCss}">
-          ${swatchTile('Light', token.light, runtimeThemeMaps.light.border)}
-          ${swatchTile('Dark', token.dark, runtimeThemeMaps.dark.border)}
+          ${swatchTile('Light', token.light, themeValueMaps.light.border)}
+          ${swatchTile('Dark', token.dark, themeValueMaps.dark.border)}
         </div>
       </li>`
 }).join('')
 
 const evaluatedPairings = verifiedPairings.map((pairing) => {
-  const lightContrast = contrast(runtimeThemeMaps.light[pairing.foreground], runtimeThemeMaps.light[pairing.background])
-  const darkContrast = contrast(runtimeThemeMaps.dark[pairing.foreground], runtimeThemeMaps.dark[pairing.background])
+  const lightContrast = contrast(themeValueMaps.light[pairing.foreground], themeValueMaps.light[pairing.background])
+  const darkContrast = contrast(themeValueMaps.dark[pairing.foreground], themeValueMaps.dark[pairing.background])
   if (lightContrast < pairing.minimum || darkContrast < pairing.minimum) {
     throw new Error(`Verified pairing failed ${pairing.title}: ${formatRatio(lightContrast)} light / ${formatRatio(darkContrast)} dark`)
   }
@@ -248,7 +254,7 @@ const paletteHtml = `
 <section id="palette" class="${bandCss}" aria-labelledby="palette-title">
   <div class="${wrapCss} ${sectionCss}">
     <p class="${eyebrowCss}">Palette</p>
-    <h2 id="palette-title" class="${h2Css}">Seventeen colors, shown in both themes.</h2>
+    <h2 id="palette-title" class="${h2Css}">${themeTokenCount} colors, shown in both themes.</h2>
     <p class="${introCss}">One token set with a light and a dark value each, switched by <code class="${codeCss}">prefers-color-scheme</code> &mdash; no second stylesheet. The light and dark swatches below are rendered side by side so neither theme relies on color alone.</p>
     ${paletteSections.map((section, index) => `
     <h3 class="${paletteGroupCss}${index ? ` ${paletteGapCss}` : ''}">${section.title}</h3>
@@ -351,7 +357,7 @@ const preCss = css({
 })
 const listCss = css({ margin: '0', paddingLeft: '20px', listStyle: 'disc', color: 'ink.muted', '& li + li': { marginTop: '2' } })
 const pandaSnippet = `// panda.config.ts
-import { semanticColorTokens } from './scripts/tokens.mjs'
+import { semanticColorTokens } from './scripts/theme.mjs'
 
 conditions: {
   dark: '@media (prefers-color-scheme: dark)',
@@ -607,12 +613,11 @@ const notFoundBody = `
 // ---- scripts ---------------------------------------------------------------------
 
 const themeToggleJs = `(function () {
-  var LIGHT = ${JSON.stringify(runtimeThemeMaps.light)};
-  var DARK = ${JSON.stringify(runtimeThemeMaps.dark)};
-  function varName(key) { return "--colors-" + key.replace(/\./g, "-"); }
+  var LIGHT = ${JSON.stringify(explicitThemeVars.light)};
+  var DARK = ${JSON.stringify(explicitThemeVars.dark)};
   function apply(map) {
     var root = document.documentElement;
-    Object.keys(map).forEach(function (k) { root.style.setProperty(varName(k), map[k]); });
+    Object.keys(map).forEach(function (k) { root.style.setProperty(k, map[k]); });
   }
   var btn = document.getElementById("theme-switch");
   if (!btn) return;

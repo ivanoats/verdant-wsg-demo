@@ -1,3 +1,5 @@
+import { themeTokens, interfacePaletteOrder, illustrationPaletteOrder } from './theme.mjs'
+
 export const fontFamilyTokens = {
   sans: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace',
@@ -38,60 +40,22 @@ export const lineHeightTokens = {
   label: '16px',
 }
 
-export const themeColorTokens = {
-  'surface.100': { light: '#faf8f3', dark: '#15140f', kind: 'interface' },
-  'surface.200': { light: '#ffffff', dark: '#1e1c15', kind: 'interface' },
-  'border': { light: '#93866c', dark: '#726b53', kind: 'interface' },
-  'ink': { light: '#1c1a15', dark: '#f1ede2', kind: 'interface' },
-  'ink.muted': { light: '#5b5548', dark: '#b6ae9c', kind: 'interface' },
-  'accent': { light: '#2f6b4a', dark: '#7fcfa3', kind: 'interface' },
-  'accent.strong': { light: '#234f38', dark: '#5fb98c', kind: 'interface' },
-  'accent.ink': { light: '#ffffff', dark: '#10241a', kind: 'interface' },
-  'focusRing': { light: '#a5670a', dark: '#e8a83e', kind: 'interface' },
-  'sunlight': { light: '#f4b63f', dark: '#e8a83e', kind: 'illustration' },
-  'positive': { light: '#1f7a6c', dark: '#5cc9b7', kind: 'interface' },
-  'critical': { light: '#c1440e', dark: '#ff8f5e', kind: 'interface' },
-  'foliage': { light: '#3ca24a', dark: '#45ad55', kind: 'illustration' },
-  'foliage.far': { light: '#cdeaae', dark: '#1c3a22', kind: 'illustration' },
-  'foliage.mid': { light: '#9ed65f', dark: '#2d6b34', kind: 'illustration' },
-  'foliage.deep': { light: '#1f6a31', dark: '#2a7d3a', kind: 'illustration' },
-  'foliage.bright': { light: '#6fcd4f', dark: '#86dc62', kind: 'illustration' },
-}
-
-const tokenEntry = (token) => ({ value: { base: token.light, _dark: token.dark } })
-
-const nestSemanticToken = (target, key, value) => {
-  const parts = key.split('.')
-  const hasChildren = Object.keys(themeColorTokens).some((candidate) => candidate.startsWith(`${parts[0]}.`))
-  const path = parts.length === 1 && hasChildren ? [parts[0], 'DEFAULT'] : parts
-  let node = target
-  for (let i = 0; i < path.length - 1; i += 1) {
-    const segment = path[i]
-    node[segment] ||= {}
-    node = node[segment]
-  }
-  node[path[path.length - 1]] = tokenEntry(value)
-  return target
-}
-
-export const semanticColorTokens = Object.entries(themeColorTokens)
-  .reduce((tokens, [key, value]) => nestSemanticToken(tokens, key, value), {})
-
-export const runtimeThemeMaps = {
-  light: Object.fromEntries(Object.entries(themeColorTokens).map(([key, value]) => [key, value.light])),
-  dark: Object.fromEntries(Object.entries(themeColorTokens).map(([key, value]) => [key, value.dark])),
-}
+const includeExisting = (keys) => keys.filter((key) => key in themeTokens)
+const orderedInterfaceKeys = includeExisting(interfacePaletteOrder)
+const orderedIllustrationKeys = includeExisting(illustrationPaletteOrder)
+const orderedTokenSet = new Set([...orderedInterfaceKeys, ...orderedIllustrationKeys])
+const interfaceExtras = Object.keys(themeTokens).filter((key) => !orderedTokenSet.has(key))
 
 export const paletteSections = [
   {
     title: 'Interface',
-    note: 'Public colors for text, controls and state. Use the verified pairings below rather than assuming every token combination is readable.',
-    keys: ['accent', 'accent.strong', 'positive', 'focusRing', 'critical', 'accent.ink', 'ink', 'ink.muted', 'border', 'surface.200', 'surface.100'],
+    note: 'Public colors for text, controls, state, and supporting UI tones. Use the verified pairings below rather than assuming every token combination is readable.',
+    keys: [...orderedInterfaceKeys, ...interfaceExtras],
   },
   {
     title: 'Illustration only',
     note: 'Decorative foliage and sunlight tokens. They are available for art, but not approved as default text, controls, or status meaning.',
-    keys: ['foliage.bright', 'foliage', 'foliage.deep', 'foliage.mid', 'foliage.far', 'sunlight'],
+    keys: orderedIllustrationKeys,
   },
 ]
 
