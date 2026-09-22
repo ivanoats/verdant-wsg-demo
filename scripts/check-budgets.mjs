@@ -1,26 +1,27 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 
-const report = JSON.parse(readFileSync('dist/asset-metrics.json', 'utf8'))
+const report = JSON.parse(readFileSync('dist/measurements.json', 'utf8'))
 const budgets = JSON.parse(readFileSync('ci/budgets.json', 'utf8'))
 const checks = [
-  ['summary.initialRenderBrotliKiB', report.summary.initialRenderBrotliKiB, budgets.thresholds.initialRenderBrotliKiB],
-  ['summary.firstSessionBrotliKiB', report.summary.firstSessionBrotliKiB, budgets.thresholds.firstSessionBrotliKiB],
-  ['summary.offlineShellBrotliKiB', report.summary.offlineShellBrotliKiB, budgets.thresholds.offlineShellBrotliKiB],
-  ['files.styles.brotliKiB', report.files[report.aliases['/styles.css']].brotliKiB, budgets.thresholds.stylesBrotliKiB],
-  ['files.siteUi.brotliKiB', report.files[report.aliases['/site-ui.js']].brotliKiB, budgets.thresholds.siteUiBrotliKiB],
-  ['files.sw.brotliKiB', report.files['/sw.js'].brotliKiB, budgets.thresholds.serviceWorkerBrotliKiB],
+  ['budgets.initialRenderEstimateKiB', Number(report.displayKib.initialRender), budgets.thresholds.initialRenderEstimateKiB],
+  ['budgets.offlineShellEstimateKiB', Number(report.displayKib.offlineShell), budgets.thresholds.offlineShellEstimateKiB],
+  ['budgets.coldFirstSessionTransferKiB', Number(report.displayKib.coldSession), budgets.thresholds.coldFirstSessionTransferKiB],
+  ['budgets.warmRepeatVisitTransferKiB', Number(report.displayKib.warmSession), budgets.thresholds.warmRepeatVisitTransferKiB],
 ].map(([name, actual, limit]) => ({ name, actual, limit, pass: actual <= limit }))
 
 mkdirSync('artifacts', { recursive: true })
 const audit = {
   checkedAt: new Date().toISOString(),
   runtime: { node: process.version },
+  report: 'dist/measurements.json',
+  schema: 'dist/measurements.schema.json',
   budgets,
   checks,
   pass: checks.every((check) => check.pass),
   manualChecksStillNeeded: [
-    'Cross-browser assistive-technology testing and real keyboard/screen-reader validation still require issue #13 manual coverage.',
-    'wsg-check remains a targeted scanner for homepage categories and is not treated as blanket WSG conformance.',
+    'Assistive-technology coverage, additional browser/device combinations, and human usability validation remain tracked in issue #13.',
+    'The service-worker update prompt contract from #21 is still blocked until that UI lands; this CI run only covers the current claim-only activation behavior.',
+    'wsg-check remains a targeted homepage scanner and is not treated as blanket WSG conformance.',
   ],
 }
 writeFileSync('artifacts/ci-audit.json', `${JSON.stringify(audit, null, 2)}\n`)

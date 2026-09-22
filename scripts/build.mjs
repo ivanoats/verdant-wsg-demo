@@ -8,6 +8,20 @@ import { css } from '../styled-system/css/index.mjs'
 import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
 import { button, card, fieldInput, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
+import {
+  explicitThemeVars,
+  illustrationPaletteOrder,
+  interfacePaletteOrder,
+  themeOverrideAttr,
+  themePreferenceAttr,
+  themePreferenceControlName,
+  themePreferenceStorageKey,
+  themePreferenceValues,
+  themeResolvedAttr,
+  themeTokenCount,
+  themeTokens,
+  themeVarName,
+} from './theme.mjs'
 
 // A hand-rolled recursive copy: some mounted/virtual filesystems choke on
 // Node's native cpSync fast paths (fcopyfile/clonefile), so this sticks to
@@ -119,7 +133,7 @@ const statsHtml = `
     <div class="${statCss}"><dt class="${statLabelCss}">This whole page, compressed &mdash; art included</dt><dd class="${statValueCss}">__HOME_KB__&nbsp;KB</dd></div>
     <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
     <div class="${statCss}"><dt class="${statLabelCss}">Stylesheet, extracted to only the rules in use</dt><dd class="${statValueCss}">__CSS_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Color tokens, each with a light and dark value</dt><dd class="${statValueCss}">17&thinsp;&times;&thinsp;2</dd></div>
+    <div class="${statCss}"><dt class="${statLabelCss}">Color tokens, each with a light and dark value</dt><dd class="${statValueCss}">${themeTokenCount}&thinsp;&times;&thinsp;2</dd></div>
   </dl>
 </section>`
 
@@ -186,22 +200,12 @@ const sw = {
 }
 const swatchNameCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
 const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '4px 0 0' })
-const palettePairs = [
-  ['accent', '#2f6b4a', '#7fcfa3'], ['accent-strong', '#234f38', '#5fb98c'], ['positive', '#1f7a6c', '#5cc9b7'],
-  ['focus-ring', '#a5670a', '#e8a83e'], ['critical', '#c1440e', '#ff8f5e'], ['accent-ink', '#ffffff', '#10241a'],
-  ['ink', '#1c1a15', '#f1ede2'], ['ink-muted', '#5b5548', '#b6ae9c'], ['border', '#93866c', '#726b53'],
-  ['surface-200', '#ffffff', '#1e1c15'], ['surface-100', '#faf8f3', '#15140f'],
-]
-const foliagePairs = [
-  ['foliage-bright', '#6fcd4f', '#86dc62'], ['foliage', '#3ca24a', '#45ad55'], ['foliage-deep', '#1f6a31', '#2a7d3a'],
-  ['foliage-mid', '#9ed65f', '#2d6b34'], ['foliage-far', '#cdeaae', '#1c3a22'], ['sunlight', '#f4b63f', '#e8a83e'],
-]
+const swatchKey = (name) => name.replace(/\./g, '-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+const tokenPair = (name) => [swatchKey(name), themeTokens[name].light, themeTokens[name].dark]
+const palettePairs = interfacePaletteOrder.map(tokenPair)
+const foliagePairs = illustrationPaletteOrder.map(tokenPair)
 const palette = palettePairs
 const foliage = foliagePairs
-const themePalettes = {
-  light: Object.fromEntries([...palettePairs, ...foliagePairs].map(([name, light]) => [name.replace(/-/g, '.').replace('focus.ring', 'focusRing'), light])),
-  dark: Object.fromEntries([...palettePairs, ...foliagePairs].map(([name, , dark]) => [name.replace(/-/g, '.').replace('focus.ring', 'focusRing'), dark])),
-}
 const paletteGroupCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 4px' })
 const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '62ch' })
 const paletteGapCss = css({ marginTop: '12' })
@@ -355,11 +359,9 @@ const nav = (active) => {
         </ul>
       </nav>
       <div class="${themeControlCss}">
-        <label class="${themeLabelCss}" for="theme-preference">Theme</label>
-        <select class="${themeSelectCss}" id="theme-preference" data-theme-preference>
-          <option value="system">System</option>
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
+        <label class="${themeLabelCss}" for="${themePreferenceControlName}">Theme</label>
+        <select class="${themeSelectCss}" id="${themePreferenceControlName}" name="${themePreferenceControlName}" data-theme-preference>
+          ${themePreferenceValues.map((value) => `<option value="${value}">${value[0].toUpperCase()}${value.slice(1)}</option>`).join('')}
         </select>
       </div>
     </div>
@@ -543,22 +545,30 @@ const offlineBody = `
 // ---- scripts ---------------------------------------------------------------------
 
 const siteUiJs = `(function () {
-  var KEY = 'verdant-theme';
-  var PALETTES = ${JSON.stringify(themePalettes)};
+  var KEY = ${JSON.stringify(themePreferenceStorageKey)};
+  var CONTROL = ${JSON.stringify(themePreferenceControlName)};
+  var PALETTES = ${JSON.stringify(explicitThemeVars)};
+  var PREF_ATTR = ${JSON.stringify(themePreferenceAttr)};
+  var RESOLVED_ATTR = ${JSON.stringify(themeResolvedAttr)};
+  var OVERRIDE_ATTR = ${JSON.stringify(themeOverrideAttr)};
   var modes = { system: true, light: true, dark: true };
   var root = document.documentElement;
-  var controls = Array.prototype.slice.call(document.querySelectorAll('[data-theme-preference]'));
+  var controls = Array.prototype.slice.call(document.querySelectorAll('[data-theme-preference], [name=\"' + CONTROL + '\"]'));
   var scheme = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-  function varName(key) { return '--colors-' + key.replace(/\\./g, '-'); }
+  function varName(key) {
+    return '--colors-' + key.replace(/\\./g, '-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  }
   function clearTheme() {
     Object.keys(PALETTES.light).forEach(function (key) { root.style.removeProperty(varName(key)); });
     root.style.colorScheme = 'light dark';
+    root.removeAttribute(OVERRIDE_ATTR);
   }
   function paint(mode) {
     if (mode === 'system') return clearTheme();
     var palette = PALETTES[mode];
     Object.keys(palette).forEach(function (key) { root.style.setProperty(varName(key), palette[key]); });
     root.style.colorScheme = mode;
+    root.setAttribute(OVERRIDE_ATTR, mode);
   }
   function readMode() {
     try {
@@ -576,8 +586,8 @@ const siteUiJs = `(function () {
   }
   function sync(mode) {
     var resolved = mode === 'system' ? (scheme && scheme.matches ? 'dark' : 'light') : mode;
-    root.dataset.themePreference = mode;
-    root.dataset.themeResolved = resolved;
+    root.setAttribute(PREF_ATTR, mode);
+    root.setAttribute(RESOLVED_ATTR, resolved);
     paint(mode);
     controls.forEach(function (control) { control.value = mode; });
   }
@@ -662,10 +672,11 @@ self.addEventListener('message', function (event) {
 });
 function routeKey(url) {
   var path = new URL(url).pathname;
-  if (path === '/') return '/';
-  if (path === '/components' || path === '/components/') return '/components.html';
+  path = path.replace(/\\/+$/, '') || '/';
+  if (path === '/' || path === '/index.html') return '/';
+  if (path === '/components' || path === '/components.html') return '/components';
   if (path === '/404' || path === '/404/') return '/404.html';
-  if (path === '/offline' || path === '/offline/') return '/offline.html';
+  if (path === '/offline' || path === '/offline.html') return '/offline.html';
   if (/\\.html$/.test(path)) return path;
   return null;
 }

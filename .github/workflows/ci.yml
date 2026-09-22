@@ -32,7 +32,9 @@ jobs:
         with:
           name: ci-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            dist/asset-metrics.json
+            dist/measurements.json
+            dist/measurements.schema.json
+            dist/offline-cache.json
             artifacts/ci-audit.json
             artifacts/playwright-report.json
           if-no-files-found: warn

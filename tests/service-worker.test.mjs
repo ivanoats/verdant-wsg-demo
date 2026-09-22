@@ -4,6 +4,7 @@ import vm from 'node:vm'
 import { readFileSync } from 'node:fs'
 
 const swSource = readFileSync('dist/sw.js', 'utf8')
+const offlineCacheContract = JSON.parse(readFileSync('dist/offline-cache.json', 'utf8'))
 const currentCache = `verdant-shell-${swSource.match(/var CACHE = PREFIX \+ '([^']+)'/)[1]}`
 
 const loadWorker = ({ fetchImpl = async () => ({ ok: true, clone() { return this } }), stores = {} } = {}) => {
@@ -78,22 +79,24 @@ const dispatch = async (handler, event) => {
   return response[0] ? response[0] : undefined
 }
 
-test('install caches the production shell including offline fallback', async () => {
+test('install caches every published canonical key and offline fallback', async () => {
   const worker = loadWorker()
   await dispatch(worker.listeners.install, {})
   const cache = [...worker.cacheStores.values()][0]
-  assert.ok(cache.has('/'))
-  assert.ok(cache.has('/components.html'))
-  assert.ok(cache.has('/offline.html'))
+  for (const key of offlineCacheContract.canonicalCacheKeys) assert.ok(cache.has(key), `${key} should be precached`)
+  assert.ok(cache.has(offlineCacheContract.offlineFallback))
   assert.equal(worker.metrics.skipped, 1)
 })
 
-test('offline navigation uses canonical pretty-url matches and dedicated fallback', async () => {
+test('offline navigation honors published route aliases and fallback contract', async () => {
   const componentsResponse = { ok: true, body: 'components', clone() { return this } }
   const offlineResponse = { ok: true, body: 'offline', clone() { return this } }
-  const worker = loadWorker({ fetchImpl: async () => { throw new Error('offline') }, stores: { 'verdant-shell-test': { '/components.html': componentsResponse, '/offline.html': offlineResponse } } })
+  const canonicalComponents = offlineCacheContract.routeAliases['/components.html']
+  const worker = loadWorker({ fetchImpl: async () => { throw new Error('offline') }, stores: { 'verdant-shell-test': { [canonicalComponents]: componentsResponse, [offlineCacheContract.offlineFallback]: offlineResponse } } })
   const componentsResult = await dispatch(worker.listeners.fetch, { request: { method: 'GET', mode: 'navigate', url: 'https://verdant.test/components' } })
   assert.equal(await componentsResult, componentsResponse)
+  const aliasResult = await dispatch(worker.listeners.fetch, { request: { method: 'GET', mode: 'navigate', url: 'https://verdant.test/components.html' } })
+  assert.equal(await aliasResult, componentsResponse)
   const unknownResult = await dispatch(worker.listeners.fetch, { request: { method: 'GET', mode: 'navigate', url: 'https://verdant.test/unknown' } })
   assert.equal(await unknownResult, offlineResponse)
 })
@@ -106,12 +109,13 @@ test('activate only removes this app cache namespace and does not force reload t
   assert.equal(worker.metrics.navigated, 0)
 })
 
-test('successful navigations refresh the canonical cached page', async () => {
+test('successful navigations refresh the published canonical page key', async () => {
   const response = { ok: true, body: 'fresh', clone() { return this } }
   const worker = loadWorker({ fetchImpl: async () => response, stores: { 'verdant-shell-test': {} } })
   const result = await dispatch(worker.listeners.fetch, { request: { method: 'GET', mode: 'navigate', url: 'https://verdant.test/components' } })
   assert.equal(await result, response)
   await new Promise((resolve) => setImmediate(resolve))
-  const cached = [...worker.cacheStores.values()].find((cache) => cache.get('/components.html') === response)
+  const canonicalComponents = offlineCacheContract.routeAliases['/components.html']
+  const cached = [...worker.cacheStores.values()].find((cache) => cache.get(canonicalComponents) === response)
   assert.ok(cached)
 })

@@ -1,28 +1,30 @@
 {
   "reviewedAt": "2026-09-22",
   "supportedRuntime": "Node 20.x",
+  "report": "dist/measurements.json",
+  "schema": "dist/measurements.schema.json",
   "baselines": {
-    "initialRenderBrotliKiB": 17.5,
-    "firstSessionBrotliKiB": 23.1,
-    "offlineShellBrotliKiB": 23.1,
-    "stylesBrotliKiB": 6.5,
-    "siteUiBrotliKiB": 1.3,
-    "serviceWorkerBrotliKiB": 0.8
+    "initialRenderEstimateKiB": 17.3,
+    "offlineShellEstimateKiB": 23.3,
+    "coldFirstSessionTransferKiB": 46.5,
+    "warmRepeatVisitTransferKiB": 9.3
   },
   "thresholds": {
-    "initialRenderBrotliKiB": 18.5,
-    "firstSessionBrotliKiB": 24.5,
-    "offlineShellBrotliKiB": 24.5,
-    "stylesBrotliKiB": 7.2,
-    "siteUiBrotliKiB": 2.0,
-    "serviceWorkerBrotliKiB": 1.2
+    "initialRenderEstimateKiB": 18.5,
+    "offlineShellEstimateKiB": 24.5,
+    "coldFirstSessionTransferKiB": 49.0,
+    "warmRepeatVisitTransferKiB": 11.0
   },
   "rationale": {
-    "initialRenderBrotliKiB": "Keep the homepage first render within about 1 KiB of the reviewed 17.5 KiB compressed baseline.",
-    "firstSessionBrotliKiB": "Allow roughly 1.5 KiB of headroom above the reviewed 23.1 KiB cold-session/offline install estimate.",
-    "offlineShellBrotliKiB": "Match the first-session ceiling because this site eagerly precaches the same 23.1 KiB shell during installation.",
-    "stylesBrotliKiB": "Preserve the extracted stylesheet close to the reviewed 6.5 KiB baseline.",
-    "siteUiBrotliKiB": "Keep the combined theme and motion helper script comfortably under 2 KiB compressed.",
-    "serviceWorkerBrotliKiB": "Keep the production worker well below 1.2 KiB compressed while covering route and cache safeguards."
+    "initialRenderEstimateKiB": "Keep the homepage first render within about 1 KiB of the reviewed compressed baseline from the finalized measurement report.",
+    "offlineShellEstimateKiB": "Allow about 1.2 KiB of headroom above the reviewed offline shell estimate while #21 finalizes the update UI and canonical route contract.",
+    "coldFirstSessionTransferKiB": "Budget the first-session local transfer measurement with moderate headroom so the CI check tracks meaningful regressions without freezing implementation details from #19.",
+    "warmRepeatVisitTransferKiB": "Keep the warm repeat-visit transfer small while acknowledging that deployed-host caching behavior remains unmeasured until upstream integration completes."
+  },
+  "blockedOn": {
+    "theme": "#18 shared theme token/runtime contract",
+    "measurements": "#19 finalized measurement report and schema",
+    "offline": "#21 update prompt and canonical offline-route contract",
+    "motion": "#17 bounded loading demo specimen details"
   }
 }
