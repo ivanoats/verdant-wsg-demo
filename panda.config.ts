@@ -3,9 +3,9 @@ import { defineConfig } from '@pandacss/dev'
 export default defineConfig({
   preflight: true,
   // Plain static HTML site — the only "source" Panda extracts from is the
-  // build script below, which calls css()/cva()/patterns() to produce the
-  // class strings baked into the generated HTML.
-  include: ['./scripts/build.mjs'],
+  // build scripts, which call css()/patterns()/recipes to produce the class
+  // strings baked into the generated HTML (art.mjs holds the SVG art).
+  include: ['./scripts/**/*.mjs'],
   exclude: [],
   outdir: 'styled-system',
 
@@ -142,6 +142,11 @@ export default defineConfig({
     ':focus-visible': { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '2px' },
     '@keyframes spin': { to: { transform: 'rotate(360deg)' } },
     '@keyframes pulse': { '0%, 100%': { opacity: '0.35' }, '50%': { opacity: '0.65' } },
+    // Verdant's art grows in once, then holds still. Only referenced from
+    // inside prefers-reduced-motion: no-preference (see scripts/art.mjs).
+    '@keyframes leafGrow': { from: { transform: 'scale(0)' }, to: { transform: 'scale(1)' } },
+    '@keyframes stemGrow': { from: { transform: 'scaleY(0)' }, to: { transform: 'scaleY(1)' } },
+    '@keyframes sunRise': { from: { opacity: '0', transform: 'translateY(24px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
     '.switchTrack .knob': {
       position: 'absolute', top: '2px', left: '2px', width: '20px', height: '20px',
       borderRadius: 'var(--radii-full)', background: 'var(--colors-surface-200)',

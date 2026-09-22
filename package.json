@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "prebuild": "panda codegen",
-    "build": "node scripts/build.mjs && panda cssgen -m --lightningcss -o dist/styles.css"
+    "build": "node scripts/build.mjs && panda cssgen -m --lightningcss -o dist/styles.css && node scripts/stats.mjs"
   },
   "license": "ISC",
   "devDependencies": {
