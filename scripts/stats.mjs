@@ -21,7 +21,7 @@ const PLACEHOLDERS = {
 }
 const br = (buf) =>
   brotliCompressSync(buf, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length
-const kib = (bytes) => Number((bytes / 1024).toFixed(1))
+const kib = (bytes) => Math.ceil((bytes / 1024) * 10 - 1e-9) / 10
 const kibText = (bytes) => kib(bytes).toFixed(1)
 const hash = (buf) => createHash('sha256').update(buf).digest('hex').slice(0, 10)
 const unique = (items) => [...new Set(items)]
@@ -58,12 +58,12 @@ try {
     currentFiles.indexHtml = renderedIndex
     currentFiles.swJs = renderedSw
     const measured = await collectMetrics({ indexHtml: renderedIndex, swJs: renderedSw, port, shellUrls })
-    const next = {
+    const next = maxDisplay(display, {
       initialRender: kibText(measured.initialRenderEstimate.bytes),
       offlineShell: kibText(measured.offlineShellEstimate.bytes),
       coldSession: kibText(measured.coldFirstSessionTransfer.bytes),
       warmSession: kibText(measured.warmRepeatVisitTransfer.bytes),
-    }
+    })
     finalMetrics = measured
     if (JSON.stringify(next) === JSON.stringify(display)) break
     display = next
@@ -76,14 +76,15 @@ try {
   currentFiles.swJs = finalSw
 
   finalMetrics = await collectMetrics({ indexHtml: finalIndex, swJs: finalSw, port, shellUrls })
-  const finalDisplay = {
+  finalMetrics.display = display
+  const finalDisplay = maxDisplay(display, {
     initialRender: kibText(finalMetrics.initialRenderEstimate.bytes),
     offlineShell: kibText(finalMetrics.offlineShellEstimate.bytes),
     coldSession: kibText(finalMetrics.coldFirstSessionTransfer.bytes),
     warmSession: kibText(finalMetrics.warmRepeatVisitTransfer.bytes),
-  }
-  if (JSON.stringify(finalDisplay) !== JSON.stringify(display)) {
-    throw new Error('Final measurements drifted after rendering homepage summary')
+  })
+  if (JSON.stringify(finalDisplay) !== JSON.stringify(display) || !coversMeasuredBytes(display, finalMetrics)) {
+    throw new Error('Final measurements drifted beyond the stable public summary')
   }
 
   writeFileSync(INDEX, finalIndex)
@@ -193,6 +194,7 @@ async function collectMetrics({ indexHtml, swJs, port, shellUrls }) {
       coldFirstSession: 'Empty caches, no service worker installed, then /sw.js registers and precaches the offline shell with cache: reload.',
       warmRepeatVisit: 'Repeat visit to / after a successful install with the service worker controlling the page and the shell already cached.',
     },
+    rounding: 'Homepage/report KiB values are rounded up to the next tenth to keep embedded summary values deterministic.',
     resourceSets: {
       initialRenderUrls,
       pageLinkedUrls: pageResources.pageLinkedUrls,
@@ -216,6 +218,7 @@ function buildReport(metrics) {
     method: {
       estimates: 'Local Brotli q11 compression of finalized dist files.',
       localTransferMeasurements: 'Local HTTP requests against finalized output with Accept-Encoding: br; totals count response-body bytes only and exclude headers.',
+      rounding: metrics.rounding,
       cacheConditions: metrics.assumptions,
     },
     budgets: {
@@ -224,6 +227,7 @@ function buildReport(metrics) {
       coldFirstSessionTransferBytes: metrics.coldFirstSessionTransfer.bytes,
       warmRepeatVisitTransferBytes: metrics.warmRepeatVisitTransfer.bytes,
     },
+    displayKib: metrics.display,
     resourceSets: metrics.resourceSets,
     metrics: {
       initialRenderEstimate: metrics.initialRenderEstimate,
@@ -259,6 +263,26 @@ function readPageResources(html) {
     metadataUrls,
     pageLinkedUrls: unique([...renderBlockingUrls, ...deferredScriptUrls, ...metadataUrls]),
   }
+}
+
+function maxDisplay(current, next) {
+  return {
+    initialRender: maxDecimalText(current.initialRender, next.initialRender),
+    offlineShell: maxDecimalText(current.offlineShell, next.offlineShell),
+    coldSession: maxDecimalText(current.coldSession, next.coldSession),
+    warmSession: maxDecimalText(current.warmSession, next.warmSession),
+  }
+}
+
+function maxDecimalText(a, b) {
+  return Number(a) >= Number(b) ? a : b
+}
+
+function coversMeasuredBytes(display, metrics) {
+  return Number(display.initialRender) >= kib(metrics.initialRenderEstimate.bytes)
+    && Number(display.offlineShell) >= kib(metrics.offlineShellEstimate.bytes)
+    && Number(display.coldSession) >= kib(metrics.coldFirstSessionTransfer.bytes)
+    && Number(display.warmSession) >= kib(metrics.warmRepeatVisitTransfer.bytes)
 }
 
 function readShell(sw) {

@@ -12,6 +12,7 @@
     "encoding",
     "method",
     "budgets",
+    "displayKib",
     "resourceSets",
     "metrics"
   ],
@@ -49,10 +50,11 @@
     },
     "method": {
       "type": "object",
-      "required": ["estimates", "localTransferMeasurements", "cacheConditions"],
+      "required": ["estimates", "localTransferMeasurements", "rounding", "cacheConditions"],
       "properties": {
         "estimates": { "type": "string" },
         "localTransferMeasurements": { "type": "string" },
+        "rounding": { "type": "string" },
         "cacheConditions": {
           "type": "object",
           "required": ["coldFirstSession", "warmRepeatVisit"],
@@ -78,6 +80,17 @@
         "offlineShellEstimateBytes": { "type": "integer", "minimum": 0 },
         "coldFirstSessionTransferBytes": { "type": "integer", "minimum": 0 },
         "warmRepeatVisitTransferBytes": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "displayKib": {
+      "type": "object",
+      "required": ["initialRender", "offlineShell", "coldSession", "warmSession"],
+      "properties": {
+        "initialRender": { "type": "string" },
+        "offlineShell": { "type": "string" },
+        "coldSession": { "type": "string" },
+        "warmSession": { "type": "string" }
       },
       "additionalProperties": false
     },
