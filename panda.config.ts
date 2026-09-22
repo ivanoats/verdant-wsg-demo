@@ -130,14 +130,26 @@ export default defineConfig({
           base: {
             width: '28px', height: '28px', borderRadius: 'full',
             border: '3px solid', borderColor: 'border', borderTopColor: 'accent',
-            _motionSafe: { animation: 'spin 900ms linear infinite' },
+          },
+          variants: {
+            preview: {
+              true: {
+                _motionSafe: { animation: 'spin 900ms linear 4' },
+              },
+            },
           },
         },
         skeleton: {
           className: 'skeleton',
           base: {
             borderRadius: 'sm', background: 'border', opacity: '0.5',
-            _motionSafe: { animation: 'pulse 1400ms ease-in-out infinite' },
+          },
+          variants: {
+            preview: {
+              true: {
+                _motionSafe: { animation: 'pulse 1400ms ease-in-out 3' },
+              },
+            },
           },
         },
       },

@@ -83,7 +83,7 @@ const heroHtml = `
       <p class="${eyebrowCss}">A design system for the W3C Web Sustainability Guidelines</p>
       <h1 id="hero-title" class="${heroTitleCss}">Verdant</h1>
       <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
-      <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, native dark mode, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
+      <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, native dark mode, motion that stays bounded, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
       <div class="${btnRowCss}">
         <a class="${btnPrimary}" href="/components.html">Browse components</a>
         <a class="${btnSecondary}" href="${REPO}">View source on GitHub</a>
@@ -420,10 +420,15 @@ const noteCss = css({ marginTop: '3', fontSize: 'label', color: 'ink.muted', max
 const motionRowCss = flex({ align: 'center', gap: '6', wrap: 'wrap' })
 const motionGroupCss = vstack({ gap: '2', alignItems: 'flex-start' })
 const spinnerCss = spinner()
+const spinnerPreviewCss = spinner({ preview: true })
 // Widths live in classes, not style="" — the CSP's style-src 'self' blocks
 // inline style attributes, which silently collapsed these bars before.
 const skeletonWideCss = `${skeleton()} ${css({ width: '160px', height: '14px' })}`
+const skeletonWidePreviewCss = `${skeleton({ preview: true })} ${css({ width: '160px', height: '14px' })}`
 const skeletonNarrowCss = `${skeleton()} ${css({ width: '110px', height: '14px' })}`
+const skeletonNarrowPreviewCss = `${skeleton({ preview: true })} ${css({ width: '110px', height: '14px' })}`
+const motionIntroCss = css({ color: 'ink.muted', maxWidth: '62ch', margin: '0 0 16px' })
+const motionControlsCss = flex({ align: 'center', gap: '3', wrap: 'wrap', marginTop: '4' })
 const decorCss = css({ display: 'block' })
 
 const componentsBody = `
@@ -481,17 +486,24 @@ const componentsBody = `
 
   <section class="${compSectionCss}">
     <h2 class="${compH2Css}">Motion</h2>
+    <p class="${motionIntroCss}">Static by default. Use the preview button to run four spinner turns and three skeleton pulses (about four seconds total). If your device prefers reduced motion, these examples stay still.</p>
     <div class="${motionRowCss}">
       <div class="${motionGroupCss}">
-        <div class="${spinnerCss}" role="status" aria-label="Scanning"></div>
-        <span class="${captionCss}">Spinner</span>
+        <div id="demo-spinner" class="${spinnerCss}" aria-hidden="true"></div>
+        <span class="${labelCss}">Spinner</span>
+        <span class="${captionCss}">Static status: Scanning site data</span>
       </div>
       <div class="${motionGroupCss}">
-        <div class="${skeletonWideCss}"></div>
-        <div class="${skeletonNarrowCss}"></div>
-        <span class="${captionCss}">Skeleton</span>
+        <div id="demo-skeleton-wide" class="${skeletonWideCss}" aria-hidden="true"></div>
+        <div id="demo-skeleton-narrow" class="${skeletonNarrowCss}" aria-hidden="true"></div>
+        <span class="${labelCss}">Skeleton</span>
+        <span class="${captionCss}">Static placeholder: Loading summary card</span>
       </div>
     </div>
+    <div class="${motionControlsCss}">
+      <button class="${btnSecondary}" type="button" id="motion-preview">Preview loading motion</button>
+    </div>
+    <p class="${noteCss}" id="motion-preview-status" role="status" aria-live="polite">Static by default. Preview runs once, then stops automatically.</p>
   </section>
 
   <section class="${compSectionCss}">
@@ -533,6 +545,61 @@ const themeToggleJs = `(function () {
     btn.setAttribute("aria-checked", String(forcedDark));
     apply(forcedDark ? DARK : LIGHT);
   });
+})();
+`
+
+const motionPreviewJs = `(function () {
+  var btn = document.getElementById("motion-preview");
+  if (!btn) return;
+  var status = document.getElementById("motion-preview-status");
+  var spinnerEl = document.getElementById("demo-spinner");
+  var skeletonWideEl = document.getElementById("demo-skeleton-wide");
+  var skeletonNarrowEl = document.getElementById("demo-skeleton-narrow");
+  var media = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  var timer = 0;
+  function setStatus(text) {
+    if (status) status.textContent = text;
+  }
+  function setStatic() {
+    if (spinnerEl) spinnerEl.className = ${JSON.stringify(spinnerCss)};
+    if (skeletonWideEl) skeletonWideEl.className = ${JSON.stringify(skeletonWideCss)};
+    if (skeletonNarrowEl) skeletonNarrowEl.className = ${JSON.stringify(skeletonNarrowCss)};
+  }
+  function restartAnimation(el, className) {
+    if (!el) return;
+    el.className = className.static;
+    void el.offsetWidth;
+    el.className = className.preview;
+  }
+  function syncReducedMotionStatus() {
+    window.clearTimeout(timer);
+    setStatic();
+    if (media && media.matches) {
+      setStatus("Reduced motion is enabled, so the loading preview stays still.");
+      return true;
+    }
+    setStatus("Static by default. Preview runs once, then stops automatically.");
+    return false;
+  }
+  btn.addEventListener("click", function () {
+    if (syncReducedMotionStatus()) return;
+    restartAnimation(spinnerEl, { static: ${JSON.stringify(spinnerCss)}, preview: ${JSON.stringify(spinnerPreviewCss)} });
+    restartAnimation(skeletonWideEl, { static: ${JSON.stringify(skeletonWideCss)}, preview: ${JSON.stringify(skeletonWidePreviewCss)} });
+    restartAnimation(skeletonNarrowEl, { static: ${JSON.stringify(skeletonNarrowCss)}, preview: ${JSON.stringify(skeletonNarrowPreviewCss)} });
+    setStatus("Preview running for about four seconds. It stops automatically.");
+    timer = window.setTimeout(function () {
+      setStatic();
+      setStatus("Preview finished. Loading demos are static again.");
+    }, 4200);
+  });
+  if (media) {
+    if (media.addEventListener) {
+      media.addEventListener("change", syncReducedMotionStatus);
+    } else if (media.addListener) {
+      media.addListener(syncReducedMotionStatus);
+    }
+  }
+  syncReducedMotionStatus();
 })();
 `
 
@@ -602,7 +669,7 @@ const minifyHtml = (html) => {
 // ---- write ---------------------------------------------------------------------
 
 mkdirSync('dist', { recursive: true })
-writeFileSync('dist/theme-toggle.js', themeToggleJs)
+writeFileSync('dist/theme-toggle.js', themeToggleJs + '\n' + motionPreviewJs)
 writeFileSync('dist/sw-register.js', swRegisterJs)
 writeFileSync('dist/sw.js', swJs)
 copyDir('public', 'dist')
