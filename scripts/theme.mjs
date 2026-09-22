@@ -1,4 +1,12 @@
 export const themePreferenceStorageKey = 'verdant-theme-preference'
+export const themePreferenceControlName = 'theme-preference'
+export const themePreferenceValues = ['system', 'light', 'dark']
+export const themePreferenceAttr = 'data-theme-preference'
+export const themeResolvedAttr = 'data-theme-resolved'
+export const themeOverrideAttr = 'data-theme-override'
+
+export const themeVarName = (name) =>
+  `--colors-${name.replace(/\./g, '-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`
 
 export const themeTokens = {
   'surface.100': { light: '#faf8f3', dark: '#15140f' },
@@ -6,6 +14,7 @@ export const themeTokens = {
   border: { light: '#93866c', dark: '#726b53' },
   ink: { light: '#1c1a15', dark: '#f1ede2' },
   'ink.muted': { light: '#5b5548', dark: '#b6ae9c' },
+  'ink.placeholder': { light: '#75726a', dark: '#8d8a81' },
   accent: { light: '#2f6b4a', dark: '#7fcfa3' },
   'accent.strong': { light: '#234f38', dark: '#5fb98c' },
   'accent.ink': { light: '#ffffff', dark: '#10241a' },
@@ -38,7 +47,7 @@ export const semanticColorTokens = Object.entries(themeTokens).reduce((colors, [
 }, {})
 
 const themeVarsFor = (mode) => Object.fromEntries(
-  Object.entries(themeTokens).map(([name, value]) => [`--colors-${name.replace(/\./g, '-')}`, value[mode]])
+  Object.entries(themeTokens).map(([name, value]) => [themeVarName(name), value[mode]])
 )
 
 export const explicitThemeVars = {
@@ -57,6 +66,7 @@ export const interfacePaletteOrder = [
   'accent.ink',
   'ink',
   'ink.muted',
+  'ink.placeholder',
   'border',
   'surface.200',
   'surface.100',

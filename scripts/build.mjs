@@ -8,7 +8,18 @@ import { css } from '../styled-system/css/index.mjs'
 import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
 import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
-import { illustrationPaletteOrder, interfacePaletteOrder, themePreferenceStorageKey, themeTokenCount, themeTokens } from './theme.mjs'
+import {
+  illustrationPaletteOrder,
+  interfacePaletteOrder,
+  themeOverrideAttr,
+  themePreferenceAttr,
+  themePreferenceControlName,
+  themePreferenceStorageKey,
+  themePreferenceValues,
+  themeResolvedAttr,
+  themeTokenCount,
+  themeTokens,
+} from './theme.mjs'
 
 // A hand-rolled recursive copy: some mounted/virtual filesystems choke on
 // Node's native cpSync fast paths (fcopyfile/clonefile), so this sticks to
@@ -139,7 +150,7 @@ const stageTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', font
 const stageBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0' })
 
 const stages = [
-  ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Small enough to hold in your head, so nothing gets a one-off value.'],
+  ['seed', 'Seed', 'Tokens', `${themeTokenCount} colors, a 4px spacing grid, four radii and system type. Small enough to hold in your head, so nothing gets a one-off value.`],
   ['sprout', 'Sprout', 'Components', 'Button, card, field, theme preference, switch specimen and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
   ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one stylesheet and two small same-origin scripts, from the first page on.'],
   ['canopy', 'Canopy', 'Sites', 'Security headers, cache rules, an offline shell and a real 404 &mdash; the hosting checks, handled before launch.'],
@@ -174,6 +185,7 @@ const sw = {
   border: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'border' }),
   ink: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink' }),
   'ink.muted': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.muted' }),
+  'ink.placeholder': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.placeholder' }),
   accent: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent' }),
   'accent.strong': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.strong' }),
   'accent.ink': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.ink' }),
@@ -202,7 +214,7 @@ const paletteHtml = `
 <section id="palette" class="${bandCss}" aria-labelledby="palette-title">
   <div class="${wrapCss} ${sectionCss}">
     <p class="${eyebrowCss}">Palette</p>
-    <h2 id="palette-title" class="${h2Css}">Seventeen colors, two seasons.</h2>
+    <h2 id="palette-title" class="${h2Css}">${themeTokenCount} colors, two seasons.</h2>
     <p class="${introCss}">One token set with a light and a dark value each. System mode follows <code class="${codeCss}">prefers-color-scheme</code>; explicit Light and Dark choices reuse the same tokens without a second stylesheet.</p>
     <h3 class="${paletteGroupCss}">Interface</h3>
     <p class="${paletteGroupNoteCss}">Text, controls and state. Every text pair clears 4.5:1 in both themes.</p>
@@ -333,7 +345,7 @@ const nav = (active) => {
     `<li><a class="${active === key ? navLinkActiveCss : navLinkCss}" href="${href}"${active === key ? ' aria-current="page"' : ''}>${label}</a></li>`
   const themeOption = (value, label) => `
           <label class="${themePrefOptionCss}" for="theme-pref-${value}">
-            <input class="${themePrefRadioCss}" type="radio" id="theme-pref-${value}" name="theme-preference" value="${value}"${value === 'system' ? ' checked' : ''}>
+            <input class="${themePrefRadioCss}" type="radio" id="theme-pref-${value}" name="${themePreferenceControlName}" value="${value}"${value === themePreferenceValues[0] ? ' checked' : ''}>
             <span>${label}</span>
           </label>`
   return `
@@ -535,9 +547,10 @@ const notFoundBody = `
 
 const themeToggleJs = `(function () {
   var STORAGE_KEY = ${JSON.stringify(themePreferenceStorageKey)};
-  var OVERRIDE_ATTR = "data-theme-override";
-  var PREFERENCE_ATTR = "data-theme-preference";
-  var RESOLVED_ATTR = "data-theme-resolved";
+  var OVERRIDE_ATTR = ${JSON.stringify(themeOverrideAttr)};
+  var PREFERENCE_ATTR = ${JSON.stringify(themePreferenceAttr)};
+  var RESOLVED_ATTR = ${JSON.stringify(themeResolvedAttr)};
+  var CONTROL_NAME = ${JSON.stringify(themePreferenceControlName)};
   var SWITCH_OFF = ${JSON.stringify(switchOffCss)};
   var SWITCH_ON = ${JSON.stringify(switchOnCss)};
   var media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
@@ -569,7 +582,7 @@ const themeToggleJs = `(function () {
   var currentPreference = readPreference();
   applyPreference(currentPreference);
   document.addEventListener("DOMContentLoaded", function () {
-    var radios = document.querySelectorAll('input[name="theme-preference"]');
+    var radios = document.querySelectorAll('input[name="' + CONTROL_NAME + '"]');
     for (var i = 0; i < radios.length; i += 1) {
       radios[i].checked = radios[i].value === currentPreference;
       radios[i].addEventListener("change", function (event) {

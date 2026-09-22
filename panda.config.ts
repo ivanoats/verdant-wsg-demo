@@ -1,5 +1,5 @@
 import { defineConfig } from '@pandacss/dev'
-import { explicitThemeVars, semanticColorTokens } from './scripts/theme.mjs'
+import { explicitThemeVars, semanticColorTokens, themeOverrideAttr, themeResolvedAttr } from './scripts/theme.mjs'
 
 export default defineConfig({
   preflight: true,
@@ -86,6 +86,7 @@ export default defineConfig({
             fontSize: 'body', lineHeight: 'body', fontFamily: 'sans',
             paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border',
             borderRadius: 'sm', background: 'surface.200', color: 'ink',
+            '&::placeholder': { color: 'ink.placeholder' },
             _focusVisible: { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '1px', borderColor: 'transparent' },
           },
         },
@@ -121,10 +122,10 @@ export default defineConfig({
 
   globalCss: {
     'html': { colorScheme: 'light dark' },
-    'html[data-theme-override="light"]': { ...explicitThemeVars.light },
-    'html[data-theme-override="dark"]': { ...explicitThemeVars.dark },
-    'html[data-theme-resolved="light"]': { colorScheme: 'light' },
-    'html[data-theme-resolved="dark"]': { colorScheme: 'dark' },
+    [`html[${themeOverrideAttr}="light"]`]: { ...explicitThemeVars.light },
+    [`html[${themeOverrideAttr}="dark"]`]: { ...explicitThemeVars.dark },
+    [`html[${themeResolvedAttr}="light"]`]: { colorScheme: 'light' },
+    [`html[${themeResolvedAttr}="dark"]`]: { colorScheme: 'dark' },
     'body': { margin: '0', background: 'surface.100', color: 'ink', fontFamily: 'sans', fontSize: 'body', lineHeight: 'body' },
     'a': { color: 'accent' },
     'a:hover': { color: 'accent.strong' },

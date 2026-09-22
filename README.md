@@ -25,6 +25,31 @@ Output lands in `dist/` — that's the Netlify publish directory (see `netlify.t
 - Content-hashed CSS/JS under `/assets/` (`scripts/fingerprint.mjs`), cached for a year; pages are network-first in the service worker, so a deploy never mixes new HTML with old CSS
 - No third-party scripts, no analytics, no web fonts, no icon font
 - "Geometric growth" art (`scripts/art.mjs`): inline SVG built from the system's own shapes, every fill a color token, so it recolors with the theme and costs no requests; it grows in once, only when motion is allowed
-- The page-weight numbers on the home page are measured by `scripts/stats.mjs` on every build, never hand-typed
+- The page-weight numbers on the home page are measured by `scripts/stats.mjs` on every build, never hand-typed; the current first-view accounting includes both the theme bootstrap and the deferred service-worker register script
 
 See the site itself for the full decision-to-guideline mapping.
+
+## Theme contract
+
+`scripts/theme.mjs` is the authoritative theme module. It exports:
+
+- `themeTokens`, `semanticColorTokens`, `explicitThemeVars`, `themeVarName`
+- `interfacePaletteOrder`, `illustrationPaletteOrder`, `themeTokenCount`
+- `themePreferenceStorageKey`
+- `themePreferenceControlName`
+- `themePreferenceValues`
+- `themePreferenceAttr`
+- `themeResolvedAttr`
+- `themeOverrideAttr`
+
+Runtime contract:
+
+- Storage key: `verdant-theme-preference`
+- Form control name: `theme-preference`
+- `<html data-theme-preference="system|light|dark">` records the user's selected preference
+- `<html data-theme-resolved="light|dark">` records the resolved theme currently on screen
+- `<html data-theme-override="light|dark">` is present only for explicit Light/Dark overrides and is omitted in System mode
+
+Bootstrap tradeoff:
+
+- `/theme-toggle.js` is loaded before the stylesheet on every page to apply a saved explicit preference before CSS paints, which reduces wrong-theme flash while staying compatible with the production CSP in `public/_headers` (`script-src 'self'`, no inline bootstrap)
