@@ -1,6 +1,6 @@
 # Verdant — WSG demo site
 
-A small static site that puts the [Verdant design system](https://claude.ai/artifact/1hu6m4apzrfeM9s8nWcmxf) on the web, built so it scores well against the W3C [Web Sustainability Guidelines](https://w3c.github.io/sustainableweb-wsg/) — checked with [wsg-check](https://github.com/ivanoats/wsg-check).
+A small static site that puts the [Verdant design system](https://claude.ai/artifact/1hu6m4apzrfeM9s8nWcmxf) on the web as a lightweight implementation demo for the W3C [Web Sustainability Guidelines](https://w3c.github.io/sustainableweb-wsg/). The repository's dated evidence register, hosting-provenance notes, and unresolved owner decisions live in [`docs/wsg-evidence-register.md`](docs/wsg-evidence-register.md).
 
 The home page promotes the system; `/components.html` is the live component gallery. Both are styled entirely with [PandaCSS](https://panda-css.com): tokens and recipes in `panda.config.ts`, a small build script (`scripts/build.mjs`) that generates the HTML and lets Panda statically extract exactly the CSS those pages use — no runtime CSS-in-JS, no unused utility classes shipped.
 
@@ -13,6 +13,11 @@ npm run build   # panda codegen -> generate HTML -> panda cssgen (minified, ligh
 ```
 
 Output lands in `dist/` — that's the Netlify publish directory (see `netlify.toml`).
+
+## Evidence and maintenance notes
+
+- Repository implementation evidence and open documentation gaps: [`docs/wsg-evidence-register.md`](docs/wsg-evidence-register.md)
+- Build-time implementation checks still surface on the site and can be re-run locally; they do not replace maintainer-supplied operational evidence.
 
 ## What's deliberately in here
 
