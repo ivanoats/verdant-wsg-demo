@@ -555,18 +555,15 @@ const siteUiJs = `(function () {
   var root = document.documentElement;
   var controls = Array.prototype.slice.call(document.querySelectorAll('[data-theme-preference], [name=\"' + CONTROL + '\"]'));
   var scheme = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-  function varName(key) {
-    return '--colors-' + key.replace(/\\./g, '-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-  }
   function clearTheme() {
-    Object.keys(PALETTES.light).forEach(function (key) { root.style.removeProperty(varName(key)); });
+    Object.keys(PALETTES.light).forEach(function (key) { root.style.removeProperty(key); });
     root.style.colorScheme = 'light dark';
     root.removeAttribute(OVERRIDE_ATTR);
   }
   function paint(mode) {
     if (mode === 'system') return clearTheme();
     var palette = PALETTES[mode];
-    Object.keys(palette).forEach(function (key) { root.style.setProperty(varName(key), palette[key]); });
+    Object.keys(palette).forEach(function (key) { root.style.setProperty(key, palette[key]); });
     root.style.colorScheme = mode;
     root.setAttribute(OVERRIDE_ATTR, mode);
   }
