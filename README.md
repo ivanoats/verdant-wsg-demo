@@ -17,6 +17,7 @@ Output lands in `dist/` — that's the Netlify publish directory (see `netlify.t
 ## Validation record
 
 Manual cross-browser, accessibility, and usability validation planning/status is tracked in [`VALIDATION.md`](./VALIDATION.md).
+
 ## Evidence and maintenance notes
 
 - Repository implementation evidence and open documentation gaps: [`docs/wsg-evidence-register.md`](docs/wsg-evidence-register.md)
