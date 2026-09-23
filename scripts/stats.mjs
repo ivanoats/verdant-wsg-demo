@@ -4,8 +4,10 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { createServer, request as httpRequest } from 'node:http'
 import { brotliCompressSync, constants } from 'node:zlib'
+import { extname, join, normalize as normalizePath, resolve as resolvePath, sep } from 'node:path'
 
 const DIST = 'dist'
+const DIST_ROOT = resolvePath(DIST)
 const INDEX = `${DIST}/index.html`
 const SW = `${DIST}/sw.js`
 const REPORT = `${DIST}/measurements.json`
@@ -50,7 +52,7 @@ try {
     coldSession: '0.0',
     warmSession: '0.0',
   }
-  let finalMetrics
+  let finalMetrics = null
 
   for (let i = 0; i < 8; i++) {
     const renderedIndex = renderIndex(indexTemplate, display)
@@ -89,7 +91,7 @@ try {
 
   writeFileSync(INDEX, finalIndex)
   writeFileSync(SW, finalSw)
-  writeFileSync(REPORT, JSON.stringify(buildReport(finalMetrics), null, 2) + '\n')
+  writeFileSync(REPORT, `${JSON.stringify(buildReport(finalMetrics), null, 2)}\n`)
 
   assertNoPlaceholders(readFileSync(INDEX, 'utf8'))
   if (readFileSync(SW, 'utf8').includes(VERSION_PLACEHOLDER)) throw new Error(`Expected ${SW} to have a finalized version`)
@@ -119,10 +121,10 @@ function renderSw(template, indexHtml) {
   return template.replace(VERSION_PLACEHOLDER, version)
 }
 
-async function collectMetrics({ indexHtml, swJs, port, shellUrls }) {
+async function collectMetrics({ indexHtml, swJs, port: serverPort, shellUrls: shell }) {
   const pageResources = readPageResources(indexHtml)
   const initialRenderUrls = unique(['/', ...pageResources.renderBlockingUrls, ...pageResources.deferredScriptUrls])
-  const offlineShellUrls = unique(['/sw.js', ...shellUrls])
+  const offlineShellUrls = unique(['/sw.js', ...shell])
 
   if (!initialRenderUrls.length) throw new Error('No initial render assets were detected')
   for (const url of initialRenderUrls) ensureUrlExists(url)
@@ -141,17 +143,17 @@ async function collectMetrics({ indexHtml, swJs, port, shellUrls }) {
   }
 
   const coldRequests = []
-  coldRequests.push(await requestOnce(port, '/'))
+  coldRequests.push(await requestOnce(serverPort, '/'))
   for (const url of pageResources.pageLinkedUrls) {
-    coldRequests.push(await requestOnce(port, url))
+    coldRequests.push(await requestOnce(serverPort, url))
   }
-  coldRequests.push(await requestOnce(port, '/sw.js'))
-  for (const url of shellUrls) {
-    coldRequests.push(await requestOnce(port, url, { label: 'service-worker-precache', cache: 'reload' }))
+  coldRequests.push(await requestOnce(serverPort, '/sw.js'))
+  for (const url of shell) {
+    coldRequests.push(await requestOnce(serverPort, url, { label: 'service-worker-precache', cache: 'reload' }))
   }
 
   const warmRequests = []
-  warmRequests.push(await requestOnce(port, '/'))
+  warmRequests.push(await requestOnce(serverPort, '/'))
   for (const url of pageResources.pageLinkedUrls) {
     warmRequests.push({
       url,
@@ -161,7 +163,7 @@ async function collectMetrics({ indexHtml, swJs, port, shellUrls }) {
       cache: 'warm-shell',
     })
   }
-  warmRequests.push(await requestOnce(port, '/sw.js', { headers: { 'If-None-Match': etag(readUrl('/sw.js', { indexHtml, swJs })) } }))
+  warmRequests.push(await requestOnce(serverPort, '/sw.js', { headers: { 'If-None-Match': etag(readUrl('/sw.js', { indexHtml, swJs })) } }))
 
   return {
     measuredAt: new Date().toISOString(),
@@ -295,18 +297,22 @@ function readMatches(text, pattern) {
   return [...text.matchAll(pattern)].map((match) => match[1])
 }
 
-function readUrl(url, currentFiles) {
-  if (url === '/') return Buffer.from(currentFiles.indexHtml)
-  if (url === '/sw.js') return Buffer.from(currentFiles.swJs)
+function readUrl(url, files) {
+  if (url === '/') return Buffer.from(files.indexHtml)
+  if (url === '/sw.js') return Buffer.from(files.swJs)
   return readFileSync(fileForUrl(url))
 }
 
+// Map a URL path to a file inside dist/, refusing anything that would resolve
+// outside it (e.g. /../package.json), even though this server is local-only.
 function fileForUrl(url) {
-  if (url === '/') return `${DIST}/index.html`
+  if (url === '/') return join(DIST_ROOT, 'index.html')
+  const candidate = resolvePath(DIST_ROOT, `.${normalizePath(decodeURIComponent(url))}`)
+  if (candidate !== DIST_ROOT && !candidate.startsWith(DIST_ROOT + sep)) throw new Error(`Refusing path outside ${DIST}: ${url}`)
   // Pretty routes (e.g. /components) are served from their .html file, the
   // same mapping Netlify and the service worker's canonical keys use.
-  if (!/\.[a-z0-9]+$/i.test(url) && existsSync(`${DIST}${url}.html`)) return `${DIST}${url}.html`
-  return `${DIST}${url}`
+  if (!extname(candidate) && existsSync(`${candidate}.html`)) return `${candidate}.html`
+  return candidate
 }
 
 function ensureUrlExists(url) {
@@ -339,9 +345,16 @@ function etag(body) {
   return `"${createHash('sha256').update(body).digest('hex')}"`
 }
 
-function serve(req, res, currentFiles) {
+function serve(req, res, files) {
   const url = new URL(req.url, 'http://127.0.0.1')
-  const body = readUrl(url.pathname, currentFiles)
+  let body
+  try {
+    body = readUrl(url.pathname, files)
+  } catch {
+    res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' })
+    res.end('Not found')
+    return
+  }
   const entityTag = etag(body)
   const headers = {
     'cache-control': cacheControl(url.pathname),
@@ -365,11 +378,11 @@ function serve(req, res, currentFiles) {
   res.end(payload)
 }
 
-function requestOnce(port, path, options = {}) {
+function requestOnce(serverPort, path, options = {}) {
   return new Promise((resolve, reject) => {
     const req = httpRequest({
       hostname: '127.0.0.1',
-      port,
+      port: serverPort,
       path,
       method: 'GET',
       headers: {
