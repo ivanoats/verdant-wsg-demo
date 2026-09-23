@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      # Lifecycle scripts are skipped; none of the pinned dev dependencies
+      # need one, and the build's own steps run explicitly below.
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      # The locally installed, lockfile-pinned Playwright CLI fetches its
+      # matching browser build; nothing is downloaded through npx.
+      - name: Install Chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Build and verify contracts
+        run: npm run verify:ci
+      - name: Upload audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            dist/measurements.json
+            dist/measurements.schema.json
+            dist/offline-cache.json
+            artifacts/ci-audit.json
+            artifacts/playwright-report.json
+          if-no-files-found: warn

@@ -48,7 +48,7 @@ if (process.argv[2]) {
   const { chromium } = await import('playwright').catch((cause) => {
     throw new Error(
       'Playwright is required for the optional CPU-throttled profile. ' +
-      'Install it temporarily with: npm install --no-save --package-lock=false playwright',
+      'Install the pinned dev dependencies with: npm ci',
       { cause },
     )
   })

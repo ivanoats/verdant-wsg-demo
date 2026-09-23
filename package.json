@@ -9,10 +9,17 @@
     "dev": "node scripts/dev.mjs",
     "prebuild": "panda codegen",
     "build": "node scripts/build.mjs && panda cssgen -m --lightningcss -o dist/styles.css && node scripts/fingerprint.mjs && node scripts/stats.mjs",
-    "profile:art": "node scripts/profile-art.mjs"
+    "profile:art": "node scripts/profile-art.mjs",
+    "check:budgets": "node scripts/check-budgets.mjs",
+    "test:unit": "node --test tests/service-worker.test.mjs tests/measurements.test.mjs",
+    "test:browser": "playwright test",
+    "test": "npm run test:unit && npm run test:browser",
+    "verify:ci": "npm run build && npm run check:budgets && npm test"
   },
   "license": "ISC",
   "devDependencies": {
-    "@pandacss/dev": "^1.12.1"
+    "@pandacss/dev": "^1.12.1",
+    "@playwright/test": "1.63.0",
+    "ajv": "8.20.0"
   }
 }

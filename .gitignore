@@ -3,3 +3,5 @@ dist/
 styled-system/
 .DS_Store
 .tmp/
+artifacts/
+test-results/

@@ -39,11 +39,10 @@ npm run profile:art
 
 That reports the generated homepage's DOM/SVG element counts plus raw, gzip, and Brotli sizes for the page, all inline SVG markup, the hero scene, and the CTA meadow.
 
-For the CPU-throttled animation pass used in issue #11, serve `dist/` and run the same profiler against the live page. The Playwright dependency is only for this local check; it is not part of the shipped site.
+For the CPU-throttled animation pass used in issue #11, serve `dist/` and run the same profiler against the live page. Playwright is a pinned dev dependency (CI uses it too); it is not part of the shipped site.
 
 ```bash
-npm install --no-save --package-lock=false playwright
-npx playwright install chromium
+./node_modules/.bin/playwright install chromium
 python3 -m http.server 4321 -d dist &   # background the server so the next line runs
 SERVER_PID=$!
 node scripts/profile-art.mjs http://127.0.0.1:4321
@@ -73,6 +72,21 @@ Tradeoffs:
 - The measurable win came from reusing a single meadow leaf shape with `<defs>/<use>` and relaxing foreground grass density slightly while lengthening blades to keep the same silhouette.
 - The 4×-throttled long-task measurement was stable enough to keep; single-frame spikes varied more between runs, so they are useful for local investigation but not recorded here as the primary comparison.
 - The visual check stayed close enough that further simplification was not justified. These measurements show lower DOM/SVG complexity and a smaller worst-case main-thread burst under throttle, but they do **not** prove any energy-savings claim by themselves.
+
+## CI coverage
+
+`npm run verify:ci` is what `.github/workflows/ci.yml` runs on every pull request and on `main`, on the Node 20 runtime pinned in `.nvmrc` (the same version `netlify.toml` builds with):
+
+- `npm ci --ignore-scripts`, then a full `npm run build` from the lockfile.
+- `scripts/check-budgets.mjs` compares the finalized `dist/measurements.json` against the reviewed limits in `ci/budgets.json` and writes `artifacts/ci-audit.json`.
+- `tests/service-worker.test.mjs` and `tests/measurements.test.mjs` check the production worker, the published offline-cache contract and the measurement report against its schema.
+- `tests/site.spec.mjs` (Playwright, Chromium) checks behavior in a real browser against `scripts/serve-dist.mjs`: field hints and placeholder contrast, prose-link underlines, skip-link focus, no horizontal scroll at 320px, theme persistence and live System mode, and the bounded, reduced-motion-safe loading preview.
+
+The run uploads the measurement report, its schema, the offline-cache contract and the audit as artifacts. Assistive-technology, cross-device and usability checks stay manual and are tracked in [`VALIDATION.md`](./VALIDATION.md).
+
+### Budget rationale
+
+`ci/budgets.json` records the 2026-09-22 baselines from `dist/measurements.json` with modest headroom above each. A budget failure means the change added weight; raise a limit only in a reviewed change that says why.
 
 ## What's deliberately in here
 

@@ -122,11 +122,12 @@ const heroHtml = `
 // ---- index: measured stats (filled in by scripts/stats.mjs after fingerprinting)
 
 const statsGridCss = css({
-  display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+  display: 'grid', // minmax(0, 1fr): a wide fallback font must not stretch a column past the viewport.
+  gridTemplateColumns: { base: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' },
   gap: { base: '6', md: '8' }, margin: '0', paddingBlock: '8',
 })
 const statCss = css({ display: 'flex', flexDirection: 'column-reverse', margin: '0' })
-const statValueCss = css({ fontSize: { base: 'displayLg', md: '40px' }, lineHeight: { base: 'displayLg', md: '48px' }, fontWeight: '700', color: 'accent', margin: '0' })
+const statValueCss = css({ fontSize: { base: 'displayMd', sm: 'displayLg', md: '40px' }, lineHeight: { base: 'displayMd', sm: 'displayLg', md: '48px' }, fontWeight: '700', color: 'accent', margin: '0' })
 const statLabelCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '4px 0 0' })
 const statsNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 8px' })
 
@@ -340,7 +341,7 @@ const tokensHtml = `
 
 // ---- index: saved WSG evidence --------------------------------------------------
 
-const scoreListCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)' }, gap: '4', listStyle: 'none', margin: '0', padding: '0' })
+const scoreListCss = css({ display: 'grid', gridTemplateColumns: { base: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: '4', listStyle: 'none', margin: '0', padding: '0' })
 const scoreItemCss = card()
 const scoreHeadCss = flex({ justify: 'space-between', align: 'baseline', gap: '3', wrap: 'wrap' })
 const scoreTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0' })
@@ -614,8 +615,9 @@ const skeletonNarrowCss = `${skeleton()} ${css({ width: '110px', height: '14px' 
 const skeletonNarrowPreviewCss = `${skeleton({ preview: true })} ${css({ width: '110px', height: '14px' })}`
 const motionIntroCss = css({ color: 'ink.muted', maxWidth: '62ch', margin: '0 0 16px' })
 const motionControlsCss = flex({ align: 'center', gap: '3', wrap: 'wrap', marginTop: '4' })
-const specimenGridCss = css({ display: 'grid', gap: '6' })
-const specimenCss = css({ background: 'surface.200', border: '1px solid', borderColor: 'border', borderRadius: 'lg', padding: { base: '4', md: '6' }, display: 'grid', gap: '4' })
+// minmax(0, 1fr) keeps a wide fallback font from stretching the column past a 320px viewport.
+const specimenGridCss = css({ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '6' })
+const specimenCss = css({ background: 'surface.200', border: '1px solid', borderColor: 'border', borderRadius: 'lg', padding: { base: '4', md: '6' }, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '4' })
 const specimenHeaderCss = vstack({ gap: '2', alignItems: 'flex-start' })
 const specimenLabelCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em', color: 'accent', margin: '0' })
 const specimenBlockCss = vstack({ gap: '2', alignItems: 'stretch' })
