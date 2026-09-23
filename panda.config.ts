@@ -141,6 +141,55 @@ export default defineConfig({
     },
   },
 
+  // Layout primitives. These replace Panda's built-in container, stack and
+  // grid so every default comes from Verdant's tokens: a 1080px page
+  // container with token padding, and 16px (spacing 4) gaps. Grid tracks use
+  // minmax(0, 1fr), and auto-fit tracks cap their minimum at 100%, so a wide
+  // fallback font can never push a column past a 320px viewport.
+  patterns: {
+    extend: {
+      container: {
+        description: 'Centered page container, capped at 1080px, with responsive token padding.',
+        properties: { maxWidth: { type: 'property', value: 'maxWidth' } },
+        defaultValues: { maxWidth: '1080px' },
+        transform(props) {
+          const { maxWidth, ...rest } = props
+          return { position: 'relative', width: '100%', maxWidth, marginInline: 'auto', paddingInline: { base: '4', md: '6' }, ...rest }
+        },
+      },
+      stack: {
+        description: 'Vertical (or horizontal) flow with a spacing-token gap.',
+        properties: {
+          align: { type: 'property', value: 'alignItems' },
+          justify: { type: 'property', value: 'justifyContent' },
+          direction: { type: 'property', value: 'flexDirection' },
+          gap: { type: 'property', value: 'gap' },
+        },
+        defaultValues: { direction: 'column', gap: '4' },
+        transform(props) {
+          const { align, justify, direction, gap, ...rest } = props
+          return { display: 'flex', flexDirection: direction, alignItems: align, justifyContent: justify, gap, ...rest }
+        },
+      },
+      grid: {
+        description: 'Responsive grid: fixed columns, or auto-fit columns with a minimum child width.',
+        properties: {
+          gap: { type: 'property', value: 'gap' },
+          columns: { type: 'number' },
+          minChildWidth: { type: 'string' },
+        },
+        defaultValues: { gap: '4' },
+        transform(props, { map }) {
+          const { gap, columns, minChildWidth, ...rest } = props
+          let gridTemplateColumns
+          if (columns != null) gridTemplateColumns = map(columns, (v) => `repeat(${v}, minmax(0, 1fr))`)
+          else if (minChildWidth != null) gridTemplateColumns = map(minChildWidth, (v) => `repeat(auto-fit, minmax(min(${v}, 100%), 1fr))`)
+          return { display: 'grid', gridTemplateColumns, gap, ...rest }
+        },
+      },
+    },
+  },
+
   globalCss: {
     'html': { colorScheme: 'light dark' },
     // Panda emits token variables in the `tokens` layer, which comes after

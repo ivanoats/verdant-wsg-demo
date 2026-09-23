@@ -104,13 +104,17 @@ export const publicTokenScope = {
     })),
   },
   layout: {
+    primitives: [
+      '`container()` — centered, capped at 1080px (override with `maxWidth`), inline padding of spacing `4`, then `6` from `md`.',
+      '`stack()` — a flex column by default with a spacing-`4` gap; takes `direction`, `align`, `justify` and `gap`.',
+      '`grid()` — `columns` (a number or responsive object) makes `minmax(0, 1fr)` tracks; `minChildWidth` (a CSS length) makes auto-fit tracks capped at 100%; default gap is spacing `4`.',
+    ],
     inherited: [
       'Responsive rules use Panda defaults (`base`, `sm`, `md`, `lg`) because Verdant does not publish a custom breakpoint token scale.',
     ],
     pageSpecific: [
       'Hero wordmark: 56px at base and 88px from `md` upward; this is page artwork, not a reusable type token.',
       'Components and 404 page titles: 40px at base and 56px from `md` upward; also page-specific, not public tokens.',
-      'The shared page wrapper is capped at 1080px for this demo site layout.',
     ],
   },
 }
