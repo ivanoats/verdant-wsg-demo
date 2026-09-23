@@ -4,6 +4,12 @@ name: Update screenshots
 # pull request (or run this from the Actions tab on the branch). It re-renders
 # the gallery baselines on the same pinned runner CI uses and commits them to
 # the branch, so the new images are reviewed in the PR diff.
+#
+# Two jobs keep the write token away from PR code: `render` runs the build and
+# Playwright with a read-only token and uploads only the PNGs; `commit` never
+# runs project code, it just commits those PNGs. Fork PRs are skipped (their
+# token can't push to the fork), so maintainers refresh baselines on a
+# same-repository branch instead.
 # Pushes made with GITHUB_TOKEN do not start CI, so push any commit (or re-run
 # CI) afterwards to see the checks pass.
 on:
@@ -12,18 +18,20 @@ on:
     types: [labeled]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  update:
+  render:
     if: >-
       (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') ||
-      (github.event_name == 'pull_request' && github.event.label.name == 'update-screenshots')
+      (github.event_name == 'pull_request' && github.event.label.name == 'update-screenshots' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref || github.ref_name }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -38,11 +46,31 @@ jobs:
         run: ./node_modules/.bin/playwright test tests/visual.spec.mjs --update-snapshots
         env:
           CI: 'true'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-baselines
+          path: tests/__screenshots__/*.png
+          if-no-files-found: error
+          retention-days: 1
+
+  commit:
+    needs: render
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: screenshot-baselines
+          path: tests/__screenshots__
       - name: Commit baselines
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/__screenshots__
+          git add 'tests/__screenshots__/*.png'
           if git diff --cached --quiet; then
             echo 'Baselines already up to date.'
           else
