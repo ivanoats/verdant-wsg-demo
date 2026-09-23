@@ -16,9 +16,10 @@ import {
   themePreferenceValues,
   themeResolvedAttr,
   themeTokenCount,
+  highContrastTokens,
   themeTokens,
 } from './theme.mjs'
-import { paletteSections, verifiedPairings, publicTokenScope } from './tokens.mjs'
+import { paletteSections, verifiedPairings, publicTokenScope, highContrastMinimum } from './tokens.mjs'
 
 // A hand-rolled recursive copy: some mounted/virtual filesystems choke on
 // Node's native cpSync fast paths (fcopyfile/clonefile), so this sticks to
@@ -192,6 +193,8 @@ const swatchThemeTileCss = css({
   border: '1px solid', borderColor: 'border', borderRadius: 'sm', padding: '3', background: 'surface.100',
 })
 const swatchThemeLabelCss = css({ display: 'block', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
+const hexInlineCss = css({ fontFamily: 'mono', fontSize: 'label' })
+const highContrastListCss = css({ margin: '0', paddingLeft: '20px', listStyle: 'disc', color: 'ink.muted', fontSize: 'bodySm', lineHeight: 'bodySm', '& li + li': { marginTop: '2' } })
 const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', marginTop: '4px' })
 const pairingGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: '4', listStyle: 'none', margin: '0', padding: '0' })
 const pairingCardCss = card()
@@ -266,6 +269,27 @@ const wcagLevel = (category, ratio) => {
 const levelBadge = (category, ratio) => `<span class="${levelBadgeCss}">WCAG ${wcagLevel(category, ratio)}</span>`
 const textPairings = evaluatedPairings.filter((pairing) => pairing.category === 'text')
 const aaaBothThemes = textPairings.filter((pairing) => Math.min(pairing.lightContrast, pairing.darkContrast) >= 7).length
+
+// prefers-contrast: more swaps in highContrastTokens; every pairing must then
+// clear the stricter targets in both themes, or the build fails.
+const highContrastMaps = {
+  light: { ...themeValueMaps.light, ...Object.fromEntries(Object.entries(highContrastTokens).map(([key, value]) => [key, value.light])) },
+  dark: { ...themeValueMaps.dark, ...Object.fromEntries(Object.entries(highContrastTokens).map(([key, value]) => [key, value.dark])) },
+}
+const highContrastPairings = verifiedPairings.map((pairing) => {
+  const minimum = highContrastMinimum[pairing.category]
+  const lightContrast = contrast(highContrastMaps.light[pairing.foreground], highContrastMaps.light[pairing.background])
+  const darkContrast = contrast(highContrastMaps.dark[pairing.foreground], highContrastMaps.dark[pairing.background])
+  if (lightContrast < minimum || darkContrast < minimum) {
+    throw new Error(`High-contrast pairing failed ${pairing.title}: ${formatRatio(lightContrast)} light / ${formatRatio(darkContrast)} dark (needs ${minimum}:1)`)
+  }
+  return { ...pairing, minimum, lightContrast, darkContrast }
+})
+const lowestHighContrastText = Math.min(...highContrastPairings
+  .filter((pairing) => pairing.category === 'text')
+  .flatMap((pairing) => [pairing.lightContrast, pairing.darkContrast]))
+const highContrastRows = Object.entries(highContrastTokens).map(([key, value]) => `
+      <li>${tokenCode(key)} &mdash; Light <span class="${hexInlineCss}">${themeTokens[key].light}</span> &rarr; <span class="${hexInlineCss}">${value.light}</span> &middot; Dark <span class="${hexInlineCss}">${themeTokens[key].dark}</span> &rarr; <span class="${hexInlineCss}">${value.dark}</span></li>`).join('')
 const pairingGroups = [
   {
     key: 'text',
@@ -308,6 +332,10 @@ const paletteHtml = `
     <h3 class="${paletteGroupCss} ${paletteGapCss}">${title}</h3>
     <p class="${paletteGroupNoteCss}">${note}</p>
     <ul class="${pairingGridCss}">${pairingCards(key)}</ul>`).join('')}
+    <h3 class="${paletteGroupCss} ${paletteGapCss}">Increased contrast</h3>
+    <p class="${paletteGroupNoteCss}">When the operating system asks for more contrast (<code class="${codeCss}">prefers-contrast: more</code>), ${Object.keys(highContrastTokens).length} tokens switch to stronger values in either theme, control borders thicken to 2px and the focus ring to 3px. The build checks every pairing above against stricter targets in that mode: ${highContrastMinimum.text}:1 for text (the weakest is ${formatRatio(lowestHighContrastText)}) and ${highContrastMinimum.functional}:1 for control borders and focus rings.</p>
+    <ul class="${highContrastListCss}">${highContrastRows}
+    </ul>
   </div>
 </section>`
 
