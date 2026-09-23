@@ -135,6 +135,9 @@ export default defineConfig({
               background: 'border.control',
             },
             _motionSafe: { _before: { transition: 'background-color 150ms ease' } },
+            // State lives in aria-checked at runtime, so the track colour follows
+            // it here (inside the recipe layer, so it outranks the base colour).
+            '&[aria-checked="true"]': { _before: { background: 'accent' } },
           },
           variants: {
             on: { true: { _before: { background: 'accent' } } },
@@ -187,9 +190,6 @@ export default defineConfig({
       '.switchTrack .knob': { transition: 'transform 150ms ease' },
     },
     '.switchTrack[aria-checked="true"] .knob': { transform: 'translateX(20px)' },
-    // The switch's state lives in aria-checked at runtime, so the track colour
-    // follows it here rather than through a build-time recipe variant.
-    '.switchTrack[aria-checked="true"]::before': { background: 'var(--colors-accent)' },
     // Decorative-only art is dropped for anyone who's asked to save data —
     // it costs bytes and carries no content (WSG 3.12's third preference query).
     '@media (prefers-reduced-data: reduce)': {
