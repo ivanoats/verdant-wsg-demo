@@ -28,9 +28,12 @@ That reports the generated homepage's DOM/SVG element counts plus raw, gzip, and
 For the CPU-throttled animation pass used in issue #11, serve `dist/` and run the same profiler against the live page. The Playwright dependency is only for this local check; it is not part of the shipped site.
 
 ```bash
-python3 -m http.server 4321 -d dist
 npm install --no-save --package-lock=false playwright
+npx playwright install chromium
+python3 -m http.server 4321 -d dist &   # background the server so the next line runs
+SERVER_PID=$!
 node scripts/profile-art.mjs http://127.0.0.1:4321
+kill $SERVER_PID
 ```
 
 The throttled run uses a 1280×900 viewport and Chrome DevTools Protocol 4× CPU slowdown, then samples `requestAnimationFrame` timing for the finite hero animation window and records `longtask` entries.
