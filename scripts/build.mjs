@@ -9,8 +9,6 @@ import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
 import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
 import {
-  illustrationPaletteOrder,
-  interfacePaletteOrder,
   themeOverrideAttr,
   themePreferenceAttr,
   themePreferenceControlName,
@@ -209,7 +207,7 @@ const paletteGroupCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fo
 const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '68ch' })
 const paletteGapCss = css({ marginTop: '12' })
 
-const hexToRgb = (hex) => [0, 2, 4].map((offset) => parseInt(hex.slice(offset + 1, offset + 3), 16) / 255)
+const hexToRgb = (hex) => [0, 2, 4].map((offset) => Number.parseInt(hex.slice(offset + 1, offset + 3), 16) / 255)
 const relativeLuminance = (hex) => {
   const [r, g, b] = hexToRgb(hex).map((channel) => (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4))
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
