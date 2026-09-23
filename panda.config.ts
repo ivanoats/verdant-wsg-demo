@@ -47,10 +47,14 @@ export default defineConfig({
             100: { value: { base: '#faf8f3', _dark: '#15140f' } },
             200: { value: { base: '#ffffff', _dark: '#1e1c15' } },
           },
-          border: { value: { base: '#93866c', _dark: '#726b53' } },
+          border: {
+            DEFAULT: { value: { base: '#c7bda9', _dark: '#514b3b' } },
+            control: { value: { base: '#7f735b', _dark: '#8f866f' } },
+          },
           ink: {
             DEFAULT: { value: { base: '#1c1a15', _dark: '#f1ede2' } },
             muted: { value: { base: '#5b5548', _dark: '#b6ae9c' } },
+            placeholder: { value: { base: '#75726a', _dark: '#8d8a81' } },
           },
           accent: {
             DEFAULT: { value: { base: '#2f6b4a', _dark: '#7fcfa3' } },
@@ -84,16 +88,16 @@ export default defineConfig({
         button: {
           className: 'btn',
           base: {
-            fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em',
-            paddingBlock: '2', paddingInline: '4', borderRadius: 'md', border: '1px solid transparent',
-            cursor: 'pointer', outlineOffset: '2px', display: 'inline-block',
+            fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', letterSpacing: '0.02em',
+            minHeight: '44px', paddingBlock: '2', paddingInline: '4', borderRadius: 'md', border: '1px solid transparent',
+            cursor: 'pointer', outlineOffset: '2px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecorationLine: 'none',
             _motionSafe: { transition: 'background-color 120ms ease, border-color 120ms ease' },
             _disabled: { opacity: '0.5', cursor: 'not-allowed' },
           },
           variants: {
             variant: {
               primary: { background: 'accent', color: 'accent.ink', _hover: { background: 'accent.strong' } },
-              secondary: { background: 'transparent', color: 'ink', borderColor: 'border', _hover: { borderColor: 'accent', color: 'accent' } },
+              secondary: { background: 'transparent', color: 'ink', borderColor: 'border.control', _hover: { borderColor: 'accent', color: 'accent' } },
             },
           },
           defaultVariants: { variant: 'primary' },
@@ -109,20 +113,34 @@ export default defineConfig({
           className: 'fieldInput',
           base: {
             fontSize: 'body', lineHeight: 'body', fontFamily: 'sans',
-            paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border',
+            minHeight: '44px', paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border.control',
             borderRadius: 'sm', background: 'surface.200', color: 'ink',
+            _placeholder: { color: 'ink.placeholder', opacity: '1' },
             _focusVisible: { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '1px', borderColor: 'transparent' },
           },
         },
         switchTrack: {
           className: 'switchTrack',
           base: {
-            position: 'relative', width: '44px', height: '24px', borderRadius: 'full',
-            background: 'border', border: 'none', cursor: 'pointer', padding: '0', flex: 'none',
-            _motionSafe: { transition: 'background-color 150ms ease' },
+            position: 'relative', width: '44px', height: '44px', borderRadius: 'full',
+            background: 'transparent', border: 'none', cursor: 'pointer', padding: '0', flex: 'none',
+            _before: {
+              content: '""',
+              position: 'absolute',
+              top: '10px',
+              left: '0',
+              width: '44px',
+              height: '24px',
+              borderRadius: 'full',
+              background: 'border.control',
+            },
+            _motionSafe: { _before: { transition: 'background-color 150ms ease' } },
+            // State lives in aria-checked at runtime, so the track colour follows
+            // it here (inside the recipe layer, so it outranks the base colour).
+            '&[aria-checked="true"]': { _before: { background: 'accent' } },
           },
           variants: {
-            on: { true: { background: 'accent' } },
+            on: { true: { _before: { background: 'accent' } } },
           },
         },
         spinner: {
@@ -159,7 +177,12 @@ export default defineConfig({
   globalCss: {
     'html': { colorScheme: 'light dark' },
     'body': { margin: '0', background: 'surface.100', color: 'ink', fontFamily: 'sans', fontSize: 'body', lineHeight: 'body' },
-    'a': { color: 'accent' },
+    'a': {
+      color: 'accent',
+      textDecoration: 'underline',
+      textUnderlineOffset: '0.15em',
+      textDecorationThickness: '0.08em',
+    },
     'a:hover': { color: 'accent.strong' },
     ':focus-visible': { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '2px' },
     '@keyframes spin': { to: { transform: 'rotate(360deg)' } },
@@ -172,7 +195,7 @@ export default defineConfig({
     '@keyframes sprout': { from: { transform: 'scale(0.2)', opacity: '0' }, to: { transform: 'scale(1)', opacity: '1' } },
     '@keyframes sunRise': { from: { opacity: '0', transform: 'translateY(24px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
     '.switchTrack .knob': {
-      position: 'absolute', top: '2px', left: '2px', width: '20px', height: '20px',
+      position: 'absolute', top: '12px', left: '2px', width: '20px', height: '20px',
       borderRadius: 'var(--radii-full)', background: 'var(--colors-surface-200)',
     },
     '@media (prefers-reduced-motion: no-preference)': {
