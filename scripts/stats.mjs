@@ -302,7 +302,11 @@ function readUrl(url, currentFiles) {
 }
 
 function fileForUrl(url) {
-  return `${DIST}${url === '/' ? '/index.html' : url}`
+  if (url === '/') return `${DIST}/index.html`
+  // Pretty routes (e.g. /components) are served from their .html file, the
+  // same mapping Netlify and the service worker's canonical keys use.
+  if (!/\.[a-z0-9]+$/i.test(url) && existsSync(`${DIST}${url}.html`)) return `${DIST}${url}.html`
+  return `${DIST}${url}`
 }
 
 function ensureUrlExists(url) {

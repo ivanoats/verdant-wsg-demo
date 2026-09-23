@@ -12,7 +12,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync, writeFileSync, mkdirSync, renameSync, readdirSync } from 'node:fs'
 
 const hash = (buf) => createHash('sha256').update(buf).digest('hex').slice(0, 10)
-const ASSETS = ['styles.css', 'sw-register.js', 'theme-toggle.js']
+const ASSETS = ['styles.css', 'sw-register.js', 'theme-toggle.js', 'gallery.js']
 const PAGES = readdirSync('dist').filter((f) => f.endsWith('.html'))
 
 mkdirSync('dist/assets', { recursive: true })
@@ -32,7 +32,7 @@ for (const page of PAGES) {
 
 // Everything the offline shell caches. scripts/stats.mjs computes the final
 // version from these finalized files after it resolves the homepage metrics.
-const shell = ['/', '/components.html', '/404.html', ...Object.values(map), '/favicon.svg', '/manifest.json']
+const shell = ['/', '/components', '/404.html', '/offline.html', ...Object.values(map), '/favicon.svg', '/manifest.json']
 const sw = readFileSync('dist/sw.js', 'utf8')
   .replace('__SHELL__', JSON.stringify(shell))
 writeFileSync('dist/sw.js', sw)
