@@ -1,0 +1,28 @@
+{
+  "publicRoutes": [
+    "/",
+    "/components"
+  ],
+  "canonicalCacheKeys": [
+    "/",
+    "/components",
+    "/404.html",
+    "/offline.html"
+  ],
+  "installAssets": [
+    "/manifest.json",
+    "/favicon.svg",
+    "/assets/*.css",
+    "/assets/*.js"
+  ],
+  "routeAliases": {
+    "/index.html": "/",
+    "/components.html": "/components"
+  },
+  "navigationStrategy": "network-first",
+  "offlineFallback": "/offline.html",
+  "updateBehavior": {
+    "activation": "claim-only",
+    "reload": "user-initiated via in-page prompt"
+  }
+}

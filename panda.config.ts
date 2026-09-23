@@ -1,6 +1,9 @@
 import { defineConfig } from '@pandacss/dev'
 import { fontFamilyTokens, spacingTokens, radiiTokens, fontSizeTokens, lineHeightTokens } from './scripts/tokens.mjs'
-import { semanticColorTokens } from './scripts/theme.mjs'
+import { explicitThemeVars, semanticColorTokens, themeOverrideAttr, themeResolvedAttr } from './scripts/theme.mjs'
+
+const important = (vars: Record<string, string>) =>
+  Object.fromEntries(Object.entries(vars).map(([name, value]) => [name, `${value} !important`]))
 
 export default defineConfig({
   preflight: true,
@@ -11,11 +14,11 @@ export default defineConfig({
   exclude: [],
   outdir: 'styled-system',
 
-  // Dark mode is driven by the OS preference, full stop — this is the WSG
-  // check (3.12) a scanner looks for. The ThemeToggle demo does not use a
-  // Panda condition at all: it overrides the same CSS custom properties
-  // inline at runtime, which always wins over a stylesheet rule without
-  // needing a second selector-based condition to fight the cascade with.
+  // System mode is the default: `_dark` values apply through
+  // prefers-color-scheme (the WSG 3.12 preference query), with no script.
+  // An explicit Light or Dark choice sets data-theme-override on <html>,
+  // and the globalCss rules below map every token to that theme's value,
+  // so the same token set serves all three preferences.
   conditions: {
     dark: '@media (prefers-color-scheme: dark)',
   },
@@ -30,9 +33,9 @@ export default defineConfig({
         lineHeights: Object.fromEntries(Object.entries(lineHeightTokens).map(([key, value]) => [key, { value }])),
       },
       semanticTokens: {
-        // Illustration-only greens: the "verdant" in Verdant. Never text or
-        // UI state — they're chosen for lushness, not 4.5:1 contrast.
-        colors: semanticColorTokens,
+        colors: {
+          ...semanticColorTokens,
+        },
         shadows: {
           sm: {
             value: {
@@ -46,16 +49,16 @@ export default defineConfig({
         button: {
           className: 'btn',
           base: {
-            fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em',
-            paddingBlock: '2', paddingInline: '4', borderRadius: 'md', border: '1px solid transparent',
-            cursor: 'pointer', outlineOffset: '2px', display: 'inline-block',
+            fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', letterSpacing: '0.02em',
+            minHeight: '44px', paddingBlock: '2', paddingInline: '4', borderRadius: 'md', border: '1px solid transparent',
+            cursor: 'pointer', outlineOffset: '2px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecorationLine: 'none',
             _motionSafe: { transition: 'background-color 120ms ease, border-color 120ms ease' },
             _disabled: { opacity: '0.5', cursor: 'not-allowed' },
           },
           variants: {
             variant: {
               primary: { background: 'accent', color: 'accent.ink', _hover: { background: 'accent.strong' } },
-              secondary: { background: 'transparent', color: 'ink', borderColor: 'border', _hover: { borderColor: 'accent', color: 'accent' } },
+              secondary: { background: 'transparent', color: 'ink', borderColor: 'border.control', _hover: { borderColor: 'accent', color: 'accent' } },
             },
           },
           defaultVariants: { variant: 'primary' },
@@ -71,20 +74,34 @@ export default defineConfig({
           className: 'fieldInput',
           base: {
             fontSize: 'body', lineHeight: 'body', fontFamily: 'sans',
-            paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border',
+            minHeight: '44px', paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border.control',
             borderRadius: 'sm', background: 'surface.200', color: 'ink',
+            _placeholder: { color: 'ink.placeholder', opacity: '1' },
             _focusVisible: { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '1px', borderColor: 'transparent' },
           },
         },
         switchTrack: {
           className: 'switchTrack',
           base: {
-            position: 'relative', width: '44px', height: '24px', borderRadius: 'full',
-            background: 'border', border: 'none', cursor: 'pointer', padding: '0', flex: 'none',
-            _motionSafe: { transition: 'background-color 150ms ease' },
+            position: 'relative', width: '44px', height: '44px', borderRadius: 'full',
+            background: 'transparent', border: 'none', cursor: 'pointer', padding: '0', flex: 'none',
+            _before: {
+              content: '""',
+              position: 'absolute',
+              top: '10px',
+              left: '0',
+              width: '44px',
+              height: '24px',
+              borderRadius: 'full',
+              background: 'border.control',
+            },
+            _motionSafe: { _before: { transition: 'background-color 150ms ease' } },
+            // State lives in aria-checked at runtime, so the track colour follows
+            // it here (inside the recipe layer, so it outranks the base colour).
+            '&[aria-checked="true"]': { _before: { background: 'accent' } },
           },
           variants: {
-            on: { true: { background: 'accent' } },
+            on: { true: { _before: { background: 'accent' } } },
           },
         },
         spinner: {
@@ -92,14 +109,26 @@ export default defineConfig({
           base: {
             width: '28px', height: '28px', borderRadius: 'full',
             border: '3px solid', borderColor: 'border', borderTopColor: 'accent',
-            _motionSafe: { animation: 'spin 900ms linear infinite' },
+          },
+          variants: {
+            preview: {
+              true: {
+                _motionSafe: { animation: 'spin 900ms linear 4' },
+              },
+            },
           },
         },
         skeleton: {
           className: 'skeleton',
           base: {
             borderRadius: 'sm', background: 'border', opacity: '0.5',
-            _motionSafe: { animation: 'pulse 1400ms ease-in-out infinite' },
+          },
+          variants: {
+            preview: {
+              true: {
+                _motionSafe: { animation: 'pulse 1400ms ease-in-out 3' },
+              },
+            },
           },
         },
       },
@@ -108,8 +137,21 @@ export default defineConfig({
 
   globalCss: {
     'html': { colorScheme: 'light dark' },
+    // Panda emits token variables in the `tokens` layer, which comes after
+    // `base` (where globalCss lives), so a plain declaration here would lose
+    // to them. `!important` in an earlier layer beats normal declarations in
+    // any later layer, which is exactly the override an explicit choice needs.
+    [`html[${themeOverrideAttr}="light"]`]: important(explicitThemeVars.light),
+    [`html[${themeOverrideAttr}="dark"]`]: important(explicitThemeVars.dark),
+    [`html[${themeResolvedAttr}="light"]`]: { colorScheme: 'light' },
+    [`html[${themeResolvedAttr}="dark"]`]: { colorScheme: 'dark' },
     'body': { margin: '0', background: 'surface.100', color: 'ink', fontFamily: 'sans', fontSize: 'body', lineHeight: 'body' },
-    'a': { color: 'accent' },
+    'a': {
+      color: 'accent',
+      textDecoration: 'underline',
+      textUnderlineOffset: '0.15em',
+      textDecorationThickness: '0.08em',
+    },
     'a:hover': { color: 'accent.strong' },
     ':focus-visible': { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '2px' },
     '@keyframes spin': { to: { transform: 'rotate(360deg)' } },
@@ -122,18 +164,13 @@ export default defineConfig({
     '@keyframes sprout': { from: { transform: 'scale(0.2)', opacity: '0' }, to: { transform: 'scale(1)', opacity: '1' } },
     '@keyframes sunRise': { from: { opacity: '0', transform: 'translateY(24px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
     '.switchTrack .knob': {
-      position: 'absolute', top: '2px', left: '2px', width: '20px', height: '20px',
+      position: 'absolute', top: '12px', left: '2px', width: '20px', height: '20px',
       borderRadius: 'var(--radii-full)', background: 'var(--colors-surface-200)',
     },
     '@media (prefers-reduced-motion: no-preference)': {
       '.switchTrack .knob': { transition: 'transform 150ms ease' },
     },
     '.switchTrack[aria-checked="true"] .knob': { transform: 'translateX(20px)' },
-    // Decorative-only art is dropped for anyone who's asked to save data —
-    // it costs bytes and carries no content (WSG 3.12's third preference query).
-    '@media (prefers-reduced-data: reduce)': {
-      '.decor': { display: 'none' },
-    },
   },
   // No staticCss block on purpose: every class in the generated stylesheet
   // comes from a real call in scripts/build.mjs. Force-generating a wide

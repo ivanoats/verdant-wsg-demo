@@ -59,6 +59,10 @@ export const paletteSections = [
   },
 ]
 
+// Every pairing the UI actually uses, checked at build time: scripts/build.mjs
+// fails the build if any drops below its minimum in either theme. `border`
+// itself is a decorative divider (below 3:1 by design); controls use
+// `border.control`.
 export const verifiedPairings = [
   {
     category: 'text',
@@ -86,6 +90,38 @@ export const verifiedPairings = [
   },
   {
     category: 'text',
+    title: 'Supporting text on raised surface',
+    foreground: 'ink.muted',
+    background: 'surface.200',
+    minimum: 4.5,
+    note: 'Card bodies, palette tiles, hints and the bands that sit on surface-200.',
+  },
+  {
+    category: 'text',
+    title: 'Placeholder text in fields',
+    foreground: 'ink.placeholder',
+    background: 'surface.200',
+    minimum: 4.5,
+    note: 'Example values inside inputs, which sit on the raised surface.',
+  },
+  {
+    category: 'text',
+    title: 'Links and accents on site canvas',
+    foreground: 'accent',
+    background: 'surface.100',
+    minimum: 4.5,
+    note: 'Inline links, eyebrows and stat values on the page background.',
+  },
+  {
+    category: 'text',
+    title: 'Links and accents on raised surface',
+    foreground: 'accent',
+    background: 'surface.200',
+    minimum: 4.5,
+    note: 'Links and accent text inside cards and bands.',
+  },
+  {
+    category: 'text',
     title: 'Primary button label',
     foreground: 'accent.ink',
     background: 'accent',
@@ -102,35 +138,35 @@ export const verifiedPairings = [
   },
   {
     category: 'text',
-    title: 'Positive status on site canvas',
+    title: 'Positive status on raised surface',
     foreground: 'positive',
-    background: 'surface.100',
+    background: 'surface.200',
     minimum: 4.5,
-    note: 'Success messaging on the default page background.',
+    note: 'Success status inside cards, e.g. the scorecard.',
   },
   {
     category: 'text',
-    title: 'Critical status on site canvas',
+    title: 'Critical status on raised surface',
     foreground: 'critical',
-    background: 'surface.100',
+    background: 'surface.200',
     minimum: 4.5,
-    note: 'Warning or error messaging on the default page background.',
+    note: 'Warning or error status inside cards, e.g. the scorecard.',
   },
   {
     category: 'functional',
-    title: 'Default border on site canvas',
-    foreground: 'border',
+    title: 'Control border on site canvas',
+    foreground: 'border.control',
     background: 'surface.100',
     minimum: 3,
-    note: 'Dividers and outlines on the page background.',
+    note: 'Input, secondary button and switch-track outlines on the page background.',
   },
   {
     category: 'functional',
-    title: 'Default border on raised surface',
-    foreground: 'border',
+    title: 'Control border on raised surface',
+    foreground: 'border.control',
     background: 'surface.200',
     minimum: 3,
-    note: 'Card, field and secondary button outlines on the raised surface.',
+    note: 'Input and secondary button outlines on the raised surface.',
   },
   {
     category: 'functional',
@@ -139,6 +175,14 @@ export const verifiedPairings = [
     background: 'surface.100',
     minimum: 3,
     note: 'Visible focus indicator against the main page background.',
+  },
+  {
+    category: 'functional',
+    title: 'Focus ring on raised surface',
+    foreground: 'focusRing',
+    background: 'surface.200',
+    minimum: 3,
+    note: 'Visible focus indicator inside cards and bands.',
   },
 ]
 

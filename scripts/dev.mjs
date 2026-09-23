@@ -46,7 +46,7 @@ async function build() {
   // would re-run every time; codegen only runs when panda.config.ts changes.
   // (`npm run dev` puts node_modules/.bin on PATH, so `panda` resolves.)
   const ok = (!needCodegen || await run('panda codegen --silent')) &&
-    await run('node scripts/build.mjs && panda cssgen -m --lightningcss --silent -o dist/styles.css && node scripts/stats.mjs && node scripts/fingerprint.mjs')
+    await run('node scripts/build.mjs && panda cssgen -m --lightningcss --silent -o dist/styles.css && node scripts/fingerprint.mjs && node scripts/stats.mjs')
   needCodegen = false
   building = false
   if (ok) {
@@ -62,7 +62,9 @@ async function build() {
 
 let timer
 const onChange = (file) => {
-  if (file && String(file).includes('panda.config')) needCodegen = true
+  // Panda's config reads its tokens from scripts/theme.mjs, so either one
+  // changing means the generated styled-system has to be rebuilt.
+  if (file && /panda\.config|theme\.mjs/.test(String(file))) needCodegen = true
   clearTimeout(timer)
   timer = setTimeout(build, 80)
 }
@@ -93,8 +95,13 @@ createServer(async (req, res) => {
     if ((await stat(file)).isDirectory()) file = join(file, 'index.html')
     send(res, 200, extname(file), await readFile(file))
   } catch {
-    try { send(res, 404, '.html', await readFile(join(DIST, '404.html'))) }
-    catch { send(res, 404, '.txt', 'Not found') }
+    try {
+      if (!extname(file)) send(res, 200, '.html', await readFile(`${file}.html`))
+      else throw new Error('not found')
+    } catch {
+      try { send(res, 404, '.html', await readFile(join(DIST, '404.html'))) }
+      catch { send(res, 404, '.txt', 'Not found') }
+    }
   }
 }).listen(PORT, () => {
   console.log(`Verdant dev server → http://localhost:${PORT}  (watching scripts/, public/, panda.config.ts)`)

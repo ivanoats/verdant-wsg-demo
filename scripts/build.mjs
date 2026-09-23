@@ -8,7 +8,18 @@ import { css } from '../styled-system/css/index.mjs'
 import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
 import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
-import { themeTokens, explicitThemeVars, themeTokenCount } from './theme.mjs'
+import {
+  illustrationPaletteOrder,
+  interfacePaletteOrder,
+  themeOverrideAttr,
+  themePreferenceAttr,
+  themePreferenceControlName,
+  themePreferenceStorageKey,
+  themePreferenceValues,
+  themeResolvedAttr,
+  themeTokenCount,
+  themeTokens,
+} from './theme.mjs'
 import { paletteSections, verifiedPairings, publicTokenScope } from './tokens.mjs'
 
 // A hand-rolled recursive copy: some mounted/virtual filesystems choke on
@@ -27,13 +38,15 @@ function copyDir(src, dest) {
 const REPO = 'https://github.com/ivanoats/verdant-wsg-demo'
 const WSG_CHECK = 'https://github.com/ivanoats/wsg-check'
 const WSG = 'https://w3c.github.io/sustainableweb-wsg/'
+const COMPONENTS_ROUTE = '/components'
+const COMPONENTS_FILE = '/components.html'
 
 // ---- shell ------------------------------------------------------------------
 
 const skipLinkCss = css({
   position: 'absolute', left: '3', top: '-48px',
   background: 'surface.200', color: 'ink', paddingBlock: '2', paddingInline: '4',
-  borderRadius: 'sm', border: '1px solid', borderColor: 'border', zIndex: '10',
+  borderRadius: 'sm', border: '1px solid', borderColor: 'border.control', zIndex: '10', textDecoration: 'none',
   _motionSafe: { transition: 'top 120ms ease' },
   _focus: { top: '3' },
 })
@@ -41,12 +54,24 @@ const wrapCss = css({ maxWidth: '1080px', marginX: 'auto', paddingInline: { base
 const headerCss = css({ borderBottom: '1px solid', borderColor: 'border' })
 const barCss = flex({ paddingBlock: '3', align: 'center', justify: 'space-between', gap: '4', wrap: 'wrap' })
 const wordmarkCss = hstack({ gap: '2', color: 'ink', textDecoration: 'none', fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '700' })
+const headerActionsCss = flex({ align: 'center', gap: '4', wrap: 'wrap' })
 const navListCss = hstack({ gap: { base: '3', md: '6' }, listStyle: 'none', margin: '0', padding: '0' })
 const navLinkCss = css({ textDecoration: 'none', fontSize: 'bodySm', fontWeight: '600', color: 'ink', _hover: { color: 'accent' } })
 const navLinkActiveCss = css({ textDecoration: 'underline', textUnderlineOffset: '6px', textDecorationThickness: '2px', fontSize: 'bodySm', fontWeight: '600', color: 'accent' })
+const themePrefCss = css({
+  display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px',
+  border: '0', margin: '0', padding: '0',
+})
+const themePrefLegendCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted', margin: '0', padding: '0' })
+const themePrefOptionCss = css({
+  display: 'inline-flex', alignItems: 'center', gap: '2',
+  paddingBlock: '1', paddingInline: '3', border: '1px solid', borderColor: 'border',
+  borderRadius: 'full', background: 'surface.200', fontSize: 'label', lineHeight: 'label', fontWeight: '600',
+})
+const themePrefRadioCss = css({ margin: '0', accentColor: 'accent' })
 
 const breadcrumbListCss = hstack({ gap: '1', listStyle: 'none', margin: '0', paddingTop: '3', paddingInline: '0', fontSize: 'label', color: 'ink.muted' })
-const breadcrumbLinkCss = css({ color: 'ink.muted' })
+const breadcrumbLinkCss = css({ color: 'ink.muted', textDecoration: 'none' })
 
 const footerCss = css({ borderTop: '1px solid', borderColor: 'border' })
 const footerBarCss = flex({ paddingBlock: '6', align: 'center', justify: 'space-between', gap: '4', wrap: 'wrap' })
@@ -82,12 +107,12 @@ const heroHtml = `
 <section class="${wrapCss}" aria-labelledby="hero-title">
   <div class="${heroCss}">
     <div>
-      <p class="${eyebrowCss}">A design system for the W3C Web Sustainability Guidelines</p>
+      <p class="${eyebrowCss}">A design system for the <a href="${WSG}">W3C Web Sustainability Guidelines</a></p>
       <h1 id="hero-title" class="${heroTitleCss}">Verdant</h1>
       <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
-      <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, native dark mode, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
+      <p class="${heroLedeCss}">Start with the parts teams usually add later: system fonts, a System/Light/Dark theme preference, restrained motion, and only the CSS each page uses. Verdant gives a product page or docs site those lighter defaults from the first commit.</p>
       <div class="${btnRowCss}">
-        <a class="${btnPrimary}" href="/components.html">Browse components</a>
+        <a class="${btnPrimary}" href="${COMPONENTS_ROUTE}">Browse components</a>
         <a class="${btnSecondary}" href="${REPO}">View source on GitHub</a>
       </div>
     </div>
@@ -95,7 +120,7 @@ const heroHtml = `
   </div>
 </section>`
 
-// ---- index: measured stats (filled in by scripts/stats.mjs after the build)
+// ---- index: measured stats (filled in by scripts/stats.mjs after fingerprinting)
 
 const statsGridCss = css({
   display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
@@ -104,15 +129,19 @@ const statsGridCss = css({
 const statCss = css({ display: 'flex', flexDirection: 'column-reverse', margin: '0' })
 const statValueCss = css({ fontSize: { base: 'displayLg', md: '40px' }, lineHeight: { base: 'displayLg', md: '48px' }, fontWeight: '700', color: 'accent', margin: '0' })
 const statLabelCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '4px 0 0' })
+const statsNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 8px' })
 
 const statsHtml = `
 <section class="${bandCss}" aria-label="By the numbers">
-  <dl class="${wrapCss} ${statsGridCss}">
-    <div class="${statCss}"><dt class="${statLabelCss}">This whole page, compressed &mdash; art included</dt><dd class="${statValueCss}">__HOME_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Stylesheet, extracted to only the rules in use</dt><dd class="${statValueCss}">__CSS_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Color tokens, each with a light and dark value</dt><dd class="${statValueCss}">${themeTokenCount}&thinsp;&times;&thinsp;2</dd></div>
-  </dl>
+  <div class="${wrapCss}">
+    <dl class="${statsGridCss}">
+      <div class="${statCss}"><dt class="${statLabelCss}">Initial render assets, local Brotli estimate</dt><dd class="${statValueCss}">__INITIAL_RENDER_KIB__&nbsp;KiB</dd></div>
+      <div class="${statCss}"><dt class="${statLabelCss}">Offline shell + worker, unique local Brotli estimate</dt><dd class="${statValueCss}">__OFFLINE_SHELL_KIB__&nbsp;KiB</dd></div>
+      <div class="${statCss}"><dt class="${statLabelCss}">Cold first session, measured local transfer</dt><dd class="${statValueCss}">__COLD_SESSION_KIB__&nbsp;KiB</dd></div>
+      <div class="${statCss}"><dt class="${statLabelCss}">Warm repeat visit, measured local transfer</dt><dd class="${statValueCss}">__WARM_SESSION_KIB__&nbsp;KiB</dd></div>
+    </dl>
+    <p class="${statsNoteCss}">Measured __MEASURED_ON__ locally over HTTP with Brotli response bodies in KiB (1024 bytes), excluding headers, then rounded up to a stable tenth for this summary. Cold includes the service worker install and its duplicate precache fetches; warm is a repeat visit with the shell already cached. Production-network transfer is unmeasured here.</p>
+  </div>
 </section>`
 
 // ---- index: how it grows ----------------------------------------------------------
@@ -128,16 +157,16 @@ const stageTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', font
 const stageBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0' })
 
 const stages = [
-  ['seed', 'Seed', 'Tokens', `${themeTokenCount} colors, a 4px spacing grid, four radii and system type. Those are the reusable public tokens; the landing page still documents its few display-size one-offs separately.`],
-  ['sprout', 'Sprout', 'Components', 'Button, card, field, theme toggle and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
-  ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one stylesheet and at most one small deferred script, from the first page on.'],
+  ['seed', 'Seed', 'Tokens', `${themeTokenCount} colors, a 4px spacing grid, four radii and system type. Small enough to stay consistent without one-off values.`],
+  ['sprout', 'Sprout', 'Components', 'Button, card, field, theme preference, switch specimen and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
+  ['sapling', 'Sapling', 'Pages', 'A product page or docs page gets landmarks, a skip link, one focus ring, one stylesheet and two small same-origin scripts from day one.'],
   ['canopy', 'Canopy', 'Sites', 'Security headers, cache rules, an offline shell and a real 404 &mdash; the hosting checks, handled before launch.'],
 ]
 const stagesHtml = `
 <section class="${wrapCss} ${sectionCss}" aria-labelledby="grows-title">
   <p class="${eyebrowCss}">How it grows</p>
-  <h2 id="grows-title" class="${h2Css}">From four seeds of tokens to a whole site.</h2>
-  <p class="${introCss}">Each layer only adds what the one below it can't do alone, which is why the finished site stays small.</p>
+  <h2 id="grows-title" class="${h2Css}">From a small token set to a whole site.</h2>
+  <p class="${introCss}">Each layer only adds the parts the previous one cannot, which keeps the finished site small.</p>
   <ol class="${stagesCss}">
     ${stages.map(([key, stage, layer, body], i) => `
     <li class="${stageCss}">
@@ -255,7 +284,7 @@ const paletteHtml = `
   <div class="${wrapCss} ${sectionCss}">
     <p class="${eyebrowCss}">Palette</p>
     <h2 id="palette-title" class="${h2Css}">${themeTokenCount} colors, shown in both themes.</h2>
-    <p class="${introCss}">One token set with a light and a dark value each, switched by <code class="${codeCss}">prefers-color-scheme</code> &mdash; no second stylesheet. The light and dark swatches below are rendered side by side so neither theme relies on color alone.</p>
+    <p class="${introCss}">One token set with a light and a dark value each. System mode follows <code class="${codeCss}">prefers-color-scheme</code>; explicit Light and Dark choices reuse the same tokens without a second stylesheet. Both values of every token are shown side by side.</p>
     ${paletteSections.map((section, index) => `
     <h3 class="${paletteGroupCss}${index ? ` ${paletteGapCss}` : ''}">${section.title}</h3>
     <p class="${paletteGroupNoteCss}">${section.note}</p>
@@ -322,9 +351,9 @@ const scoreBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink
 const scoreNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', marginTop: '6', maxWidth: '70ch' })
 
 const scores = [
-  ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, one deferred script, nothing render-blocking.'],
+  ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, two small same-origin scripts, nothing third-party.'],
   ['Semantic &amp; standards', true, 'Landmarks, a single h1 with ordered headings, canonical URL and structured data.'],
-  ['Sustainability-specific', true, 'Color-scheme, reduced-motion and reduced-data queries all present; no unused CSS shipped.'],
+  ['Sustainability-specific', true, 'Color-scheme and reduced-motion preferences are respected; decorative art stays inline so the baseline stays lightweight even where reduced-data is unsupported; no unused CSS shipped.'],
   ['Security &amp; maintenance', true, 'CSP, HSTS, Permissions-Policy, nosniff and frame protection; robots.txt and a sitemap.'],
   ['UX &amp; design', true, 'Labelled fields with autocomplete and inputmode, one visible focus ring, no autoplay, no web fonts.'],
   ['Hosting &amp; infrastructure', false, 'Offline service worker, cache rules and a custom 404 pass. Green hosting isn&rsquo;t verified by the Green Web Foundation for this Netlify subdomain.'],
@@ -333,7 +362,7 @@ const scoreHtml = `
 <section class="${wrapCss} ${sectionCss}" aria-labelledby="score-title">
   <p class="${eyebrowCss}">Checked live</p>
   <h2 id="score-title" class="${h2Css}">How the deployed site holds up.</h2>
-  <p class="${introCss}">Audited against the live deploy across the six categories <a href="${WSG_CHECK}">wsg-check</a> scans. Five pass outright; one has a gap we can&rsquo;t fix in code.</p>
+  <p class="${introCss}">Checked against the live deploy with <a href="${WSG_CHECK}">wsg-check</a>. Five categories pass; one still depends on hosting verification.</p>
   <ul class="${scoreListCss}">
     ${scores.map(([title, pass, body]) => `
     <li class="${scoreItemCss}">
@@ -357,13 +386,14 @@ const preCss = css({
 })
 const listCss = css({ margin: '0', paddingLeft: '20px', listStyle: 'disc', color: 'ink.muted', '& li + li': { marginTop: '2' } })
 const pandaSnippet = `// panda.config.ts
-import { semanticColorTokens } from './scripts/theme.mjs'
-
 conditions: {
   dark: '@media (prefers-color-scheme: dark)',
 },
-theme: { extend: { semanticTokens: { colors: semanticColorTokens } } },
-// Build docs and the runtime theme map from the same token file.`
+theme: { extend: { semanticTokens: { colors: {
+  accent: { value: { base: '#2f6b4a', _dark: '#7fcfa3' } },
+  // …the other ${themeTokenCount - 1}, same shape
+} } } },
+// No staticCss: ship only the rules pages use.`
 const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 const pandaHtml = `
@@ -373,7 +403,7 @@ const pandaHtml = `
       <div>
         <p class="${eyebrowCss}">Built with PandaCSS</p>
         <h2 id="panda-title" class="${h2Css}">Tokens in, only-what-you-use CSS out.</h2>
-        <p class="${introCss}">Verdant maps onto a <a href="https://panda-css.com">PandaCSS</a> config in one file. Panda extracts styles at build time, so the stylesheet grows with your pages &mdash; never with the size of the framework.</p>
+        <p class="${introCss}">Verdant fits in one <a href="https://panda-css.com">PandaCSS</a> config. Build-time extraction keeps the stylesheet tied to what the page actually renders.</p>
         <ul class="${listCss}">
           <li>Semantic tokens carry both themes; <code class="${codeCss}">_dark</code> maps to the OS preference.</li>
           <li>Recipes for button, card, field and switch mirror the component guidelines.</li>
@@ -392,14 +422,14 @@ const ctaInnerCss = css({ position: 'relative', paddingBlock: { base: '12', md: 
 const ctaTitleCss = css({ fontSize: { base: 'displayMd', md: 'displayLg' }, lineHeight: { base: 'displayMd', md: 'displayLg' }, fontWeight: '700', margin: '0', maxWidth: '22ch' })
 const ctaBodyCss = css({ margin: '12px 0 0', maxWidth: '56ch' })
 const ctaBtnCss = css({
-  display: 'inline-block', fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', letterSpacing: '0.02em',
   paddingBlock: '3', paddingInline: '4', borderRadius: 'md', textDecoration: 'none',
   background: 'accent.ink', color: 'accent', border: '1px solid', borderColor: 'accent.ink',
   _hover: { color: 'accent.strong' },
   _focusVisible: { outline: '2px solid', outlineColor: 'accent.ink', outlineOffset: '3px' },
 })
 const ctaLinkCss = css({
-  display: 'inline-block', fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', letterSpacing: '0.02em',
   paddingBlock: '3', paddingInline: '4', borderRadius: 'md', textDecoration: 'none',
   color: 'accent.ink', border: '1px solid', borderColor: 'accent.ink',
   _hover: { color: 'accent.ink', textDecoration: 'underline' },
@@ -411,11 +441,11 @@ const ctaHtml = `
 <section class="${ctaCss}" aria-labelledby="cta-title">
   <div class="${ctaArtCss}">${leafRow()}</div>
   <div class="${wrapCss} ${ctaInnerCss}">
-    <h2 id="cta-title" class="${ctaTitleCss}">Plant it in your next project.</h2>
-    <p class="${ctaBodyCss}">Clone the repo, copy <code class="${codeCss}">panda.config.ts</code>, and keep the checklist. Everything else is optional &mdash; which is the point.</p>
+    <h2 id="cta-title" class="${ctaTitleCss}">Use it in your next project.</h2>
+    <p class="${ctaBodyCss}">Clone the repo, copy <code class="${codeCss}">panda.config.ts</code>, and keep the checklist. Start with the defaults, then layer in only the styling your product needs.</p>
     <div class="${btnRowCss}">
       <a class="${ctaBtnCss}" href="${REPO}">Get the source</a>
-      <a class="${ctaLinkCss}" href="/components.html">See the components</a>
+      <a class="${ctaLinkCss}" href="${COMPONENTS_ROUTE}">See the components</a>
     </div>
   </div>
 </section>`
@@ -425,17 +455,30 @@ const ctaHtml = `
 const nav = (active) => {
   const link = (key, href, label) =>
     `<li><a class="${active === key ? navLinkActiveCss : navLinkCss}" href="${href}"${active === key ? ' aria-current="page"' : ''}>${label}</a></li>`
+  const themeOption = (value, label) => `
+          <label class="${themePrefOptionCss}" for="theme-pref-${value}">
+            <input class="${themePrefRadioCss}" type="radio" id="theme-pref-${value}" name="${themePreferenceControlName}" value="${value}"${value === themePreferenceValues[0] ? ' checked' : ''}>
+            <span>${label}</span>
+          </label>`
   return `
   <header class="${headerCss}">
     <div class="${wrapCss} ${barCss}">
       <a class="${wordmarkCss}" href="/">${mark(28)}<span>Verdant</span></a>
-      <nav aria-label="Primary">
-        <ul class="${navListCss}">
-          ${link('components', '/components.html', 'Components')}
-          ${link('palette', '/#palette', 'Palette')}
-          ${link('github', REPO, 'GitHub')}
-        </ul>
-      </nav>
+      <div class="${headerActionsCss}">
+        <nav aria-label="Primary">
+          <ul class="${navListCss}">
+            ${link('components', COMPONENTS_ROUTE, 'Components')}
+            ${link('palette', '/#palette', 'Palette')}
+            ${link('github', REPO, 'GitHub')}
+          </ul>
+        </nav>
+        <fieldset class="${themePrefCss}" aria-label="Theme preference">
+          <legend class="${themePrefLegendCss}">Theme</legend>
+          ${themeOption('system', 'System')}
+          ${themeOption('light', 'Light')}
+          ${themeOption('dark', 'Dark')}
+        </fieldset>
+      </div>
     </div>
   </header>`
 }
@@ -460,6 +503,32 @@ const footer = () => `
     </div>
   </footer>`
 
+const updateBannerCss = css({
+  position: 'fixed',
+  insetInline: { base: '4', md: '6' },
+  bottom: { base: '4', md: '6' },
+  zIndex: '10',
+  maxWidth: '640px',
+  marginInline: 'auto',
+  padding: '4',
+  background: 'surface.200',
+  border: '1px solid',
+  borderColor: 'border',
+  borderRadius: 'md',
+  boxShadow: 'md',
+})
+const updateBannerTextCss = css({ margin: '0', fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink' })
+const updateBannerActionsCss = hstack({ gap: '3', marginTop: '3', flexWrap: 'wrap' })
+
+const updateBanner = `
+  <section id="sw-update" class="${updateBannerCss}" hidden aria-labelledby="sw-update-title" aria-live="polite" aria-atomic="true">
+    <p id="sw-update-title" class="${updateBannerTextCss}">A fresh Verdant update is ready. Apply it when you&rsquo;re ready.</p>
+    <div class="${updateBannerActionsCss}">
+      <button id="sw-update-apply" type="button" class="${btnPrimary}">Update now</button>
+      <button id="sw-update-dismiss" type="button" class="${btnSecondary}">Later</button>
+    </div>
+  </section>`
+
 const page = ({ title, description, path, active, jsonLd, bodyHtml, scripts = [] }) => `<!doctype html>
 <html lang="en">
 <head>
@@ -473,8 +542,9 @@ const page = ({ title, description, path, active, jsonLd, bodyHtml, scripts = []
 <meta property="og:type" content="website">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2f6b4a" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#15140f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="${themeTokens['surface.100'].light}" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="${themeTokens['surface.100'].dark}" media="(prefers-color-scheme: dark)">
+<script src="/theme-toggle.js"></script>
 <link rel="stylesheet" href="/styles.css">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>` : ''}
 </head>
@@ -486,6 +556,7 @@ ${active === 'components' ? breadcrumb('Components') : ''}
 ${bodyHtml}
 </main>
 ${footer()}
+${updateBanner}
 ${['/sw-register.js', ...scripts].map((s) => `<script src="${s}" defer></script>`).join('\n')}
 </body>
 </html>
@@ -514,20 +585,25 @@ const hintCss = css({ fontSize: 'bodySm', color: 'ink.muted', margin: '0' })
 const inputCss = fieldInput()
 const switchRowCss = flex({ align: 'center', gap: '3' })
 const switchOffCss = switchTrack()
+const switchOnCss = switchTrack({ on: true })
 const noteCss = css({ marginTop: '3', fontSize: 'label', color: 'ink.muted', maxWidth: '60ch' })
 const motionRowCss = flex({ align: 'center', gap: '6', wrap: 'wrap' })
 const motionGroupCss = vstack({ gap: '2', alignItems: 'flex-start' })
 const spinnerCss = spinner()
+const spinnerPreviewCss = spinner({ preview: true })
 // Widths live in classes, not style="" — the CSP's style-src 'self' blocks
 // inline style attributes, which silently collapsed these bars before.
 const skeletonWideCss = `${skeleton()} ${css({ width: '160px', height: '14px' })}`
+const skeletonWidePreviewCss = `${skeleton({ preview: true })} ${css({ width: '160px', height: '14px' })}`
 const skeletonNarrowCss = `${skeleton()} ${css({ width: '110px', height: '14px' })}`
-const decorCss = css({ display: 'block' })
+const skeletonNarrowPreviewCss = `${skeleton({ preview: true })} ${css({ width: '110px', height: '14px' })}`
+const motionIntroCss = css({ color: 'ink.muted', maxWidth: '62ch', margin: '0 0 16px' })
+const motionControlsCss = flex({ align: 'center', gap: '3', wrap: 'wrap', marginTop: '4' })
 
 const componentsBody = `
 <div class="${wrapCss} ${compMainCss}">
   <h1 class="${compTitleCss}">Components</h1>
-  <p class="${ledeCss}">Five patterns, each demonstrating one WSG-relevant behavior live rather than just describing it.</p>
+  <p class="${ledeCss}">Five component patterns, plus the site-wide theme preference in the header, each demonstrating one WSG-relevant behavior live rather than just describing it.</p>
 
   <section class="${compSectionCss}">
     <h2 class="${compH2Css}">Buttons</h2>
@@ -543,8 +619,8 @@ const componentsBody = `
     <h2 class="${compH2Css}">Cards</h2>
     <div class="${gridCss}">
       <div class="${cardCss}">
-        <h3 class="${cardHeadingCss}">Homepage scan</h3>
-        <p class="${cardBodyCss}">18 checks passed, 2 warnings, 0 failures.</p>
+        <h3 class="${cardHeadingCss}">Product launch page</h3>
+        <p class="${cardBodyCss}">Fast hero, readable pricing cards and a primary CTA that stays easy to tap.</p>
         <div class="${statusCss} ${statusPositiveCss}">&#10003; Passing</div>
       </div>
       <div class="${cardCss}">
@@ -560,43 +636,45 @@ const componentsBody = `
     <form class="${formCss}">
       <div class="${fieldCss}">
         <label class="${labelCss}" for="site-url">Website URL</label>
-        <input class="${inputCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com">
-        <p class="${hintCss}">One field &mdash; enough to run a scan, nothing else required.</p>
+        <input class="${inputCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" aria-describedby="site-url-hint" placeholder="https://example.com">
+        <p class="${hintCss}" id="site-url-hint">One field, clear guidance and autocomplete keep the form easy to complete.</p>
       </div>
     </form>
   </section>
 
   <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">Theme toggle</h2>
+    <h2 class="${compH2Css}">Switch specimen</h2>
     <div class="${switchRowCss}">
-      <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" id="theme-switch">
+      <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" aria-labelledby="specimen-switch-label" id="theme-switch">
         <span class="knob"></span>
       </button>
-      <label class="${labelCss}" for="theme-switch">Dark theme</label>
+      <span class="${labelCss}" id="specimen-switch-label">Email alerts</span>
     </div>
-    <p class="${noteCss}">This page already switches with your OS. The toggle overrides that by setting the same tokens on the root through the CSSOM &mdash; it never fights the stylesheet for priority.</p>
+    <p class="${noteCss}">Demonstration only: the site-wide System/Light/Dark preference lives in the header. This specimen keeps its checked track and knob in sync with its own state.</p>
   </section>
 
   <section class="${compSectionCss}">
     <h2 class="${compH2Css}">Motion</h2>
+    <p class="${motionIntroCss}">Static by default. Use the preview button to run four spinner turns and three skeleton pulses (about four seconds total). If your device prefers reduced motion, these examples stay still.</p>
     <div class="${motionRowCss}">
       <div class="${motionGroupCss}">
-        <div class="${spinnerCss}" role="status" aria-label="Scanning"></div>
-        <span class="${captionCss}">Spinner</span>
+        <div id="demo-spinner" class="${spinnerCss}" aria-hidden="true"></div>
+        <span class="${labelCss}">Spinner</span>
+        <span class="${captionCss}">Static status: Scanning site data</span>
       </div>
       <div class="${motionGroupCss}">
-        <div class="${skeletonWideCss}"></div>
-        <div class="${skeletonNarrowCss}"></div>
-        <span class="${captionCss}">Skeleton</span>
+        <div id="demo-skeleton-wide" class="${skeletonWideCss}" aria-hidden="true"></div>
+        <div id="demo-skeleton-narrow" class="${skeletonNarrowCss}" aria-hidden="true"></div>
+        <span class="${labelCss}">Skeleton</span>
+        <span class="${captionCss}">Static placeholder: Loading summary card</span>
       </div>
     </div>
+    <div class="${motionControlsCss}">
+      <button class="${btnSecondary}" type="button" id="motion-preview">Preview loading motion</button>
+    </div>
+    <p class="${noteCss}" id="motion-preview-status" role="status" aria-live="polite">Static by default. Preview runs once, then stops automatically.</p>
   </section>
 
-  <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">A decorative image</h2>
-    <p class="${ledeCss}">The Verdant leaf, as a real file: purely decorative, so it carries <code class="${codeCss}">alt=""</code>, explicit dimensions, lazy loading, and drops out entirely for anyone who's asked to save data.</p>
-    <img class="${decorCss} decor" src="/favicon.svg" width="64" height="64" alt="" loading="lazy">
-  </section>
 </div>
 `
 
@@ -607,36 +685,220 @@ const notFoundBody = `
 <div class="${wrapCss} ${nfCss}">
   ${seedlingArt()}
   <h1 class="${compTitleCss}">Page not found</h1>
-  <p class="${ledeCss}">Nothing has grown here yet. <a href="/">Back to the overview</a>, or <a href="/components.html">browse the components</a>.</p>
+  <p class="${ledeCss}">Nothing has grown here yet. <a href="/">Back to the overview</a>, or <a href="${COMPONENTS_ROUTE}">browse the components</a>.</p>
+</div>`
+
+const offlineBody = `
+<div class="${wrapCss} ${nfCss}">
+  ${seedlingArt()}
+  <h1 class="${compTitleCss}">Offline for now</h1>
+  <p class="${ledeCss}">This page isn&rsquo;t cached yet, and the network is out of reach. You can still open the <a href="/">overview</a> or the <a href="${COMPONENTS_ROUTE}">component gallery</a>, which are saved for offline use after installation.</p>
 </div>`
 
 // ---- scripts ---------------------------------------------------------------------
 
 const themeToggleJs = `(function () {
-  var LIGHT = ${JSON.stringify(explicitThemeVars.light)};
-  var DARK = ${JSON.stringify(explicitThemeVars.dark)};
-  function apply(map) {
-    var root = document.documentElement;
-    Object.keys(map).forEach(function (k) { root.style.setProperty(k, map[k]); });
+  var STORAGE_KEY = ${JSON.stringify(themePreferenceStorageKey)};
+  var OVERRIDE_ATTR = ${JSON.stringify(themeOverrideAttr)};
+  var PREFERENCE_ATTR = ${JSON.stringify(themePreferenceAttr)};
+  var RESOLVED_ATTR = ${JSON.stringify(themeResolvedAttr)};
+  var CONTROL_NAME = ${JSON.stringify(themePreferenceControlName)};
+  var SWITCH_OFF = ${JSON.stringify(switchOffCss)};
+  var SWITCH_ON = ${JSON.stringify(switchOnCss)};
+  var media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  function systemTheme() {
+    return media && media.matches ? "dark" : "light";
   }
-  var btn = document.getElementById("theme-switch");
-  if (!btn) return;
-  // Reflect the OS-driven theme that's already on screen, so the switch
-  // never lies about the current state before it's touched.
-  var forcedDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  btn.setAttribute("aria-checked", String(forcedDark));
-  btn.addEventListener("click", function () {
-    forcedDark = !forcedDark;
-    btn.setAttribute("aria-checked", String(forcedDark));
-    apply(forcedDark ? DARK : LIGHT);
+  function readPreference() {
+    try {
+      var saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved === "light" || saved === "dark") return saved;
+    } catch (_) {}
+    return "system";
+  }
+  function persistPreference(value) {
+    try {
+      if (value === "system") window.localStorage.removeItem(STORAGE_KEY);
+      else window.localStorage.setItem(STORAGE_KEY, value);
+    } catch (_) {}
+  }
+  var THEME_COLOR = ${JSON.stringify({ light: themeTokens['surface.100'].light, dark: themeTokens['surface.100'].dark })};
+  // Browser chrome follows the resolved theme: an explicit choice pins every
+  // theme-color meta to that theme; System restores the media-query fallbacks.
+  function syncThemeColor(value, resolved) {
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    for (var i = 0; i < metas.length; i += 1) {
+      var meta = metas[i];
+      if (!meta.hasAttribute("data-media")) {
+        meta.setAttribute("data-media", meta.getAttribute("media") || "");
+        meta.setAttribute("data-content", meta.getAttribute("content") || "");
+      }
+      if (value === "system") {
+        meta.setAttribute("media", meta.getAttribute("data-media"));
+        meta.setAttribute("content", meta.getAttribute("data-content"));
+      } else {
+        meta.removeAttribute("media");
+        meta.setAttribute("content", THEME_COLOR[resolved]);
+      }
+    }
+  }
+  function applyPreference(value) {
+    var resolved = value === "system" ? systemTheme() : value;
+    var root = document.documentElement;
+    root.setAttribute(PREFERENCE_ATTR, value);
+    root.setAttribute(RESOLVED_ATTR, resolved);
+    if (value === "system") root.removeAttribute(OVERRIDE_ATTR);
+    else root.setAttribute(OVERRIDE_ATTR, value);
+    syncThemeColor(value, resolved);
+    return resolved;
+  }
+  function syncControls() {
+    var radios = document.querySelectorAll('input[name="' + CONTROL_NAME + '"]');
+    for (var i = 0; i < radios.length; i += 1) radios[i].checked = radios[i].value === currentPreference;
+  }
+  var currentPreference = readPreference();
+  applyPreference(currentPreference);
+  document.addEventListener("DOMContentLoaded", function () {
+    syncControls();
+    var radios = document.querySelectorAll('input[name="' + CONTROL_NAME + '"]');
+    for (var i = 0; i < radios.length; i += 1) {
+      radios[i].addEventListener("change", function (event) {
+        currentPreference = event.target.value;
+        persistPreference(currentPreference);
+        applyPreference(currentPreference);
+      });
+    }
+    var btn = document.getElementById("theme-switch");
+    if (btn) {
+      var specimenOn = btn.getAttribute("aria-checked") === "true";
+      var renderSwitch = function () {
+        btn.className = specimenOn ? SWITCH_ON : SWITCH_OFF;
+        btn.setAttribute("aria-checked", String(specimenOn));
+      };
+      renderSwitch();
+      btn.addEventListener("click", function () {
+        specimenOn = !specimenOn;
+        renderSwitch();
+      });
+    }
   });
+  // A page restored from the back/forward cache keeps its old DOM state:
+  // re-read the stored choice in case it changed on another page meanwhile.
+  window.addEventListener("pageshow", function (event) {
+    if (!event.persisted) return;
+    currentPreference = readPreference();
+    applyPreference(currentPreference);
+    syncControls();
+  });
+  if (media) {
+    var onSystemChange = function () {
+      if (currentPreference === "system") applyPreference("system");
+    };
+    if (typeof media.addEventListener === "function") media.addEventListener("change", onSystemChange);
+    else if (typeof media.addListener === "function") media.addListener(onSystemChange);
+  }
 })();
 `
 
+const motionPreviewJs = `(function () {
+  var btn = document.getElementById("motion-preview");
+  if (!btn) return;
+  var status = document.getElementById("motion-preview-status");
+  var spinnerEl = document.getElementById("demo-spinner");
+  var skeletonWideEl = document.getElementById("demo-skeleton-wide");
+  var skeletonNarrowEl = document.getElementById("demo-skeleton-narrow");
+  var media = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  var timer = 0;
+  function setStatus(text) {
+    if (status) status.textContent = text;
+  }
+  function setStatic() {
+    if (spinnerEl) spinnerEl.className = ${JSON.stringify(spinnerCss)};
+    if (skeletonWideEl) skeletonWideEl.className = ${JSON.stringify(skeletonWideCss)};
+    if (skeletonNarrowEl) skeletonNarrowEl.className = ${JSON.stringify(skeletonNarrowCss)};
+  }
+  function restartAnimation(el, className) {
+    if (!el) return;
+    el.className = className.static;
+    void el.offsetWidth;
+    el.className = className.preview;
+  }
+  function syncReducedMotionStatus() {
+    window.clearTimeout(timer);
+    setStatic();
+    if (media && media.matches) {
+      setStatus("Reduced motion is enabled, so the loading preview stays still.");
+      return true;
+    }
+    setStatus("Static by default. Preview runs once, then stops automatically.");
+    return false;
+  }
+  btn.addEventListener("click", function () {
+    if (syncReducedMotionStatus()) return;
+    restartAnimation(spinnerEl, { static: ${JSON.stringify(spinnerCss)}, preview: ${JSON.stringify(spinnerPreviewCss)} });
+    restartAnimation(skeletonWideEl, { static: ${JSON.stringify(skeletonWideCss)}, preview: ${JSON.stringify(skeletonWidePreviewCss)} });
+    restartAnimation(skeletonNarrowEl, { static: ${JSON.stringify(skeletonNarrowCss)}, preview: ${JSON.stringify(skeletonNarrowPreviewCss)} });
+    setStatus("Preview running for about four seconds. It stops automatically.");
+    timer = window.setTimeout(function () {
+      setStatic();
+      setStatus("Preview finished. Loading demos are static again.");
+    }, 4200);
+  });
+  if (media) {
+    if (media.addEventListener) {
+      media.addEventListener("change", syncReducedMotionStatus);
+    } else if (media.addListener) {
+      media.addListener(syncReducedMotionStatus);
+    }
+  }
+  syncReducedMotionStatus();
+})();
+`
 
 const swRegisterJs = `if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/sw.js');
+    var prompt = document.getElementById('sw-update');
+    var apply = document.getElementById('sw-update-apply');
+    var dismiss = document.getElementById('sw-update-dismiss');
+    var waitingWorker = null;
+    var shouldRefresh = false;
+    var refreshing = false;
+    function showUpdate(worker) {
+      waitingWorker = worker;
+      if (prompt) prompt.hidden = false;
+    }
+    function hideUpdate() {
+      if (prompt) prompt.hidden = true;
+    }
+    if (dismiss) dismiss.addEventListener('click', hideUpdate);
+    if (apply) {
+      apply.addEventListener('click', function () {
+        if (!waitingWorker) return;
+        shouldRefresh = true;
+        hideUpdate();
+        waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+      });
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      waitingWorker = null;
+      hideUpdate();
+      if (!shouldRefresh || refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+    navigator.serviceWorker.register('/sw.js').then(function (registration) {
+      function watch(worker) {
+        if (!worker) return;
+        worker.addEventListener('statechange', function () {
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) showUpdate(worker);
+        });
+      }
+      if (registration.waiting) showUpdate(registration.waiting);
+      if (registration.installing) watch(registration.installing);
+      registration.addEventListener('updatefound', function () {
+        watch(registration.installing);
+      });
+    }).catch(function () {});
   });
 }
 `
@@ -648,40 +910,51 @@ const swJs = `// Verdant — offline shell.
 // Pages: network first, so HTML is always the deployed version when online;
 // the cached copy is only a fallback. Assets: hashed filenames, so a cached
 // copy can never be stale — cache first is safe.
-var CACHE = 'verdant-__VERSION__';
+var CACHE_PREFIX = 'verdant-';
+var CACHE = CACHE_PREFIX + '__VERSION__';
 var SHELL = __SHELL__;
+self.addEventListener('message', function (event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+function normalizePage(pathname) {
+  if (pathname === '/' || pathname === '/index.html') return '/';
+  pathname = pathname.replace(/\\/+$/, '');
+  if (pathname === '${COMPONENTS_ROUTE}' || pathname === '${COMPONENTS_FILE}') return '${COMPONENTS_ROUTE}';
+  if (pathname === '/404' || pathname === '/404.html') return '/404.html';
+  if (pathname === '/offline' || pathname === '/offline.html') return '/offline.html';
+  return null;
+}
 self.addEventListener('install', function (event) {
   // cache: 'reload' skips the HTTP cache, so the new shell is never
   // assembled from an older deploy's files.
   event.waitUntil(caches.open(CACHE).then(function (cache) {
     return cache.addAll(SHELL.map(function (u) { return new Request(u, { cache: 'reload' }); }));
   }));
-  self.skipWaiting();
 });
 self.addEventListener('activate', function (event) {
   event.waitUntil(caches.keys().then(function (keys) {
-    var old = keys.filter(function (k) { return k !== CACHE; });
+    var old = keys.filter(function (k) { return k.indexOf(CACHE_PREFIX) === 0 && k !== CACHE; });
     return Promise.all(old.map(function (k) { return caches.delete(k); }))
-      .then(function () { return self.clients.claim(); })
-      .then(function () {
-        // An update (not a first install): reload open tabs once so they
-        // don't keep showing a page from the previous deploy.
-        if (!old.length) return;
-        return self.clients.matchAll({ type: 'window' }).then(function (tabs) {
-          tabs.forEach(function (tab) { tab.navigate(tab.url); });
-        });
-      });
+      .then(function () { return self.clients.claim(); });
   }));
 });
 self.addEventListener('fetch', function (event) {
   var req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   if (req.mode === 'navigate') {
+    var page = normalizePage(new URL(req.url).pathname);
     event.respondWith(fetch(req).then(function (res) {
-      if (res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
+      if (res.ok && page) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(page, copy); }); }
       return res;
     }).catch(function () {
-      return caches.match(req).then(function (hit) { return hit || caches.match('/'); });
+      return caches.open(CACHE).then(function (cache) {
+        if (page) {
+          return cache.match(page).then(function (hit) {
+            return hit || cache.match('/offline.html');
+          });
+        }
+        return cache.match('/offline.html');
+      });
     }));
     return;
   }
@@ -693,14 +966,17 @@ self.addEventListener('fetch', function (event) {
 // touches text content (and <pre> blocks are left alone), so copy stays intact.
 const minifyHtml = (html) => {
   const pres = []
-  const held = html.replace(/<pre[\s\S]*?<\/pre>/g, (m) => `\u0000${pres.push(m) - 1}\u0000`)
-  return held.replace(/>\s+</g, '><').replace(/\u0000(\d+)\u0000/g, (_, i) => pres[+i]).trim() + '\n'
+  const held = html.replace(/<pre[\s\S]*?<\/pre>/gu, (m) => `<!--pre:${pres.push(m) - 1}-->`)
+  const collapsed = held.replace(/>\s+</gu, '><').replace(/<!--pre:(\d+)-->/gu, (_, i) => pres[Number(i)])
+  return `${collapsed.trim()}\n`
 }
 
 // ---- write ---------------------------------------------------------------------
 
 mkdirSync('dist', { recursive: true })
 writeFileSync('dist/theme-toggle.js', themeToggleJs)
+// The gallery's motion preview needs the DOM, so it ships separately and deferred.
+writeFileSync('dist/gallery.js', motionPreviewJs)
 writeFileSync('dist/sw-register.js', swRegisterJs)
 writeFileSync('dist/sw.js', swJs)
 copyDir('public', 'dist')
@@ -722,11 +998,11 @@ writeFileSync('dist/index.html', minifyHtml(page({
 
 writeFileSync('dist/components.html', minifyHtml(page({
   title: 'Components — Verdant',
-  description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, theme toggle, and motion patterns.',
-  path: '/components.html',
+  description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, a switch specimen, and motion patterns.',
+  path: COMPONENTS_ROUTE,
   active: 'components',
   bodyHtml: componentsBody,
-  scripts: ['/theme-toggle.js'],
+  scripts: ['/gallery.js'],
 })))
 
 writeFileSync('dist/404.html', minifyHtml(page({
@@ -737,4 +1013,12 @@ writeFileSync('dist/404.html', minifyHtml(page({
   bodyHtml: notFoundBody,
 })))
 
-console.log('Wrote dist/index.html, dist/components.html, dist/404.html')
+writeFileSync('dist/offline.html', minifyHtml(page({
+  title: 'Offline — Verdant',
+  description: 'You are offline and this page is not available yet.',
+  path: '/offline.html',
+  active: '',
+  bodyHtml: offlineBody,
+})))
+
+console.log('Wrote dist/index.html, dist/components.html, dist/404.html, dist/offline.html')
