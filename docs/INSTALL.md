@@ -104,7 +104,7 @@ Spacing is a 7-step scale, not a full ramp. Values outside it are a deliberate o
 | Spacing | `1` 4px, `2` 8px, `3` 12px, `4` 16px, `6` 24px, `8` 32px, `12` 48px |
 | Radii | `sm` 4px, `md` 8px, `lg` 16px, `full` 999px |
 | Fonts | `sans` (system UI stack), `mono` (system mono stack) |
-| Font sizes | `displayLg` 32/40, `displayMd` 24/32, `displaySm` 20/28, `body` 16/24, `bodySm` 14/20, `label` 12/16 |
+| Font sizes | `displayLg` 32/40, `displayMd` 24/32, `displaySm` 20/28, `body` 16/24, `bodySm` 14/20, `label` 13/16 |
 
 **There are no web fonts, and adding one is a decision with a cost.** The `sans` stack is system-only so a page costs zero font bytes and has no font-swap reflow.
 
