@@ -78,7 +78,7 @@ Tradeoffs:
 `npm run verify:ci` is what `.github/workflows/ci.yml` runs on every pull request and on `main`, on the Node 20 runtime pinned in `.nvmrc` (the same version `netlify.toml` builds with):
 
 - `npm ci --ignore-scripts`, then a full `npm run build` from the lockfile.
-- `scripts/check-budgets.mjs` compares the finalized `dist/measurements.json` against the reviewed limits in `ci/budgets.json` and writes `artifacts/ci-audit.json`.
+- `scripts/check-budgets.mjs` compares the finalized `dist/measurements.json` against the reviewed limits in `ci/budgets.json`, totals any web-font files in `dist/` against `webFontsKiB` (0 by default), and writes `artifacts/ci-audit.json`.
 - `tests/service-worker.test.mjs` and `tests/measurements.test.mjs` check the production worker, the published offline-cache contract and the measurement report against its schema.
 - `tests/site.spec.mjs` (Playwright, Chromium) checks behavior in a real browser against `scripts/serve-dist.mjs`: field hints and placeholder contrast, prose-link underlines, skip-link focus, no horizontal scroll at 320px, theme persistence and live System mode, and the bounded, reduced-motion-safe loading preview.
 
@@ -87,6 +87,47 @@ The run uploads the measurement report, its schema, the offline-cache contract a
 ### Budget rationale
 
 `ci/budgets.json` records the 2026-09-22 baselines from `dist/measurements.json` with modest headroom above each. A budget failure means the change added weight; raise a limit only in a reviewed change that says why.
+
+## Custom web fonts: the off-ramp
+
+Verdant's default is the system font stack (`system-ui` for text, `ui-monospace` for code). It costs no bytes and no requests, and CI holds web fonts to a **0 KiB** budget. Keep that default wherever you can. When a brand really needs its own typeface, take this path so the font doesn't undo the rest of the weight budget. It follows the WSG's guidance to take a more sustainable approach to typefaces ([UX Design section](https://www.w3.org/TR/web-sustainability-guidelines/)).
+
+1. **Scope it.** Use the brand face for headings and the wordmark only; keep body copy, forms and code on the system stacks. One face is the target; every extra weight or style is another file.
+2. **Self-host WOFF2 only.** Serve fonts from the site's own origin under `/assets/`, so `scripts/fingerprint.mjs` hashes them and `public/_headers` caches them for a year. Avoid third-party font CDNs: they add connections and share visitors' requests, and the site's CSP (`default-src 'self'`, which also covers fonts) would block them anyway. Skip WOFF, TTF and EOT fallbacks; every supported browser reads WOFF2.
+3. **Subset it.** Keep only the scripts and glyphs the content uses. Prefer one variable font over several static weights when you need more than two weights.
+
+   ```bash
+   pip install fonttools brotli
+   pyftsubset Brand.ttf --flavor=woff2 --layout-features='kern,liga' \
+     --unicodes='U+0000-00FF,U+2013-2014,U+2018-201D,U+2026' \
+     --output-file=public/assets/brand-subset.woff2
+   ```
+
+4. **Load it without blocking or shifting.** Use `font-display: swap`, preload only the one face used above the fold, and give the fallback matching metrics so the swap doesn't move the layout:
+
+   ```css
+   @font-face {
+     font-family: 'Brand';
+     src: url('/assets/brand-subset.woff2') format('woff2');
+     font-display: swap;
+     font-weight: 600 700;
+   }
+   @font-face {                 /* metric-matched fallback: tune the values per font */
+     font-family: 'Brand Fallback';
+     src: local('Arial');
+     size-adjust: 104%;
+     ascent-override: 92%;
+     descent-override: 24%;
+   }
+   ```
+
+   ```html
+   <link rel="preload" href="/assets/brand-subset.woff2" as="font" type="font/woff2" crossorigin>
+   ```
+
+   Then add a token rather than hard-coding the family: `fonts.brand: "'Brand', 'Brand Fallback', system-ui, sans-serif"` in `scripts/tokens.mjs`, used only by heading styles.
+5. **Budget it.** Raise `thresholds.webFontsKiB` in `ci/budgets.json` in the same reviewed change, with a `rationale` entry saying why. `scripts/check-budgets.mjs` totals every `.woff2`, `.woff`, `.ttf`, `.otf` and `.eot` file in `dist/` and fails the build over the limit. As a guide, a Latin subset of one variable face is typically 20–40 KiB; stay under 30 KiB.
+6. **Respect the reader.** Under `prefers-reduced-data: reduce`, drop the web font and keep the fallback stack. It's cheap to do even though browser support is still limited.
 
 ## What's deliberately in here
 
