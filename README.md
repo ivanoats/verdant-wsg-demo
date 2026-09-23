@@ -81,8 +81,10 @@ Tradeoffs:
 - `scripts/check-budgets.mjs` compares the finalized `dist/measurements.json` against the reviewed limits in `ci/budgets.json`, totals any web-font files in `dist/` against `webFontsKiB` (0 by default), and writes `artifacts/ci-audit.json`.
 - `tests/service-worker.test.mjs` and `tests/measurements.test.mjs` check the production worker, the published offline-cache contract and the measurement report against its schema.
 - `tests/site.spec.mjs` (Playwright, Chromium) checks behavior in a real browser against `scripts/serve-dist.mjs`: field hints and placeholder contrast, prose-link underlines, skip-link focus, no horizontal scroll at 320px, theme persistence and live System mode, and the bounded, reduced-motion-safe loading preview.
+- `tests/a11y.spec.mjs` runs [axe-core](https://github.com/dequelabs/axe-core) on every page (`/`, `/components`, the 404 and the offline page) for WCAG 2.x A and AA rules, in light, dark and both high-contrast modes.
+- `tests/visual.spec.mjs` screenshots each gallery specimen in light, dark and high contrast and compares it with the baselines in `tests/__screenshots__`. Baselines are rendered on the pinned `ubuntu-24.04` runner, so these tests are skipped locally unless `VISUAL=1`. When a visual change is intended, add the `update-screenshots` label to the PR. `.github/workflows/update-screenshots.yml` then re-renders the baselines and commits them to the branch, where the image diff is reviewed like code.
 
-The run uploads the measurement report, its schema, the offline-cache contract and the audit as artifacts. Assistive-technology, cross-device and usability checks stay manual and are tracked in [`VALIDATION.md`](./VALIDATION.md).
+The run uploads the measurement report, its schema, the offline-cache contract, the audit and, on failure, Playwright's `test-results/` (including expected/actual/diff images) as artifacts. Assistive-technology, cross-device and usability checks stay manual and are tracked in [`VALIDATION.md`](./VALIDATION.md).
 
 ### Budget rationale
 
