@@ -25,6 +25,9 @@ test('production service worker keeps cache ownership scoped and removes forced 
   assert.match(sw, /k\.indexOf\(CACHE_PREFIX\) === 0 && k !== CACHE/)
   assert.match(sw, /event\.data && event\.data\.type === 'SKIP_WAITING'/)
   assert.doesNotMatch(sw, /tab\.navigate\(tab\.url\)/)
+  // Only the legacy cache-first worker is replaced without the prompt.
+  assert.match(sw, /var LEGACY_CACHE = \/\^verdant-v\\d\+\$\//)
+  assert.match(sw, /LEGACY_CACHE\.test\(k\); \}\)\) return self\.skipWaiting\(\)/)
 })
 
 test('generated pages include update controls and the offline fallback page', () => {

@@ -1204,6 +1204,7 @@ const swJs = `// Verdant — offline shell.
 // copy can never be stale — cache first is safe.
 var CACHE_PREFIX = 'verdant-';
 var CACHE = CACHE_PREFIX + '__VERSION__';
+var LEGACY_CACHE = /^verdant-v\\d+$/;
 var SHELL = __SHELL__;
 self.addEventListener('message', function (event) {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
@@ -1221,6 +1222,11 @@ self.addEventListener('install', function (event) {
   // assembled from an older deploy's files.
   event.waitUntil(caches.open(CACHE).then(function (cache) {
     return cache.addAll(SHELL.map(function (u) { return new Request(u, { cache: 'reload' }); }));
+  }).then(function () { return caches.keys(); }).then(function (keys) {
+    // The first cache-first worker (caches verdant-v1/v2) serves stale pages
+    // that have no update prompt, so nothing would ever send SKIP_WAITING.
+    // Replace it straight away; every newer worker waits for the prompt.
+    if (keys.some(function (k) { return LEGACY_CACHE.test(k); })) return self.skipWaiting();
   }));
 });
 self.addEventListener('activate', function (event) {
