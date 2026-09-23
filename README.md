@@ -9,10 +9,15 @@ The home page promotes the system; `/components` is the public component-gallery
 ```
 npm install
 npm run dev     # http://localhost:4321 — rebuilds on save and reloads the browser
-npm run build   # panda codegen -> generate HTML -> panda cssgen (minified, lightningcss) -> measure page weight -> hash asset names
+npm run build   # panda codegen -> generate HTML -> panda cssgen -> hash final asset names -> measure finalized assets and transfer
 ```
 
 Output lands in `dist/` — that's the Netlify publish directory (see `netlify.toml`).
+
+`npm run build` also publishes the measurement artifacts that CI can consume:
+
+- `dist/measurements.json` — finalized build report with byte budgets, derived resource sets, local transfer observations, and explicitly unmeasured production-network fields
+- `dist/measurements.schema.json` — JSON Schema for the report shape
 
 ## Profiling the decorative SVGs
 
@@ -71,7 +76,7 @@ Tradeoffs:
 - Content-hashed CSS/JS under `/assets/` (`scripts/fingerprint.mjs`), cached for a year; pages are network-first in the service worker, so a deploy never mixes new HTML with old CSS
 - No third-party scripts, no analytics, no web fonts, no icon font
 - "Geometric growth" art (`scripts/art.mjs`): inline SVG built from the system's own shapes, every fill a color token, so it recolors with the theme and costs no requests; it grows in once, only when motion is allowed
-- The page-weight numbers on the home page are measured by `scripts/stats.mjs` on every build, never hand-typed; the current first-view accounting includes both the theme bootstrap and the deferred service-worker register script
+- `scripts/stats.mjs` measures finalized assets on every build, writes `dist/measurements.json` plus `dist/measurements.schema.json` for CI budgets, and updates the home-page summary without hand-typed numbers
 
 ## Offline cache strategy
 

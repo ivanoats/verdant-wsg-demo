@@ -46,7 +46,7 @@ async function build() {
   // would re-run every time; codegen only runs when panda.config.ts changes.
   // (`npm run dev` puts node_modules/.bin on PATH, so `panda` resolves.)
   const ok = (!needCodegen || await run('panda codegen --silent')) &&
-    await run('node scripts/build.mjs && panda cssgen -m --lightningcss --silent -o dist/styles.css && node scripts/stats.mjs && node scripts/fingerprint.mjs')
+    await run('node scripts/build.mjs && panda cssgen -m --lightningcss --silent -o dist/styles.css && node scripts/fingerprint.mjs && node scripts/stats.mjs')
   needCodegen = false
   building = false
   if (ok) {

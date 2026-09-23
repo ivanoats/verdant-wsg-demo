@@ -119,7 +119,7 @@ const heroHtml = `
   </div>
 </section>`
 
-// ---- index: measured stats (filled in by scripts/stats.mjs after the build)
+// ---- index: measured stats (filled in by scripts/stats.mjs after fingerprinting)
 
 const statsGridCss = css({
   display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
@@ -128,15 +128,19 @@ const statsGridCss = css({
 const statCss = css({ display: 'flex', flexDirection: 'column-reverse', margin: '0' })
 const statValueCss = css({ fontSize: { base: 'displayLg', md: '40px' }, lineHeight: { base: 'displayLg', md: '48px' }, fontWeight: '700', color: 'accent', margin: '0' })
 const statLabelCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '4px 0 0' })
+const statsNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 8px' })
 
 const statsHtml = `
 <section class="${bandCss}" aria-label="By the numbers">
-  <dl class="${wrapCss} ${statsGridCss}">
-    <div class="${statCss}"><dt class="${statLabelCss}">This whole page, compressed &mdash; art included</dt><dd class="${statValueCss}">__HOME_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Stylesheet, extracted to only the rules in use</dt><dd class="${statValueCss}">__CSS_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Public palette pairs shown below</dt><dd class="${statValueCss}">${themeTokenCount}&thinsp;&times;&thinsp;2</dd></div>
-  </dl>
+  <div class="${wrapCss}">
+    <dl class="${statsGridCss}">
+      <div class="${statCss}"><dt class="${statLabelCss}">Initial render assets, local Brotli estimate</dt><dd class="${statValueCss}">__INITIAL_RENDER_KIB__&nbsp;KiB</dd></div>
+      <div class="${statCss}"><dt class="${statLabelCss}">Offline shell + worker, unique local Brotli estimate</dt><dd class="${statValueCss}">__OFFLINE_SHELL_KIB__&nbsp;KiB</dd></div>
+      <div class="${statCss}"><dt class="${statLabelCss}">Cold first session, measured local transfer</dt><dd class="${statValueCss}">__COLD_SESSION_KIB__&nbsp;KiB</dd></div>
+      <div class="${statCss}"><dt class="${statLabelCss}">Warm repeat visit, measured local transfer</dt><dd class="${statValueCss}">__WARM_SESSION_KIB__&nbsp;KiB</dd></div>
+    </dl>
+    <p class="${statsNoteCss}">Measured __MEASURED_ON__ locally over HTTP with Brotli response bodies in KiB (1024 bytes), excluding headers, then rounded up to a stable tenth for this summary. Cold includes the service worker install and its duplicate precache fetches; warm is a repeat visit with the shell already cached. Production-network transfer is unmeasured here.</p>
+  </div>
 </section>`
 
 // ---- index: how it grows ----------------------------------------------------------

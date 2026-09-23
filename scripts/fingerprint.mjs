@@ -1,6 +1,7 @@
 // Post-build: give every CSS/JS file a content-hashed name under /assets/,
-// point the HTML at those names, and stamp the service worker with a
-// version built from all shipped files.
+// point the HTML at those names, and stamp the service worker with the final
+// shell list. scripts/stats.mjs fills in the final worker version afterwards,
+// once the homepage measurements have been written.
 //
 // Why: the pages change on every deploy, but a file called /styles.css can
 // sit in a browser (or service worker) cache from an older deploy. New HTML
@@ -29,14 +30,11 @@ for (const page of PAGES) {
   writeFileSync(`dist/${page}`, html)
 }
 
-// Everything the offline shell caches, and a version that changes whenever
-// any of it does — so every deploy ships a byte-different sw.js.
+// Everything the offline shell caches. scripts/stats.mjs computes the final
+// version from these finalized files after it resolves the homepage metrics.
 const shell = ['/', '/components', '/404.html', '/offline.html', ...Object.values(map), '/favicon.svg', '/manifest.json']
-const version = hash(Buffer.concat([...PAGES, ...Object.values(map).map((p) => p.slice(1)), 'favicon.svg', 'manifest.json']
-  .map((f) => readFileSync(`dist/${f}`))))
 const sw = readFileSync('dist/sw.js', 'utf8')
-  .replace('__VERSION__', version)
   .replace('__SHELL__', JSON.stringify(shell))
 writeFileSync('dist/sw.js', sw)
 
-console.log(`Fingerprinted ${ASSETS.length} assets; service worker version ${version}`)
+console.log(`Fingerprinted ${ASSETS.length} assets and updated offline shell URLs`)
