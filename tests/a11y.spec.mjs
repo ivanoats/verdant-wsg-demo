@@ -4,7 +4,7 @@ import AxeBuilder from '@axe-core/playwright'
 // axe-core scans every page for WCAG 2.x A and AA violations, in each color
 // mode the site supports. Motion is reduced so no element is mid-fade when
 // contrast is measured.
-const PAGES = ['/', '/components', '/missing-route', '/offline.html']
+const PAGES = ['/', '/components', '/green-web', '/missing-route', '/offline.html']
 const MODES = [
   { name: 'light', colorScheme: 'light' },
   { name: 'dark', colorScheme: 'dark' },

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { highContrastTokens, themeTokens } from '../scripts/theme.mjs'
+import { highContrastTokens, themeTokens } from 'verdant-design/theme'
 
 // WCAG relative-luminance contrast between two computed rgb()/rgba() colors.
 const contrast = ({ foreground, background }) => {
@@ -135,4 +135,14 @@ test('increased contrast swaps in stronger tokens and thicker boundaries', async
   await page.emulateMedia({ contrast: 'no-preference' })
   await expect.poll(tokenValue).toBe(themeTokens['ink.muted'].light)
   expect(await borderWidth()).toBe('1px')
+})
+
+test('the hero links to the green web page', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('link', { name: 'What is the green web?' }).click()
+  await expect(page).toHaveURL(/\/green-web$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'What is the Green Web?' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Get in touch' })).toHaveAttribute('href', 'https://sustainaweb.netlify.app/contact')
+  await page.setViewportSize({ width: 320, height: 900 })
+  await expectNoHorizontalScroll(page)
 })
