@@ -9,8 +9,6 @@ import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
 import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
 import {
-  illustrationPaletteOrder,
-  interfacePaletteOrder,
   themeOverrideAttr,
   themePreferenceAttr,
   themePreferenceControlName,
@@ -20,6 +18,7 @@ import {
   themeTokenCount,
   themeTokens,
 } from './theme.mjs'
+import { paletteSections, verifiedPairings, publicTokenScope } from './tokens.mjs'
 
 // A hand-rolled recursive copy: some mounted/virtual filesystems choke on
 // Node's native cpSync fast paths (fcopyfile/clonefile), so this sticks to
@@ -177,60 +176,164 @@ const stagesHtml = `
   </ol>
 </section>`
 
-// ---- index: palette, as leaves ----------------------------------------------------
+// ---- index: palette, pairings and token scope --------------------------------------
 
 const paletteGridCss = css({
-  display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(176px, 1fr))',
-  gap: { base: '4', md: '6' }, listStyle: 'none', margin: '0', padding: '0',
+  display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' },
+  gap: '4', listStyle: 'none', margin: '0', padding: '0',
 })
-const swatchItemCss = hstack({ gap: '3', alignItems: 'center' })
-// A leaf is a square with two opposite corners fully rounded.
-const sw = {
-  'surface.100': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.100' }),
-  'surface.200': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.200' }),
-  border: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'border' }),
-  'border.control': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'border.control' }),
-  ink: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink' }),
-  'ink.muted': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.muted' }),
-  'ink.placeholder': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.placeholder' }),
-  accent: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent' }),
-  'accent.strong': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.strong' }),
-  'accent.ink': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.ink' }),
-  focusRing: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'focusRing' }),
-  positive: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'positive' }),
-  critical: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'critical' }),
-  foliage: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage' }),
-  'foliage.far': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.far' }),
-  'foliage.mid': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.mid' }),
-  'foliage.deep': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.deep' }),
-  'foliage.bright': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.bright' }),
-  sunlight: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'sunlight' }),
-}
-const swatchNameCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
-const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '4px 0 0' })
+const swatchCardCss = card()
+const swatchNameCss = css({ fontFamily: 'mono', fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', margin: '0' })
+const swatchThemeGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: '3', marginTop: '3' })
+const swatchThemeTileCss = css({
+  display: 'grid', gridTemplateColumns: '48px 1fr', gap: '3', alignItems: 'center',
+  border: '1px solid', borderColor: 'border', borderRadius: 'sm', padding: '3', background: 'surface.100',
+})
+const swatchThemeLabelCss = css({ display: 'block', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
+const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', marginTop: '4px' })
+const pairingGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: '4', listStyle: 'none', margin: '0', padding: '0' })
+const pairingCardCss = card()
+const pairingTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0' })
+const pairingTokenCss = css({ fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', margin: '8px 0 0' })
+const pairingBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '8px 0 0' })
+const pairingMetaCss = css({ fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '12px 0 0' })
+const scopeGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: '4' })
+const scopeCardCss = card()
+const scopeTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 8px' })
+const scopeBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 12px' })
+const scopeListCss = css({ margin: '0', paddingLeft: '20px', color: 'ink.muted', '& li + li': { marginTop: '2' } })
+const scopeCodeCss = css({ fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink' })
 const paletteGroupCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 4px' })
-const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '62ch' })
+const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '68ch' })
 const paletteGapCss = css({ marginTop: '12' })
-const tokenLabel = (name) => name.replace(/\./g, '-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
-const swatches = (list) => list.map((name) => `
-      <li class="${swatchItemCss}">
-        <span class="${sw[name]}" aria-hidden="true"></span>
-        <span><span class="${swatchNameCss}">${tokenLabel(name)}</span><span class="${swatchHexCss}">Light ${themeTokens[name].light}</span><span class="${swatchHexCss}">Dark ${themeTokens[name].dark}</span></span>
+
+const hexToRgb = (hex) => [0, 2, 4].map((offset) => Number.parseInt(hex.slice(offset + 1, offset + 3), 16) / 255)
+const relativeLuminance = (hex) => {
+  const [r, g, b] = hexToRgb(hex).map((channel) => (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4))
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+const contrast = (foreground, background) => {
+  const [lighter, darker] = [relativeLuminance(foreground), relativeLuminance(background)].sort((a, b) => b - a)
+  return (lighter + 0.05) / (darker + 0.05)
+}
+const formatRatio = (ratio) => `${ratio.toFixed(2)}:1`
+const tokenCode = (token) => `<code class="${codeCss}">${token}</code>`
+const leafSwatch = (fill, stroke) => `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true" focusable="false"><path d="M8 40V14c0-3.3 2.7-6 6-6h26v26c0 3.3-2.7 6-6 6H8Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/></svg>`
+const swatchTile = (themeLabel, fill, stroke) => `
+        <div class="${swatchThemeTileCss}">
+          ${leafSwatch(fill, stroke)}
+          <span><span class="${swatchThemeLabelCss}">${themeLabel}</span><span class="${swatchHexCss}">${fill}</span></span>
+        </div>`
+const themeValueMaps = {
+  light: Object.fromEntries(Object.entries(themeTokens).map(([key, value]) => [key, value.light])),
+  dark: Object.fromEntries(Object.entries(themeTokens).map(([key, value]) => [key, value.dark])),
+}
+
+const swatches = (keys) => keys.map((key) => {
+  const token = themeTokens[key]
+  return `
+      <li class="${swatchCardCss}">
+        <p class="${swatchNameCss}">${key}</p>
+        <div class="${swatchThemeGridCss}">
+          ${swatchTile('Light', token.light, themeValueMaps.light.border)}
+          ${swatchTile('Dark', token.dark, themeValueMaps.dark.border)}
+        </div>
+      </li>`
+}).join('')
+
+const evaluatedPairings = verifiedPairings.map((pairing) => {
+  const lightContrast = contrast(themeValueMaps.light[pairing.foreground], themeValueMaps.light[pairing.background])
+  const darkContrast = contrast(themeValueMaps.dark[pairing.foreground], themeValueMaps.dark[pairing.background])
+  if (lightContrast < pairing.minimum || darkContrast < pairing.minimum) {
+    throw new Error(`Verified pairing failed ${pairing.title}: ${formatRatio(lightContrast)} light / ${formatRatio(darkContrast)} dark`)
+  }
+  return { ...pairing, lightContrast, darkContrast }
+})
+const pairingGroups = [
+  {
+    key: 'text',
+    title: 'Verified text pairings',
+    note: 'Measured from the shared theme tokens at build time. These are the approved readable combinations — not every token can be mixed freely.',
+  },
+  {
+    key: 'functional',
+    title: 'Verified functional boundaries',
+    note: 'Borders and focus indicators target at least 3:1 non-text contrast against the surfaces they appear on.',
+  },
+]
+const pairingCards = (category) => evaluatedPairings
+  .filter((pairing) => pairing.category === category)
+  .map((pairing) => `
+      <li class="${pairingCardCss}">
+        <h4 class="${pairingTitleCss}">${pairing.title}</h4>
+        <p class="${pairingTokenCss}">${tokenCode(pairing.foreground)} on ${tokenCode(pairing.background)}</p>
+        <p class="${pairingBodyCss}">${pairing.note}</p>
+        <p class="${pairingMetaCss}">Light ${formatRatio(pairing.lightContrast)} &middot; Dark ${formatRatio(pairing.darkContrast)} &middot; Target ${pairing.minimum}:1</p>
       </li>`).join('')
+
+const tokenList = (items) => items.map((item) => `<code class="${scopeCodeCss}">${item}</code>`).join(', ')
+const scopeList = (items) => items.map((item) => `<li>${item}</li>`).join('')
+const typographyList = publicTokenScope.typography.sizes
+  .map(({ token, fontSize, lineHeight }) => `<li><code class="${scopeCodeCss}">${token}</code> &mdash; ${fontSize} / ${lineHeight}</li>`)
+  .join('')
+
 const paletteHtml = `
 <section id="palette" class="${bandCss}" aria-labelledby="palette-title">
   <div class="${wrapCss} ${sectionCss}">
     <p class="${eyebrowCss}">Palette</p>
-    <h2 id="palette-title" class="${h2Css}">${themeTokenCount} colors, two themes.</h2>
-    <p class="${introCss}">One token set with a light and a dark value each. System mode follows <code class="${codeCss}">prefers-color-scheme</code>; explicit Light and Dark choices reuse the same tokens without a second stylesheet.</p>
-    <h3 class="${paletteGroupCss}">Interface</h3>
-    <p class="${paletteGroupNoteCss}">Text, controls and state. Every text pair clears 4.5:1 in both themes.</p>
-    <ul class="${paletteGridCss}">${swatches(interfacePaletteOrder)}
-    </ul>
-    <h3 class="${paletteGroupCss} ${paletteGapCss}">Illustration</h3>
-    <p class="${paletteGroupNoteCss}">Hills, leaves, grass and sun. Picked for lushness, not contrast, so they never carry text or meaning.</p>
-    <ul class="${paletteGridCss}">${swatches(illustrationPaletteOrder)}
-    </ul>
+    <h2 id="palette-title" class="${h2Css}">${themeTokenCount} colors, shown in both themes.</h2>
+    <p class="${introCss}">One token set with a light and a dark value each. System mode follows <code class="${codeCss}">prefers-color-scheme</code>; explicit Light and Dark choices reuse the same tokens without a second stylesheet. Both values of every token are shown side by side.</p>
+    ${paletteSections.map((section, index) => `
+    <h3 class="${paletteGroupCss}${index ? ` ${paletteGapCss}` : ''}">${section.title}</h3>
+    <p class="${paletteGroupNoteCss}">${section.note}</p>
+    <ul class="${paletteGridCss}">${swatches(section.keys)}</ul>`).join('')}
+    ${pairingGroups.map(({ key, title, note }) => `
+    <h3 class="${paletteGroupCss} ${paletteGapCss}">${title}</h3>
+    <p class="${paletteGroupNoteCss}">${note}</p>
+    <ul class="${pairingGridCss}">${pairingCards(key)}</ul>`).join('')}
+  </div>
+</section>`
+
+const tokensHtml = `
+<section class="${wrapCss} ${sectionCss}" aria-labelledby="tokens-title">
+  <p class="${eyebrowCss}">Public token scope</p>
+  <h2 id="tokens-title" class="${h2Css}">What Verdant publishes, inherits, and keeps page-specific.</h2>
+  <p class="${introCss}">The palette above defines the supported color API. These cards document the rest of the token surface so adopters can tell reusable design tokens from Panda defaults and demo-only layout values.</p>
+  <div class="${scopeGridCss}">
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Colors</h3>
+      <p class="${scopeBodyCss}">Interface colors are the public text, control and status tokens. Illustration colors stay public for artwork only.</p>
+      <ul class="${scopeListCss}">
+        <li>Interface: ${tokenList(paletteSections[0].keys)}</li>
+        <li>Illustration only: ${tokenList(paletteSections[1].keys)}</li>
+      </ul>
+    </section>
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Spacing</h3>
+      <p class="${scopeBodyCss}">Public spacing tokens follow a 4px rhythm.</p>
+      <ul class="${scopeListCss}">${scopeList(publicTokenScope.spacing.map(({ token, value }) => `<code class="${scopeCodeCss}">${token}</code> &mdash; ${value}`))}</ul>
+    </section>
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Radii</h3>
+      <p class="${scopeBodyCss}">Rounded corners stay on four reusable steps.</p>
+      <ul class="${scopeListCss}">${scopeList(publicTokenScope.radii.map(({ token, value }) => `<code class="${scopeCodeCss}">${token}</code> &mdash; ${value}`))}</ul>
+    </section>
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Typography</h3>
+      <p class="${scopeBodyCss}">System fonts plus six public size/line-height pairs.</p>
+      <ul class="${scopeListCss}">
+        ${scopeList(publicTokenScope.typography.families.map(({ token, value }) => `<code class="${scopeCodeCss}">${token}</code> &mdash; ${value}`))}
+        ${typographyList}
+      </ul>
+    </section>
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Layout &amp; breakpoints</h3>
+      <p class="${scopeBodyCss}">Verdant keeps its public token surface small, so responsive and page-art values are called out separately here.</p>
+      <ul class="${scopeListCss}">
+        ${scopeList(publicTokenScope.layout.inherited)}
+        ${scopeList(publicTokenScope.layout.pageSpecific)}
+      </ul>
+    </section>
   </div>
 </section>`
 
@@ -888,7 +991,7 @@ writeFileSync('dist/index.html', minifyHtml(page({
     description: 'A small design system where every default satisfies the W3C Web Sustainability Guidelines.',
     url: 'https://verdant-wsg-demo.netlify.app/',
   },
-  bodyHtml: heroHtml + statsHtml + stagesHtml + paletteHtml + scoreHtml + pandaHtml + ctaHtml,
+  bodyHtml: heroHtml + statsHtml + stagesHtml + paletteHtml + tokensHtml + scoreHtml + pandaHtml + ctaHtml,
 })))
 
 writeFileSync('dist/components.html', minifyHtml(page({
