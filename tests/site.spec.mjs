@@ -13,6 +13,10 @@ const contrast = ({ foreground, background }) => {
 }
 
 const underline = (locator) => locator.evaluate((link) => getComputedStyle(link).textDecorationLine)
+const expectNoHorizontalScroll = async (page) => {
+  const widths = await page.evaluate(() => ({ viewport: window.innerWidth, scroll: document.documentElement.scrollWidth }))
+  expect(widths.scroll).toBeLessThanOrEqual(widths.viewport + 1)
+}
 const rootAttr = (page, name) => page.evaluate((attr) => document.documentElement.getAttribute(attr), name)
 
 test('a11y affordances stay visible at narrow widths', async ({ page }) => {
@@ -26,6 +30,7 @@ test('a11y affordances stay visible at narrow widths', async ({ page }) => {
     await expect(page.locator(`#${id}`)).toBeVisible()
     await expect(page.locator(`#${id}`)).not.toHaveText('')
   }
+  await expectNoHorizontalScroll(page)
 
   // The placeholder is measured against the first opaque background behind the field.
   const placeholder = await field.evaluate((input) => {
@@ -44,8 +49,7 @@ test('a11y affordances stay visible at narrow widths', async ({ page }) => {
   await expect(proseLink).toBeVisible()
   expect(await underline(proseLink)).toContain('underline')
 
-  const widths = await page.evaluate(() => ({ viewport: window.innerWidth, scroll: document.documentElement.scrollWidth }))
-  expect(widths.scroll).toBeLessThanOrEqual(widths.viewport + 1)
+  await expectNoHorizontalScroll(page)
 
   await page.keyboard.press('Tab')
   const skipLink = page.getByRole('link', { name: /skip to content/i })
