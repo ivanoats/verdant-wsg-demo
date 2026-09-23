@@ -361,10 +361,13 @@ function serve(req, res, files) {
     res.end('Not found')
     return
   }
+  // Pretty routes (/components) are served from their .html file, so type
+  // and compression follow that file, as they do on Netlify.
+  const typePath = extname(url.pathname) || url.pathname.endsWith('/') ? url.pathname : `${url.pathname}.html`
   const entityTag = etag(body)
   const headers = {
     'cache-control': cacheControl(url.pathname),
-    'content-type': contentType(url.pathname),
+    'content-type': contentType(typePath),
     etag: entityTag,
   }
 
@@ -375,7 +378,7 @@ function serve(req, res, files) {
   }
 
   let payload = body
-  if (shouldCompress(url.pathname) && /\bbr\b/.test(req.headers['accept-encoding'] || '')) {
+  if (shouldCompress(typePath) && /\bbr\b/.test(req.headers['accept-encoding'] || '')) {
     payload = brotliCompressSync(body)
     headers['content-encoding'] = 'br'
   }
