@@ -1,4 +1,9 @@
 import { defineConfig } from '@pandacss/dev'
+import { fontFamilyTokens, spacingTokens, radiiTokens, fontSizeTokens, lineHeightTokens } from './scripts/tokens.mjs'
+import { explicitThemeVars, semanticColorTokens, themeOverrideAttr, themeResolvedAttr } from './scripts/theme.mjs'
+
+const important = (vars: Record<string, string>) =>
+  Object.fromEntries(Object.entries(vars).map(([name, value]) => [name, `${value} !important`]))
 
 export default defineConfig({
   preflight: true,
@@ -9,11 +14,11 @@ export default defineConfig({
   exclude: [],
   outdir: 'styled-system',
 
-  // Dark mode is driven by the OS preference, full stop — this is the WSG
-  // check (3.12) a scanner looks for. The ThemeToggle demo does not use a
-  // Panda condition at all: it overrides the same CSS custom properties
-  // inline at runtime, which always wins over a stylesheet rule without
-  // needing a second selector-based condition to fight the cascade with.
+  // System mode is the default: `_dark` values apply through
+  // prefers-color-scheme (the WSG 3.12 preference query), with no script.
+  // An explicit Light or Dark choice sets data-theme-override on <html>,
+  // and the globalCss rules below map every token to that theme's value,
+  // so the same token set serves all three preferences.
   conditions: {
     dark: '@media (prefers-color-scheme: dark)',
   },
@@ -21,55 +26,15 @@ export default defineConfig({
   theme: {
     extend: {
       tokens: {
-        fonts: {
-          sans: { value: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' },
-          mono: { value: 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace' },
-        },
-        spacing: {
-          1: { value: '4px' }, 2: { value: '8px' }, 3: { value: '12px' }, 4: { value: '16px' },
-          6: { value: '24px' }, 8: { value: '32px' }, 12: { value: '48px' },
-        },
-        radii: {
-          sm: { value: '4px' }, md: { value: '8px' }, lg: { value: '16px' }, full: { value: '999px' },
-        },
-        fontSizes: {
-          displayLg: { value: '32px' }, displayMd: { value: '24px' }, displaySm: { value: '20px' },
-          body: { value: '16px' }, bodySm: { value: '14px' }, label: { value: '13px' },
-        },
-        lineHeights: {
-          displayLg: { value: '40px' }, displayMd: { value: '32px' }, displaySm: { value: '28px' },
-          body: { value: '24px' }, bodySm: { value: '20px' }, label: { value: '16px' },
-        },
+        fonts: Object.fromEntries(Object.entries(fontFamilyTokens).map(([key, value]) => [key, { value }])),
+        spacing: Object.fromEntries(Object.entries(spacingTokens).map(([key, value]) => [key, { value }])),
+        radii: Object.fromEntries(Object.entries(radiiTokens).map(([key, value]) => [key, { value }])),
+        fontSizes: Object.fromEntries(Object.entries(fontSizeTokens).map(([key, value]) => [key, { value }])),
+        lineHeights: Object.fromEntries(Object.entries(lineHeightTokens).map(([key, value]) => [key, { value }])),
       },
       semanticTokens: {
         colors: {
-          surface: {
-            100: { value: { base: '#faf8f3', _dark: '#15140f' } },
-            200: { value: { base: '#ffffff', _dark: '#1e1c15' } },
-          },
-          border: { value: { base: '#93866c', _dark: '#726b53' } },
-          ink: {
-            DEFAULT: { value: { base: '#1c1a15', _dark: '#f1ede2' } },
-            muted: { value: { base: '#5b5548', _dark: '#b6ae9c' } },
-          },
-          accent: {
-            DEFAULT: { value: { base: '#2f6b4a', _dark: '#7fcfa3' } },
-            strong: { value: { base: '#234f38', _dark: '#5fb98c' } },
-            ink: { value: { base: '#ffffff', _dark: '#10241a' } },
-          },
-          focusRing: { value: { base: '#a5670a', _dark: '#e8a83e' } },
-          // Illustration-only greens: the "verdant" in Verdant. Never text or
-          // UI state — they're chosen for lushness, not 4.5:1 contrast.
-          foliage: {
-            DEFAULT: { value: { base: '#3ca24a', _dark: '#45ad55' } },
-            far: { value: { base: '#cdeaae', _dark: '#1c3a22' } },
-            mid: { value: { base: '#9ed65f', _dark: '#2d6b34' } },
-            deep: { value: { base: '#1f6a31', _dark: '#2a7d3a' } },
-            bright: { value: { base: '#6fcd4f', _dark: '#86dc62' } },
-          },
-          sunlight: { value: { base: '#f4b63f', _dark: '#e8a83e' } },
-          positive: { value: { base: '#1f7a6c', _dark: '#5cc9b7' } },
-          critical: { value: { base: '#c1440e', _dark: '#ff8f5e' } },
+          ...semanticColorTokens,
         },
         shadows: {
           sm: {
@@ -84,16 +49,21 @@ export default defineConfig({
         button: {
           className: 'btn',
           base: {
-            fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em',
-            paddingBlock: '2', paddingInline: '4', borderRadius: 'md', border: '1px solid transparent',
-            cursor: 'pointer', outlineOffset: '2px', display: 'inline-block',
+            fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', letterSpacing: '0.02em',
+            minHeight: '44px', paddingBlock: '2', paddingInline: '4', borderRadius: 'md', border: '1px solid transparent',
+            cursor: 'pointer', outlineOffset: '2px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecorationLine: 'none',
             _motionSafe: { transition: 'background-color 120ms ease, border-color 120ms ease' },
             _disabled: { opacity: '0.5', cursor: 'not-allowed' },
           },
           variants: {
             variant: {
-              primary: { background: 'accent', color: 'accent.ink', _hover: { background: 'accent.strong' } },
-              secondary: { background: 'transparent', color: 'ink', borderColor: 'border', _hover: { borderColor: 'accent', color: 'accent' } },
+              primary: {
+                background: 'accent', color: 'accent.ink', _hover: { background: 'accent.strong' },
+                // Toggle buttons: the pressed look follows aria-pressed, so the
+                // visual and announced state can't drift apart.
+                '&[aria-pressed=true]': { background: 'accent.strong' },
+              },
+              secondary: { background: 'transparent', color: 'ink', borderColor: 'border.control', _hover: { borderColor: 'accent', color: 'accent' } },
             },
           },
           defaultVariants: { variant: 'primary' },
@@ -109,20 +79,35 @@ export default defineConfig({
           className: 'fieldInput',
           base: {
             fontSize: 'body', lineHeight: 'body', fontFamily: 'sans',
-            paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border',
+            width: '100%', minHeight: '44px', paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border.control',
             borderRadius: 'sm', background: 'surface.200', color: 'ink',
+            _placeholder: { color: 'ink.placeholder', opacity: '1' },
             _focusVisible: { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '1px', borderColor: 'transparent' },
+            _readOnly: { background: 'surface.100', color: 'ink.muted' },
           },
         },
         switchTrack: {
           className: 'switchTrack',
           base: {
-            position: 'relative', width: '44px', height: '24px', borderRadius: 'full',
-            background: 'border', border: 'none', cursor: 'pointer', padding: '0', flex: 'none',
-            _motionSafe: { transition: 'background-color 150ms ease' },
+            position: 'relative', width: '44px', height: '44px', borderRadius: 'full',
+            background: 'transparent', border: 'none', cursor: 'pointer', padding: '0', flex: 'none',
+            _before: {
+              content: '""',
+              position: 'absolute',
+              top: '10px',
+              left: '0',
+              width: '44px',
+              height: '24px',
+              borderRadius: 'full',
+              background: 'border.control',
+            },
+            _motionSafe: { _before: { transition: 'background-color 150ms ease' } },
+            // State lives in aria-checked at runtime, so the track colour follows
+            // it here (inside the recipe layer, so it outranks the base colour).
+            '&[aria-checked="true"]': { _before: { background: 'accent' } },
           },
           variants: {
-            on: { true: { background: 'accent' } },
+            on: { true: { _before: { background: 'accent' } } },
           },
         },
         spinner: {
@@ -130,14 +115,26 @@ export default defineConfig({
           base: {
             width: '28px', height: '28px', borderRadius: 'full',
             border: '3px solid', borderColor: 'border', borderTopColor: 'accent',
-            _motionSafe: { animation: 'spin 900ms linear infinite' },
+          },
+          variants: {
+            preview: {
+              true: {
+                _motionSafe: { animation: 'spin 900ms linear 4' },
+              },
+            },
           },
         },
         skeleton: {
           className: 'skeleton',
           base: {
             borderRadius: 'sm', background: 'border', opacity: '0.5',
-            _motionSafe: { animation: 'pulse 1400ms ease-in-out infinite' },
+          },
+          variants: {
+            preview: {
+              true: {
+                _motionSafe: { animation: 'pulse 1400ms ease-in-out 3' },
+              },
+            },
           },
         },
       },
@@ -146,8 +143,21 @@ export default defineConfig({
 
   globalCss: {
     'html': { colorScheme: 'light dark' },
+    // Panda emits token variables in the `tokens` layer, which comes after
+    // `base` (where globalCss lives), so a plain declaration here would lose
+    // to them. `!important` in an earlier layer beats normal declarations in
+    // any later layer, which is exactly the override an explicit choice needs.
+    [`html[${themeOverrideAttr}="light"]`]: important(explicitThemeVars.light),
+    [`html[${themeOverrideAttr}="dark"]`]: important(explicitThemeVars.dark),
+    [`html[${themeResolvedAttr}="light"]`]: { colorScheme: 'light' },
+    [`html[${themeResolvedAttr}="dark"]`]: { colorScheme: 'dark' },
     'body': { margin: '0', background: 'surface.100', color: 'ink', fontFamily: 'sans', fontSize: 'body', lineHeight: 'body' },
-    'a': { color: 'accent' },
+    'a': {
+      color: 'accent',
+      textDecoration: 'underline',
+      textUnderlineOffset: '0.15em',
+      textDecorationThickness: '0.08em',
+    },
     'a:hover': { color: 'accent.strong' },
     ':focus-visible': { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '2px' },
     '@keyframes spin': { to: { transform: 'rotate(360deg)' } },
@@ -160,21 +170,16 @@ export default defineConfig({
     '@keyframes sprout': { from: { transform: 'scale(0.2)', opacity: '0' }, to: { transform: 'scale(1)', opacity: '1' } },
     '@keyframes sunRise': { from: { opacity: '0', transform: 'translateY(24px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
     '.switchTrack .knob': {
-      position: 'absolute', top: '2px', left: '2px', width: '20px', height: '20px',
+      position: 'absolute', top: '12px', left: '2px', width: '20px', height: '20px',
       borderRadius: 'var(--radii-full)', background: 'var(--colors-surface-200)',
     },
     '@media (prefers-reduced-motion: no-preference)': {
       '.switchTrack .knob': { transition: 'transform 150ms ease' },
     },
     '.switchTrack[aria-checked="true"] .knob': { transform: 'translateX(20px)' },
-    // Decorative-only art is dropped for anyone who's asked to save data —
-    // it costs bytes and carries no content (WSG 3.12's third preference query).
-    '@media (prefers-reduced-data: reduce)': {
-      '.decor': { display: 'none' },
-    },
   },
   // No staticCss block on purpose: every class in the generated stylesheet
   // comes from a real call in scripts/build.mjs. Force-generating a wide
-  // utility surface "just in case" is exactly the CSS-redundancy WSG 4.2/4.3
-  // checks flag — extraction only emits what's actually used.
+  // utility surface "just in case" is exactly the CSS-redundancy WSG 3.2/3.4
+  // guidance tries to avoid — extraction only emits referenced styles.
 })

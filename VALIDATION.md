@@ -16,12 +16,12 @@ This record tracks what has been validated, what is blocked in this environment,
 
 | Area | Environment / version | Steps to reproduce | Expected outcome | Status | Notes / evidence |
 | --- | --- | --- | --- | --- | --- |
-| Browser baseline: Chromium desktop | Chromium (Playwright/runtime browser in this environment) | Open `/` and `/components.html`; verify layout, interactions, and theme behavior | Core pages render and remain usable | Not run | Needs manual browser pass in this issue follow-up |
+| Browser baseline: Chromium desktop | Chromium (Playwright/runtime browser in this environment) | Open `/` and `/components`; verify layout, interactions, and theme behavior | Core pages render and remain usable | Not run | Needs manual browser pass in this issue follow-up |
 | Browser baseline: Firefox desktop | Firefox (latest stable) | Same steps as Chromium baseline | Behavior/functionality equivalent to supported baseline | Blocked | Firefox not available in this execution environment |
 | Browser baseline: Safari desktop | Safari (latest macOS stable) | Same steps as Chromium baseline | Behavior/functionality equivalent to supported baseline | Blocked | macOS/Safari device unavailable |
 | Mobile narrow reflow (320px) | iOS Safari + Android Chrome (latest stable) | At 320px CSS px width, navigate homepage and components; no horizontal scroll for core content | Reflow remains readable/operable | Blocked | Real mobile devices unavailable |
 | 390px narrow layout | iOS Safari/Android Chrome at 390px | Repeat primary journeys at 390px | Reflow remains readable/operable | Blocked | Real mobile devices unavailable |
-| Theme parity: Light/Dark | Any supported browser with OS theme toggle | Load page in Light, switch OS to Dark while page is open, then back to Light | Theme updates consistently without content loss | Not run | Depends on issue #4 behavior contract |
+| Theme parity: System/Light/Dark | Any supported browser with OS theme toggle | With the header preference on System, switch the OS between Light and Dark while the page is open; then choose Light and Dark explicitly, reload, and confirm the choice persists | System follows the OS; an explicit choice overrides it and survives reload, without content loss | Not run | Depends on issue #4 behavior contract |
 | Reduced motion | Any supported browser with `prefers-reduced-motion: reduce` | Enable reduced motion, reload homepage/components | Non-essential animations are suppressed/bounded | Not run | Coordinate behavior details with issue #3 |
 | Forced colors / high contrast | Windows + Edge with forced colors enabled | Enable forced colors, verify controls, text, focus indicator | Content remains readable with visible focus and state cues | Blocked | Windows forced-colors environment unavailable |
 | Text-only zoom / text scaling | Desktop browser text zoom 200%; mobile text scaling | Increase text-only zoom, then test forms/nav/components | No clipped critical text; controls remain operable | Blocked | Browser/device support for text-only zoom not available here |
@@ -35,7 +35,7 @@ Record actual browser + assistive technology pairings and outcomes **only when t
 
 | Check | Browser + version | Assistive tech + version | Route/context | Result | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Names / roles / states announced for major controls and landmarks | Not tested | Not tested | `/`, `/components.html` | Not run | Requires NVDA/JAWS/VoiceOver/TalkBack test pass |
+| Names / roles / states announced for major controls and landmarks | Not tested | Not tested | `/`, `/components` | Not run | Requires NVDA/JAWS/VoiceOver/TalkBack test pass |
 | Error/help associations announced for field examples | Not tested | Not tested | Component field/state example | Not run | Coordinate with issue #2 if association defects are found |
 | Status/loading announcements are meaningful and bounded | Not tested | Not tested | Any loading/animation demo state | Not run | Coordinate with issue #3 behavior fixes |
 
