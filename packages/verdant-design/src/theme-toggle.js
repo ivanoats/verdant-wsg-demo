@@ -6,7 +6,7 @@
 // page gets prefers-color-scheme only and an explicit Light/Dark choice cannot
 // take effect. See docs/INSTALL.md.
 //
-// The constants below mirror src/theme.mjs; packages/verdant-design/theme-contract.test.mjs
+// The constants below mirror src/theme.mjs; tests/theme-contract.test.mjs
 // fails the build if the two ever drift apart.
 (function () {
   var STORAGE_KEY = "verdant-theme-preference";
