@@ -2,14 +2,14 @@
 
 A small static site that puts the [Verdant design system](https://claude.ai/artifact/1hu6m4apzrfeM9s8nWcmxf) on the web as a lightweight implementation demo for the W3C [Web Sustainability Guidelines](https://w3c.github.io/sustainableweb-wsg/). The homepage scorecard is generated from the saved [`public/wsg-evidence.json`](public/wsg-evidence.json) record rather than presented as a live conformance audit; the dated evidence register, hosting-provenance notes, and unresolved owner decisions live in [`docs/wsg-evidence-register.md`](docs/wsg-evidence-register.md).
 
-The home page promotes the system; `/components` is the public component-gallery route, backed by the generated `components.html` file. Both are styled entirely with [PandaCSS](https://panda-css.com): the design system itself lives in the `verdant-design` package, and a small build script generates the HTML so Panda can statically extract the styles those pages reference — no browser-side CSS-in-JS runtime and no broad pre-generated utility bundle.
+The home page promotes the system; `/components` is the public component-gallery route, backed by the generated `components.html` file. Both are styled entirely with [PandaCSS](https://panda-css.com): the design system itself lives in the `@sustainablewebsites/verdant-design` package, and a small build script generates the HTML so Panda can statically extract the styles those pages reference — no browser-side CSS-in-JS runtime and no broad pre-generated utility bundle.
 
 ## Using Verdant in your own project
 
 The design system is published as a PandaCSS preset. See **[`docs/INSTALL.md`](docs/INSTALL.md)** for installation, the token reference, the theme contract, and known gaps.
 
 ```bash
-npm install -D verdant-design
+npm install -D @sustainablewebsites/verdant-design
 ```
 
 ## Where things live

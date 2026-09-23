@@ -1,7 +1,7 @@
 {
-  "name": "verdant-design",
+  "name": "@sustainablewebsites/verdant-design",
   "version": "0.1.0",
-  "description": "Verdant: a PandaCSS preset with defaults aligned to selected W3C Web Sustainability Guidelines — system fonts, semantic colour tokens verified for contrast, a System/Light/Dark theme contract, and prefers-contrast and prefers-reduced-motion support.",
+  "description": "A Green Web Design System with Sustainable Defaults following W3C WSG guidelines",
   "type": "module",
   "license": "ISC",
   "author": "Ivan Storck",

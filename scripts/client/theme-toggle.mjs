@@ -3,7 +3,7 @@
 import {
   themeOverrideAttr, themePreferenceAttr, themePreferenceControlName,
   themePreferenceStorageKey, themeResolvedAttr, themeTokens,
-} from 'verdant-design/theme'
+} from '@sustainablewebsites/verdant-design/theme'
 import { switchOffCss, switchOnCss } from '../pages/components.mjs'
 
 export const themeToggleJs = `(function () {

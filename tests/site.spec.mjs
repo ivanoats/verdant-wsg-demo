@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { highContrastTokens, themeTokens } from 'verdant-design/theme'
+import { highContrastTokens, themeTokens } from '@sustainablewebsites/verdant-design/theme'
 
 // WCAG relative-luminance contrast between two computed rgb()/rgba() colors.
 const contrast = ({ foreground, background }) => {
