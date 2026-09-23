@@ -5,7 +5,7 @@
 import { writeFileSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { css } from '../styled-system/css/index.mjs'
-import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
+import { flex, vstack, hstack, container, stack, grid } from '../styled-system/patterns/index.mjs'
 import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
 import {
@@ -50,7 +50,7 @@ const skipLinkCss = css({
   _motionSafe: { transition: 'top 120ms ease' },
   _focus: { top: '3' },
 })
-const wrapCss = css({ maxWidth: '1080px', marginX: 'auto', paddingInline: { base: '4', md: '6' } })
+const wrapCss = container()
 const headerCss = css({ borderBottom: '1px solid', borderColor: 'border' })
 const barCss = flex({ paddingBlock: '3', align: 'center', justify: 'space-between', gap: '4', wrap: 'wrap' })
 const wordmarkCss = hstack({ gap: '2', color: 'ink', textDecoration: 'none', fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '700' })
@@ -122,11 +122,7 @@ const heroHtml = `
 
 // ---- index: measured stats (filled in by scripts/stats.mjs after fingerprinting)
 
-const statsGridCss = css({
-  display: 'grid', // minmax(0, 1fr): a wide fallback font must not stretch a column past the viewport.
-  gridTemplateColumns: { base: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' },
-  gap: { base: '6', md: '8' }, margin: '0', paddingBlock: '8',
-})
+const statsGridCss = grid({ columns: { base: 2, md: 4 }, gap: { base: '6', md: '8' }, margin: '0', paddingBlock: '8' })
 const statCss = css({ display: 'flex', flexDirection: 'column-reverse', margin: '0' })
 const statValueCss = css({ fontSize: { base: 'displayMd', sm: 'displayLg', md: '40px' }, lineHeight: { base: 'displayMd', sm: 'displayLg', md: '48px' }, fontWeight: '700', color: 'accent', margin: '0' })
 const statLabelCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '4px 0 0' })
@@ -147,10 +143,7 @@ const statsHtml = `
 
 // ---- index: how it grows ----------------------------------------------------------
 
-const stagesCss = css({
-  display: 'grid', gridTemplateColumns: { base: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
-  gap: '4', listStyle: 'none', margin: '0', padding: '0',
-})
+const stagesCss = grid({ columns: { base: 1, sm: 2, lg: 4 }, listStyle: 'none', margin: '0', padding: '0' })
 const stageCss = card()
 const stageGlyphCss = css({ display: 'block', marginBottom: '3' })
 const stageStepCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted', margin: '0' })
@@ -181,13 +174,10 @@ const stagesHtml = `
 
 // ---- index: palette, pairings and token scope --------------------------------------
 
-const paletteGridCss = css({
-  display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' },
-  gap: '4', listStyle: 'none', margin: '0', padding: '0',
-})
+const paletteGridCss = grid({ columns: { base: 1, lg: 2 }, listStyle: 'none', margin: '0', padding: '0' })
 const swatchCardCss = card()
 const swatchNameCss = css({ fontFamily: 'mono', fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', margin: '0' })
-const swatchThemeGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: '3', marginTop: '3' })
+const swatchThemeGridCss = grid({ columns: { base: 1, sm: 2 }, gap: '3', marginTop: '3' })
 const swatchThemeTileCss = css({
   display: 'grid', gridTemplateColumns: '48px 1fr', gap: '3', alignItems: 'center',
   border: '1px solid', borderColor: 'border', borderRadius: 'sm', padding: '3', background: 'surface.100',
@@ -196,7 +186,7 @@ const swatchThemeLabelCss = css({ display: 'block', fontSize: 'label', lineHeigh
 const hexInlineCss = css({ fontFamily: 'mono', fontSize: 'label' })
 const highContrastListCss = css({ margin: '0', paddingLeft: '20px', listStyle: 'disc', color: 'ink.muted', fontSize: 'bodySm', lineHeight: 'bodySm', '& li + li': { marginTop: '2' } })
 const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', marginTop: '4px' })
-const pairingGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: '4', listStyle: 'none', margin: '0', padding: '0' })
+const pairingGridCss = grid({ columns: { base: 1, lg: 2 }, listStyle: 'none', margin: '0', padding: '0' })
 const pairingCardCss = card()
 const pairingTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0' })
 const pairingTokenCss = css({ fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', margin: '8px 0 0' })
@@ -206,7 +196,7 @@ const levelBadgeCss = css({
   display: 'inline-block', marginInlineStart: '1', paddingInline: '2', border: '1px solid', borderColor: 'border.control',
   borderRadius: 'full', fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink', whiteSpace: 'nowrap',
 })
-const scopeGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: '4' })
+const scopeGridCss = grid({ columns: { base: 1, lg: 2 } })
 const scopeCardCss = card()
 const scopeTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 8px' })
 const scopeBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 12px' })
@@ -313,6 +303,8 @@ const pairingCards = (category) => evaluatedPairings
       </li>`).join('')
 
 const tokenList = (items) => items.map((item) => `<code class="${scopeCodeCss}">${item}</code>`).join(', ')
+// Backtick spans in token-scope copy become <code> elements.
+const inlineCode = (text) => text.replace(/`([^`]+)`/g, (_, code) => `<code class="${scopeCodeCss}">${code}</code>`)
 const scopeList = (items) => items.map((item) => `<li>${item}</li>`).join('')
 const typographyList = publicTokenScope.typography.sizes
   .map(({ token, fontSize, lineHeight }) => `<li><code class="${scopeCodeCss}">${token}</code> &mdash; ${fontSize} / ${lineHeight}</li>`)
@@ -373,10 +365,11 @@ const tokensHtml = `
     </section>
     <section class="${scopeCardCss}">
       <h3 class="${scopeTitleCss}">Layout &amp; breakpoints</h3>
-      <p class="${scopeBodyCss}">Verdant keeps its public token surface small, so responsive and page-art values are called out separately here.</p>
+      <p class="${scopeBodyCss}">Three layout primitives cover page structure; responsive and page-art values are called out separately. See the <a href="${COMPONENTS_ROUTE}#layout-specimen-title">layout specimen</a>.</p>
       <ul class="${scopeListCss}">
-        ${scopeList(publicTokenScope.layout.inherited)}
-        ${scopeList(publicTokenScope.layout.pageSpecific)}
+        ${scopeList(publicTokenScope.layout.primitives.map(inlineCode))}
+        ${scopeList(publicTokenScope.layout.inherited.map(inlineCode))}
+        ${scopeList(publicTokenScope.layout.pageSpecific.map(inlineCode))}
       </ul>
     </section>
   </div>
@@ -384,7 +377,7 @@ const tokensHtml = `
 
 // ---- index: saved WSG evidence --------------------------------------------------
 
-const scoreListCss = css({ display: 'grid', gridTemplateColumns: { base: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: '4', listStyle: 'none', margin: '0', padding: '0' })
+const scoreListCss = grid({ columns: { base: 1, md: 2 }, listStyle: 'none', margin: '0', padding: '0' })
 const scoreItemCss = card()
 const scoreHeadCss = flex({ justify: 'space-between', align: 'baseline', gap: '3', wrap: 'wrap' })
 const scoreTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0' })
@@ -627,7 +620,7 @@ const compTitleCss = css({ fontSize: { base: '40px', md: '56px' }, lineHeight: '
 const compSectionCss = css({ marginTop: '12' })
 const compH2Css = css({ fontSize: 'displayMd', lineHeight: 'displayMd', fontWeight: '700', margin: '0' })
 const ledeCss = css({ color: 'ink.muted', maxWidth: '62ch', margin: '0' })
-const gridCss = css({ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '4' })
+const gridCss = grid({ minChildWidth: '240px' })
 const cardCss = card()
 const cardHeadingCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 4px' })
 const cardBodyCss = css({ color: 'ink.muted', margin: '0', fontSize: 'bodySm', lineHeight: 'bodySm' })
@@ -660,14 +653,22 @@ const skeletonNarrowCss = `${skeleton()} ${css({ width: '110px', height: '14px' 
 const skeletonNarrowPreviewCss = `${skeleton({ preview: true })} ${css({ width: '110px', height: '14px' })}`
 const motionIntroCss = css({ color: 'ink.muted', maxWidth: '62ch', margin: '0 0 16px' })
 const motionControlsCss = flex({ align: 'center', gap: '3', wrap: 'wrap', marginTop: '4' })
-// minmax(0, 1fr) keeps a wide fallback font from stretching the column past a 320px viewport.
-const specimenGridCss = css({ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '6' })
+const specimenGridCss = grid({ columns: 1, gap: '6' })
 const specimenCss = css({ background: 'surface.200', border: '1px solid', borderColor: 'border', borderRadius: 'lg', padding: { base: '4', md: '6' }, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '4' })
 const specimenHeaderCss = vstack({ gap: '2', alignItems: 'flex-start' })
 const specimenLabelCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em', color: 'accent', margin: '0' })
 const specimenBlockCss = vstack({ gap: '2', alignItems: 'stretch' })
 const specimenPreviewCss = css({ border: '1px solid', borderColor: 'border', borderRadius: 'md', background: 'surface.100', padding: '4' })
-const specimenStateGridCss = css({ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '3' })
+const layoutFrameCss = css({ border: '1px dashed', borderColor: 'border.control', borderRadius: 'md', padding: '3' })
+const layoutLabelCss = css({ fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '0' })
+const layoutStackCss = stack({ gap: '3', marginTop: '2' })
+const layoutStackSmallCss = stack({ gap: '2' })
+const layoutGridCss = grid({ minChildWidth: '120px', gap: '2' })
+const layoutColumnsCss = grid({ columns: 2, gap: '2' })
+const layoutAutoCss = grid({ minChildWidth: '64px', gap: '2' })
+const layoutBarCss = css({ background: 'surface.200', border: '1px solid', borderColor: 'border', borderRadius: 'sm', paddingBlock: '2', paddingInline: '3', fontSize: 'label', lineHeight: 'label', fontWeight: '600' })
+const layoutBoxCss = css({ background: 'surface.200', border: '1px solid', borderColor: 'border', borderRadius: 'sm', padding: '2', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', textAlign: 'center', overflowWrap: 'anywhere' })
+const specimenStateGridCss = grid({ minChildWidth: '160px', gap: '3' })
 const specimenStateCss = css({ border: '1px dashed', borderColor: 'border', borderRadius: 'md', padding: '3', display: 'grid', gap: '2', alignContent: 'start' })
 const specimenStateTitleCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
 const specimenStateBodyCss = css({ display: 'grid', gap: '2' })
@@ -741,7 +742,7 @@ const specimen = ({ id, title, blurb, preview, states, guidance, htmlCode, panda
 const componentsBody = `
 <div class="${wrapCss} ${compMainCss}">
   <h1 class="${compTitleCss}">Components</h1>
-  <p class="${ledeCss}">Six documented specimens pair preview states, concise guidance, and copyable snippets without implying a live backend. The site-wide System/Light/Dark preference lives in the header.</p>
+  <p class="${ledeCss}">Seven documented specimens pair preview states, concise guidance, and copyable snippets without implying a live backend. The site-wide System/Light/Dark preference lives in the header.</p>
 
   <div class="${specimenGridCss} ${compSectionCss}">
     ${specimen({
@@ -1018,6 +1019,47 @@ const criticalStatus = css({ color: 'critical' })`,
       pandaCode: `
 const busySpinner = spinner()
 const loadingSkeleton = skeleton()`,
+    })}
+
+    ${specimen({
+      id: 'layout-specimen',
+      title: 'Layout primitives',
+      blurb: 'Three token-driven patterns, container, stack and grid, cover page structure, so pages compose layouts instead of writing display: grid by hand. This page is built from them.',
+      preview: `
+        <div class="${layoutFrameCss}">
+          <p class="${layoutLabelCss}">container()</p>
+          <div class="${layoutStackCss}">
+            <p class="${layoutLabelCss}">stack({ gap: '3' })</p>
+            <div class="${layoutBarCss}">Section heading</div>
+            <div class="${layoutGridCss}">
+              <div class="${layoutBoxCss}">grid</div><div class="${layoutBoxCss}">minChildWidth</div><div class="${layoutBoxCss}">120px</div><div class="${layoutBoxCss}">wraps</div>
+            </div>
+          </div>
+        </div>`,
+      states: [
+        stateTile('Stack', `<div class="${layoutStackSmallCss}"><div class="${layoutBoxCss}">1</div><div class="${layoutBoxCss}">2</div><div class="${layoutBoxCss}">3</div></div>`, 'Vertical flow, spacing-token gap.'),
+        stateTile('Grid, fixed columns', `<div class="${layoutColumnsCss}"><div class="${layoutBoxCss}">1</div><div class="${layoutBoxCss}">2</div><div class="${layoutBoxCss}">3</div><div class="${layoutBoxCss}">4</div></div>`, 'columns: 2; tracks never overflow.'),
+        stateTile('Grid, auto-fit', `<div class="${layoutAutoCss}"><div class="${layoutBoxCss}">a</div><div class="${layoutBoxCss}">b</div><div class="${layoutBoxCss}">c</div></div>`, 'minChildWidth: 64px; wraps on its own.'),
+      ].join(''),
+      guidance: [
+        `Reach for ${tokenCode('container')}, ${tokenCode('stack')} and ${tokenCode('grid')} before hand-written layout CSS; shared patterns reuse the same atomic classes, so new pages add almost no bytes.`,
+        'Gaps take spacing tokens (1&ndash;12), and the default is spacing 4 (16px), so layouts stay on the 4px rhythm.',
+        `Use ${tokenCode('columns')} for a fixed count and ${tokenCode('minChildWidth')} (a CSS length) when items should wrap on their own. Both keep every track inside a 320px viewport.`,
+      ],
+      htmlCode: `
+<main class="container">
+  <section class="stack">
+    <h2>Scan results</h2>
+    <ul class="grid">…</ul>
+  </section>
+</main>`,
+      pandaCode: `
+import { container, stack, grid } from '../styled-system/patterns/index.mjs'
+
+const page = container()                          // 1080px, token padding
+const section = stack({ gap: '6' })               // column, 24px gap
+const results = grid({ minChildWidth: '240px' })  // wraps, never overflows
+const stats = grid({ columns: { base: 2, md: 4 } })`,
     })}
 
   </div>
