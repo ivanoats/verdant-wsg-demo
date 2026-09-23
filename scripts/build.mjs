@@ -669,7 +669,7 @@ const minifyHtml = (html) => {
 // ---- write ---------------------------------------------------------------------
 
 mkdirSync('dist', { recursive: true })
-writeFileSync('dist/theme-toggle.js', themeToggleJs + '\n' + motionPreviewJs)
+writeFileSync('dist/theme-toggle.js', `${themeToggleJs}\n${motionPreviewJs}`)
 writeFileSync('dist/sw-register.js', swRegisterJs)
 writeFileSync('dist/sw.js', swJs)
 copyDir('public', 'dist')
