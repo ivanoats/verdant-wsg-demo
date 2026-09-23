@@ -31,7 +31,7 @@ const WSG = 'https://w3c.github.io/sustainableweb-wsg/'
 const skipLinkCss = css({
   position: 'absolute', left: '3', top: '-48px',
   background: 'surface.200', color: 'ink', paddingBlock: '2', paddingInline: '4',
-  borderRadius: 'sm', border: '1px solid', borderColor: 'border', zIndex: '10', textDecoration: 'none',
+  borderRadius: 'sm', border: '1px solid', borderColor: 'border.control', zIndex: '10', textDecoration: 'none',
   _motionSafe: { transition: 'top 120ms ease' },
   _focus: { top: '3' },
 })
@@ -80,10 +80,10 @@ const heroHtml = `
 <section class="${wrapCss}" aria-labelledby="hero-title">
   <div class="${heroCss}">
     <div>
-      <p class="${eyebrowCss}">A design system for the W3C Web Sustainability Guidelines</p>
+      <p class="${eyebrowCss}">A design system for the <a href="${WSG}">W3C Web Sustainability Guidelines</a></p>
       <h1 id="hero-title" class="${heroTitleCss}">Verdant</h1>
       <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
-      <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, native dark mode, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
+      <p class="${heroLedeCss}">Start with the parts teams usually add later: system fonts, OS-level dark mode, restrained motion, and only the CSS each page uses. Verdant gives a product page or docs site those lighter defaults from the first commit.</p>
       <div class="${btnRowCss}">
         <a class="${btnPrimary}" href="/components.html">Browse components</a>
         <a class="${btnSecondary}" href="${REPO}">View source on GitHub</a>
@@ -109,7 +109,7 @@ const statsHtml = `
     <div class="${statCss}"><dt class="${statLabelCss}">This whole page, compressed &mdash; art included</dt><dd class="${statValueCss}">__HOME_KB__&nbsp;KB</dd></div>
     <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
     <div class="${statCss}"><dt class="${statLabelCss}">Stylesheet, extracted to only the rules in use</dt><dd class="${statValueCss}">__CSS_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Color tokens, each with a light and dark value</dt><dd class="${statValueCss}">17&thinsp;&times;&thinsp;2</dd></div>
+    <div class="${statCss}"><dt class="${statLabelCss}">Public palette pairs shown below</dt><dd class="${statValueCss}">17&thinsp;&times;&thinsp;2</dd></div>
   </dl>
 </section>`
 
@@ -126,16 +126,16 @@ const stageTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', font
 const stageBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0' })
 
 const stages = [
-  ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Small enough to hold in your head, so nothing gets a one-off value.'],
+  ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Small enough to stay consistent without one-off values.'],
   ['sprout', 'Sprout', 'Components', 'Button, card, field, theme toggle and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
-  ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one stylesheet and at most one small deferred script, from the first page on.'],
+  ['sapling', 'Sapling', 'Pages', 'A product page or docs page gets landmarks, a skip link, one focus ring, one stylesheet and one small deferred script from day one.'],
   ['canopy', 'Canopy', 'Sites', 'Security headers, cache rules, an offline shell and a real 404 &mdash; the hosting checks, handled before launch.'],
 ]
 const stagesHtml = `
 <section class="${wrapCss} ${sectionCss}" aria-labelledby="grows-title">
   <p class="${eyebrowCss}">How it grows</p>
-  <h2 id="grows-title" class="${h2Css}">From four seeds of tokens to a whole site.</h2>
-  <p class="${introCss}">Each layer only adds what the one below it can't do alone, which is why the finished site stays small.</p>
+  <h2 id="grows-title" class="${h2Css}">From a small token set to a whole site.</h2>
+  <p class="${introCss}">Each layer only adds the parts the previous one cannot, which keeps the finished site small.</p>
   <ol class="${stagesCss}">
     ${stages.map(([key, stage, layer, body], i) => `
     <li class="${stageCss}">
@@ -179,7 +179,7 @@ const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'labe
 const palette = [
   ['accent', '#2f6b4a', '#7fcfa3'], ['accent-strong', '#234f38', '#5fb98c'], ['positive', '#1f7a6c', '#5cc9b7'],
   ['focus-ring', '#a5670a', '#e8a83e'], ['critical', '#c1440e', '#ff8f5e'], ['accent-ink', '#ffffff', '#10241a'],
-  ['ink', '#1c1a15', '#f1ede2'], ['ink-muted', '#5b5548', '#b6ae9c'], ['border', '#93866c', '#726b53'],
+  ['ink', '#1c1a15', '#f1ede2'], ['ink-muted', '#5b5548', '#b6ae9c'], ['border', '#c7bda9', '#514b3b'],
   ['surface-200', '#ffffff', '#1e1c15'], ['surface-100', '#faf8f3', '#15140f'],
 ]
 const foliage = [
@@ -198,8 +198,8 @@ const paletteHtml = `
 <section id="palette" class="${bandCss}" aria-labelledby="palette-title">
   <div class="${wrapCss} ${sectionCss}">
     <p class="${eyebrowCss}">Palette</p>
-    <h2 id="palette-title" class="${h2Css}">Seventeen colors, two seasons.</h2>
-    <p class="${introCss}">One token set with a light and a dark value each, switched by <code class="${codeCss}">prefers-color-scheme</code> &mdash; no second stylesheet. Flip your OS theme and the valley above turns to night.</p>
+    <h2 id="palette-title" class="${h2Css}">Seventeen colors, two themes.</h2>
+    <p class="${introCss}">One token set carries a light and dark value for each color, switched by <code class="${codeCss}">prefers-color-scheme</code> &mdash; no second stylesheet.</p>
     <h3 class="${paletteGroupCss}">Interface</h3>
     <p class="${paletteGroupNoteCss}">Text, controls and state. Every text pair clears 4.5:1 in both themes.</p>
     <ul class="${paletteGridCss}">${swatches(palette)}
@@ -234,7 +234,7 @@ const scoreHtml = `
 <section class="${wrapCss} ${sectionCss}" aria-labelledby="score-title">
   <p class="${eyebrowCss}">Checked live</p>
   <h2 id="score-title" class="${h2Css}">How the deployed site holds up.</h2>
-  <p class="${introCss}">Audited against the live deploy across the six categories <a href="${WSG_CHECK}">wsg-check</a> scans. Five pass outright; one has a gap we can&rsquo;t fix in code.</p>
+  <p class="${introCss}">Checked against the live deploy with <a href="${WSG_CHECK}">wsg-check</a>. Five categories pass; one still depends on hosting verification.</p>
   <ul class="${scoreListCss}">
     ${scores.map(([title, pass, body]) => `
     <li class="${scoreItemCss}">
@@ -275,7 +275,7 @@ const pandaHtml = `
       <div>
         <p class="${eyebrowCss}">Built with PandaCSS</p>
         <h2 id="panda-title" class="${h2Css}">Tokens in, only-what-you-use CSS out.</h2>
-        <p class="${introCss}">Verdant maps onto a <a href="https://panda-css.com">PandaCSS</a> config in one file. Panda extracts styles at build time, so the stylesheet grows with your pages &mdash; never with the size of the framework.</p>
+        <p class="${introCss}">Verdant fits in one <a href="https://panda-css.com">PandaCSS</a> config. Build-time extraction keeps the stylesheet tied to what the page actually renders.</p>
         <ul class="${listCss}">
           <li>Semantic tokens carry both themes; <code class="${codeCss}">_dark</code> maps to the OS preference.</li>
           <li>Recipes for button, card, field and switch mirror the component guidelines.</li>
@@ -294,14 +294,14 @@ const ctaInnerCss = css({ position: 'relative', paddingBlock: { base: '12', md: 
 const ctaTitleCss = css({ fontSize: { base: 'displayMd', md: 'displayLg' }, lineHeight: { base: 'displayMd', md: 'displayLg' }, fontWeight: '700', margin: '0', maxWidth: '22ch' })
 const ctaBodyCss = css({ margin: '12px 0 0', maxWidth: '56ch' })
 const ctaBtnCss = css({
-  display: 'inline-block', fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', letterSpacing: '0.02em',
   paddingBlock: '3', paddingInline: '4', borderRadius: 'md', textDecoration: 'none',
   background: 'accent.ink', color: 'accent', border: '1px solid', borderColor: 'accent.ink',
   _hover: { color: 'accent.strong' },
   _focusVisible: { outline: '2px solid', outlineColor: 'accent.ink', outlineOffset: '3px' },
 })
 const ctaLinkCss = css({
-  display: 'inline-block', fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', letterSpacing: '0.02em',
   paddingBlock: '3', paddingInline: '4', borderRadius: 'md', textDecoration: 'none',
   color: 'accent.ink', border: '1px solid', borderColor: 'accent.ink',
   _hover: { color: 'accent.ink', textDecoration: 'underline' },
@@ -313,8 +313,8 @@ const ctaHtml = `
 <section class="${ctaCss}" aria-labelledby="cta-title">
   <div class="${ctaArtCss}">${leafRow()}</div>
   <div class="${wrapCss} ${ctaInnerCss}">
-    <h2 id="cta-title" class="${ctaTitleCss}">Plant it in your next project.</h2>
-    <p class="${ctaBodyCss}">Clone the repo, copy <code class="${codeCss}">panda.config.ts</code>, and keep the checklist. Everything else is optional &mdash; which is the point.</p>
+    <h2 id="cta-title" class="${ctaTitleCss}">Use it in your next project.</h2>
+    <p class="${ctaBodyCss}">Clone the repo, copy <code class="${codeCss}">panda.config.ts</code>, and keep the checklist. Start with the defaults, then layer in only the styling your product needs.</p>
     <div class="${btnRowCss}">
       <a class="${ctaBtnCss}" href="${REPO}">Get the source</a>
       <a class="${ctaLinkCss}" href="/components.html">See the components</a>
@@ -445,8 +445,8 @@ const componentsBody = `
     <h2 class="${compH2Css}">Cards</h2>
     <div class="${gridCss}">
       <div class="${cardCss}">
-        <h3 class="${cardHeadingCss}">Homepage scan</h3>
-        <p class="${cardBodyCss}">18 checks passed, 2 warnings, 0 failures.</p>
+        <h3 class="${cardHeadingCss}">Product launch page</h3>
+        <p class="${cardBodyCss}">Fast hero, readable pricing cards and a primary CTA that stays easy to tap.</p>
         <div class="${statusCss} ${statusPositiveCss}">&#10003; Passing</div>
       </div>
       <div class="${cardCss}">
@@ -463,7 +463,7 @@ const componentsBody = `
       <div class="${fieldCss}">
         <label class="${labelCss}" for="site-url">Website URL</label>
         <input class="${inputCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" aria-describedby="site-url-hint" placeholder="https://example.com">
-        <p class="${hintCss}" id="site-url-hint">One field &mdash; enough to run a scan, nothing else required.</p>
+        <p class="${hintCss}" id="site-url-hint">One field, clear guidance and autocomplete keep the form easy to complete.</p>
       </div>
     </form>
   </section>
@@ -515,8 +515,8 @@ const notFoundBody = `
 // ---- scripts ---------------------------------------------------------------------
 
 const themeToggleJs = `(function () {
-  var LIGHT = { "surface.100": "#faf8f3", "surface.200": "#ffffff", "border": "#93866c", "ink": "#1c1a15", "ink.muted": "#5b5548", "ink.placeholder": "#75726a", "accent": "#2f6b4a", "accent.strong": "#234f38", "accent.ink": "#ffffff", "focusRing": "#a5670a", "positive": "#1f7a6c", "critical": "#c1440e", "foliage": "#3ca24a", "foliage.far": "#cdeaae", "foliage.mid": "#9ed65f", "foliage.deep": "#1f6a31", "foliage.bright": "#6fcd4f", "sunlight": "#f4b63f" };
-  var DARK = { "surface.100": "#15140f", "surface.200": "#1e1c15", "border": "#726b53", "ink": "#f1ede2", "ink.muted": "#b6ae9c", "ink.placeholder": "#8d8a81", "accent": "#7fcfa3", "accent.strong": "#5fb98c", "accent.ink": "#10241a", "focusRing": "#e8a83e", "positive": "#5cc9b7", "critical": "#ff8f5e", "foliage": "#45ad55", "foliage.far": "#1c3a22", "foliage.mid": "#2d6b34", "foliage.deep": "#2a7d3a", "foliage.bright": "#86dc62", "sunlight": "#e8a83e" };
+  var LIGHT = { "surface.100": "#faf8f3", "surface.200": "#ffffff", "border": "#c7bda9", "border.control": "#7f735b", "ink": "#1c1a15", "ink.muted": "#5b5548", "ink.placeholder": "#75726a", "accent": "#2f6b4a", "accent.strong": "#234f38", "accent.ink": "#ffffff", "focusRing": "#a5670a", "positive": "#1f7a6c", "critical": "#c1440e", "foliage": "#3ca24a", "foliage.far": "#cdeaae", "foliage.mid": "#9ed65f", "foliage.deep": "#1f6a31", "foliage.bright": "#6fcd4f", "sunlight": "#f4b63f" };
+  var DARK = { "surface.100": "#15140f", "surface.200": "#1e1c15", "border": "#514b3b", "border.control": "#8f866f", "ink": "#f1ede2", "ink.muted": "#b6ae9c", "ink.placeholder": "#8d8a81", "accent": "#7fcfa3", "accent.strong": "#5fb98c", "accent.ink": "#10241a", "focusRing": "#e8a83e", "positive": "#5cc9b7", "critical": "#ff8f5e", "foliage": "#45ad55", "foliage.far": "#1c3a22", "foliage.mid": "#2d6b34", "foliage.deep": "#2a7d3a", "foliage.bright": "#86dc62", "sunlight": "#e8a83e" };
   function varName(key) { return "--colors-" + key.replace(/\\./g, "-"); }
   function apply(map) {
     var root = document.documentElement;
