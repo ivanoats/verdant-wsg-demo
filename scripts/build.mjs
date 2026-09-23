@@ -494,7 +494,6 @@ const skeletonNarrowCss = `${skeleton()} ${css({ width: '110px', height: '14px' 
 const skeletonNarrowPreviewCss = `${skeleton({ preview: true })} ${css({ width: '110px', height: '14px' })}`
 const motionIntroCss = css({ color: 'ink.muted', maxWidth: '62ch', margin: '0 0 16px' })
 const motionControlsCss = flex({ align: 'center', gap: '3', wrap: 'wrap', marginTop: '4' })
-const decorCss = css({ display: 'block' })
 
 const componentsBody = `
 <div class="${wrapCss} ${compMainCss}">
@@ -862,8 +861,9 @@ self.addEventListener('fetch', function (event) {
 // touches text content (and <pre> blocks are left alone), so copy stays intact.
 const minifyHtml = (html) => {
   const pres = []
-  const held = html.replace(/<pre[\s\S]*?<\/pre>/g, (m) => `\u0000${pres.push(m) - 1}\u0000`)
-  return held.replace(/>\s+</g, '><').replace(/\u0000(\d+)\u0000/g, (_, i) => pres[+i]).trim() + '\n'
+  const held = html.replace(/<pre[\s\S]*?<\/pre>/gu, (m) => `<!--pre:${pres.push(m) - 1}-->`)
+  const collapsed = held.replace(/>\s+</gu, '><').replace(/<!--pre:(\d+)-->/gu, (_, i) => pres[Number(i)])
+  return `${collapsed.trim()}\n`
 }
 
 // ---- write ---------------------------------------------------------------------
