@@ -346,7 +346,7 @@ const scoreItemCss = card()
 const scoreHeadCss = flex({ justify: 'space-between', align: 'baseline', gap: '3', wrap: 'wrap' })
 const scoreTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0' })
 const scorePassCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'positive', margin: '0' })
-const scoreOpenCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'critical', margin: '0' })
+const scoreOpenCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'warning', margin: '0' })
 const scorePendingCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted', margin: '0' })
 const scoreBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '8px 0 0' })
 const scoreMetaCss = css({ fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '8px 0 0' })
@@ -590,6 +590,8 @@ const cardHeadingCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fon
 const cardBodyCss = css({ color: 'ink.muted', margin: '0', fontSize: 'bodySm', lineHeight: 'bodySm' })
 const statusCss = hstack({ gap: '1', fontSize: 'label', lineHeight: 'label', fontWeight: '600', marginTop: '3' })
 const statusPositiveCss = css({ color: 'positive' })
+const statusInfoCss = css({ color: 'info' })
+const statusWarningCss = css({ color: 'warning' })
 const statusCriticalCss = css({ color: 'critical' })
 const rowCss = flex({ gap: '3', align: 'center', wrap: 'wrap' })
 const captionCss = css({ fontSize: 'label', color: 'ink.muted', margin: '0' })
@@ -882,7 +884,7 @@ const switchOn = switchTrack({ on: true })`,
             <p class="${captionCss}">Sample result</p>
             <h3 class="${cardHeadingCss}">Checkout flow</h3>
             <p class="${cardBodyCss}">Render-blocking script appears on the payment step.</p>
-            <div class="${statusCss} ${statusCriticalCss}"><span aria-hidden="true">&#9888;</span><span>Needs attention</span></div>
+            <div class="${statusCss} ${statusWarningCss}"><span aria-hidden="true">&#9888;</span><span>Needs attention</span></div>
           </div>
         </div>`,
       states: [
@@ -892,22 +894,29 @@ const switchOn = switchTrack({ on: true })`,
             <p class="${cardBodyCss}">Keyboard checks passed in this sample.</p>
             <div class="${statusCss} ${statusPositiveCss}"><span aria-hidden="true">&#10003;</span><span>Passing sample</span></div>
           </div>`),
-        stateTile('Needs attention', `
-          <div class="${cardCss}">
-            <h3 class="${cardHeadingCss}">Images review</h3>
-            <p class="${cardBodyCss}">One decorative image still needs an empty alt attribute.</p>
-            <div class="${statusCss} ${statusCriticalCss}"><span aria-hidden="true">&#9888;</span><span>Fix before publish</span></div>
-          </div>`),
         stateTile('Informational', `
           <div class="${cardCss}">
             <h3 class="${cardHeadingCss}">Queue note</h3>
             <p class="${cardBodyCss}">This card shows static copy only; no network request has been sent.</p>
-            <div class="${statusCss}"><span aria-hidden="true">&#9432;</span><span>Sample only</span></div>
+            <div class="${statusCss} ${statusInfoCss}"><span aria-hidden="true">&#9432;</span><span>Sample only</span></div>
+          </div>`),
+        stateTile('Warning', `
+          <div class="${cardCss}">
+            <h3 class="${cardHeadingCss}">Images review</h3>
+            <p class="${cardBodyCss}">One decorative image still needs an empty alt attribute.</p>
+            <div class="${statusCss} ${statusWarningCss}"><span aria-hidden="true">&#9888;</span><span>Review before publish</span></div>
+          </div>`),
+        stateTile('Critical', `
+          <div class="${cardCss}">
+            <h3 class="${cardHeadingCss}">Form submission</h3>
+            <p class="${cardBodyCss}">The contact form posts to an endpoint that returns an error.</p>
+            <div class="${statusCss} ${statusCriticalCss}"><span aria-hidden="true">&#10005;</span><span>Blocks publish</span></div>
           </div>`),
       ].join(''),
       guidance: [
         'Label examples as samples whenever the page is not showing live application data.',
         'Pair status color with an icon or word so the meaning survives monochrome and high-contrast modes.',
+        `Match the token to the stakes: ${tokenCode('info')} for neutral notes, ${tokenCode('warning')} for cautions that do not block, ${tokenCode('critical')} only for errors and destructive actions.`,
         'Keep the card body focused on the next action or takeaway instead of reproducing raw scanner output.',
       ],
       htmlCode: `
@@ -919,7 +928,9 @@ const switchOn = switchTrack({ on: true })`,
       pandaCode: `
 const resultCard = card()
 const passingStatus = css({ color: 'positive' })
-const warningStatus = css({ color: 'critical' })`,
+const infoStatus = css({ color: 'info' })
+const warningStatus = css({ color: 'warning' })
+const criticalStatus = css({ color: 'critical' })`,
     })}
 
     ${specimen({

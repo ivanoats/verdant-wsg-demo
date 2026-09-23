@@ -27,6 +27,8 @@ export const themeTokens = {
   'foliage.bright': { light: '#6fcd4f', dark: '#86dc62' },
   sunlight: { light: '#f4b63f', dark: '#e8a83e' },
   positive: { light: '#1f7a6c', dark: '#5cc9b7' },
+  info: { light: '#2b5f8e', dark: '#8cbcea' },
+  warning: { light: '#8a5a00', dark: '#f2c14e' },
   critical: { light: '#c1440e', dark: '#ff8f5e' },
 }
 
@@ -62,8 +64,10 @@ export const interfacePaletteOrder = [
   'accent',
   'accent.strong',
   'positive',
-  'focusRing',
+  'info',
+  'warning',
   'critical',
+  'focusRing',
   'accent.ink',
   'ink',
   'ink.muted',
