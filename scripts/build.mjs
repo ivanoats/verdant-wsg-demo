@@ -37,6 +37,8 @@ function copyDir(src, dest) {
 const REPO = 'https://github.com/ivanoats/verdant-wsg-demo'
 const WSG_CHECK = 'https://github.com/ivanoats/wsg-check'
 const WSG = 'https://w3c.github.io/sustainableweb-wsg/'
+const COMPONENTS_ROUTE = '/components'
+const COMPONENTS_FILE = '/components.html'
 
 // ---- shell ------------------------------------------------------------------
 
@@ -109,7 +111,7 @@ const heroHtml = `
       <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
       <p class="${heroLedeCss}">Start with the parts teams usually add later: system fonts, a System/Light/Dark theme preference, restrained motion, and only the CSS each page uses. Verdant gives a product page or docs site those lighter defaults from the first commit.</p>
       <div class="${btnRowCss}">
-        <a class="${btnPrimary}" href="/components.html">Browse components</a>
+        <a class="${btnPrimary}" href="${COMPONENTS_ROUTE}">Browse components</a>
         <a class="${btnSecondary}" href="${REPO}">View source on GitHub</a>
       </div>
     </div>
@@ -334,7 +336,7 @@ const ctaHtml = `
     <p class="${ctaBodyCss}">Clone the repo, copy <code class="${codeCss}">panda.config.ts</code>, and keep the checklist. Start with the defaults, then layer in only the styling your product needs.</p>
     <div class="${btnRowCss}">
       <a class="${ctaBtnCss}" href="${REPO}">Get the source</a>
-      <a class="${ctaLinkCss}" href="/components.html">See the components</a>
+      <a class="${ctaLinkCss}" href="${COMPONENTS_ROUTE}">See the components</a>
     </div>
   </div>
 </section>`
@@ -356,7 +358,7 @@ const nav = (active) => {
       <div class="${headerActionsCss}">
         <nav aria-label="Primary">
           <ul class="${navListCss}">
-            ${link('components', '/components.html', 'Components')}
+            ${link('components', COMPONENTS_ROUTE, 'Components')}
             ${link('palette', '/#palette', 'Palette')}
             ${link('github', REPO, 'GitHub')}
           </ul>
@@ -392,6 +394,32 @@ const footer = () => `
     </div>
   </footer>`
 
+const updateBannerCss = css({
+  position: 'fixed',
+  insetInline: { base: '4', md: '6' },
+  bottom: { base: '4', md: '6' },
+  zIndex: '10',
+  maxWidth: '640px',
+  marginInline: 'auto',
+  padding: '4',
+  background: 'surface.200',
+  border: '1px solid',
+  borderColor: 'border',
+  borderRadius: 'md',
+  boxShadow: 'md',
+})
+const updateBannerTextCss = css({ margin: '0', fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink' })
+const updateBannerActionsCss = hstack({ gap: '3', marginTop: '3', flexWrap: 'wrap' })
+
+const updateBanner = `
+  <section id="sw-update" class="${updateBannerCss}" hidden aria-labelledby="sw-update-title" aria-live="polite" aria-atomic="true">
+    <p id="sw-update-title" class="${updateBannerTextCss}">A fresh Verdant update is ready. Apply it when you&rsquo;re ready.</p>
+    <div class="${updateBannerActionsCss}">
+      <button id="sw-update-apply" type="button" class="${btnPrimary}">Update now</button>
+      <button id="sw-update-dismiss" type="button" class="${btnSecondary}">Later</button>
+    </div>
+  </section>`
+
 const page = ({ title, description, path, active, jsonLd, bodyHtml, scripts = [] }) => `<!doctype html>
 <html lang="en">
 <head>
@@ -419,6 +447,7 @@ ${active === 'components' ? breadcrumb('Components') : ''}
 ${bodyHtml}
 </main>
 ${footer()}
+${updateBanner}
 ${['/sw-register.js', ...scripts].map((s) => `<script src="${s}" defer></script>`).join('\n')}
 </body>
 </html>
@@ -553,7 +582,14 @@ const notFoundBody = `
 <div class="${wrapCss} ${nfCss}">
   ${seedlingArt()}
   <h1 class="${compTitleCss}">Page not found</h1>
-  <p class="${ledeCss}">Nothing has grown here yet. <a href="/">Back to the overview</a>, or <a href="/components.html">browse the components</a>.</p>
+  <p class="${ledeCss}">Nothing has grown here yet. <a href="/">Back to the overview</a>, or <a href="${COMPONENTS_ROUTE}">browse the components</a>.</p>
+</div>`
+
+const offlineBody = `
+<div class="${wrapCss} ${nfCss}">
+  ${seedlingArt()}
+  <h1 class="${compTitleCss}">Offline for now</h1>
+  <p class="${ledeCss}">This page isn&rsquo;t cached yet, and the network is out of reach. You can still open the <a href="/">overview</a> or the <a href="${COMPONENTS_ROUTE}">component gallery</a>, which are saved for offline use after installation.</p>
 </div>`
 
 // ---- scripts ---------------------------------------------------------------------
@@ -718,7 +754,48 @@ const motionPreviewJs = `(function () {
 
 const swRegisterJs = `if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/sw.js');
+    var prompt = document.getElementById('sw-update');
+    var apply = document.getElementById('sw-update-apply');
+    var dismiss = document.getElementById('sw-update-dismiss');
+    var waitingWorker = null;
+    var shouldRefresh = false;
+    var refreshing = false;
+    function showUpdate(worker) {
+      waitingWorker = worker;
+      if (prompt) prompt.hidden = false;
+    }
+    function hideUpdate() {
+      if (prompt) prompt.hidden = true;
+    }
+    if (dismiss) dismiss.addEventListener('click', hideUpdate);
+    if (apply) {
+      apply.addEventListener('click', function () {
+        if (!waitingWorker) return;
+        shouldRefresh = true;
+        hideUpdate();
+        waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+      });
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      waitingWorker = null;
+      hideUpdate();
+      if (!shouldRefresh || refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+    navigator.serviceWorker.register('/sw.js').then(function (registration) {
+      function watch(worker) {
+        if (!worker) return;
+        worker.addEventListener('statechange', function () {
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) showUpdate(worker);
+        });
+      }
+      if (registration.waiting) showUpdate(registration.waiting);
+      if (registration.installing) watch(registration.installing);
+      registration.addEventListener('updatefound', function () {
+        watch(registration.installing);
+      });
+    }).catch(function () {});
   });
 }
 `
@@ -730,40 +807,51 @@ const swJs = `// Verdant — offline shell.
 // Pages: network first, so HTML is always the deployed version when online;
 // the cached copy is only a fallback. Assets: hashed filenames, so a cached
 // copy can never be stale — cache first is safe.
-var CACHE = 'verdant-__VERSION__';
+var CACHE_PREFIX = 'verdant-';
+var CACHE = CACHE_PREFIX + '__VERSION__';
 var SHELL = __SHELL__;
+self.addEventListener('message', function (event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+function normalizePage(pathname) {
+  if (pathname === '/' || pathname === '/index.html') return '/';
+  pathname = pathname.replace(/\\/+$/, '');
+  if (pathname === '${COMPONENTS_ROUTE}' || pathname === '${COMPONENTS_FILE}') return '${COMPONENTS_ROUTE}';
+  if (pathname === '/404' || pathname === '/404.html') return '/404.html';
+  if (pathname === '/offline' || pathname === '/offline.html') return '/offline.html';
+  return null;
+}
 self.addEventListener('install', function (event) {
   // cache: 'reload' skips the HTTP cache, so the new shell is never
   // assembled from an older deploy's files.
   event.waitUntil(caches.open(CACHE).then(function (cache) {
     return cache.addAll(SHELL.map(function (u) { return new Request(u, { cache: 'reload' }); }));
   }));
-  self.skipWaiting();
 });
 self.addEventListener('activate', function (event) {
   event.waitUntil(caches.keys().then(function (keys) {
-    var old = keys.filter(function (k) { return k !== CACHE; });
+    var old = keys.filter(function (k) { return k.indexOf(CACHE_PREFIX) === 0 && k !== CACHE; });
     return Promise.all(old.map(function (k) { return caches.delete(k); }))
-      .then(function () { return self.clients.claim(); })
-      .then(function () {
-        // An update (not a first install): reload open tabs once so they
-        // don't keep showing a page from the previous deploy.
-        if (!old.length) return;
-        return self.clients.matchAll({ type: 'window' }).then(function (tabs) {
-          tabs.forEach(function (tab) { tab.navigate(tab.url); });
-        });
-      });
+      .then(function () { return self.clients.claim(); });
   }));
 });
 self.addEventListener('fetch', function (event) {
   var req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   if (req.mode === 'navigate') {
+    var page = normalizePage(new URL(req.url).pathname);
     event.respondWith(fetch(req).then(function (res) {
-      if (res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
+      if (res.ok && page) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(page, copy); }); }
       return res;
     }).catch(function () {
-      return caches.match(req).then(function (hit) { return hit || caches.match('/'); });
+      return caches.open(CACHE).then(function (cache) {
+        if (page) {
+          return cache.match(page).then(function (hit) {
+            return hit || cache.match('/offline.html');
+          });
+        }
+        return cache.match('/offline.html');
+      });
     }));
     return;
   }
@@ -807,7 +895,7 @@ writeFileSync('dist/index.html', minifyHtml(page({
 writeFileSync('dist/components.html', minifyHtml(page({
   title: 'Components — Verdant',
   description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, a switch specimen, and motion patterns.',
-  path: '/components.html',
+  path: COMPONENTS_ROUTE,
   active: 'components',
   bodyHtml: componentsBody,
   scripts: ['/gallery.js'],
@@ -821,4 +909,12 @@ writeFileSync('dist/404.html', minifyHtml(page({
   bodyHtml: notFoundBody,
 })))
 
-console.log('Wrote dist/index.html, dist/components.html, dist/404.html')
+writeFileSync('dist/offline.html', minifyHtml(page({
+  title: 'Offline — Verdant',
+  description: 'You are offline and this page is not available yet.',
+  path: '/offline.html',
+  active: '',
+  bodyHtml: offlineBody,
+})))
+
+console.log('Wrote dist/index.html, dist/components.html, dist/404.html, dist/offline.html')
