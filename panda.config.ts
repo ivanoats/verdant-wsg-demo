@@ -1,6 +1,9 @@
 import { defineConfig } from '@pandacss/dev'
 import { explicitThemeVars, semanticColorTokens, themeOverrideAttr, themeResolvedAttr } from './scripts/theme.mjs'
 
+const important = (vars: Record<string, string>) =>
+  Object.fromEntries(Object.entries(vars).map(([name, value]) => [name, `${value} !important`]))
+
 export default defineConfig({
   preflight: true,
   // Plain static HTML site — the only "source" Panda extracts from is the
@@ -147,8 +150,12 @@ export default defineConfig({
 
   globalCss: {
     'html': { colorScheme: 'light dark' },
-    [`html[${themeOverrideAttr}="light"]`]: { ...explicitThemeVars.light },
-    [`html[${themeOverrideAttr}="dark"]`]: { ...explicitThemeVars.dark },
+    // Panda emits token variables in the `tokens` layer, which comes after
+    // `base` (where globalCss lives), so a plain declaration here would lose
+    // to them. `!important` in an earlier layer beats normal declarations in
+    // any later layer, which is exactly the override an explicit choice needs.
+    [`html[${themeOverrideAttr}="light"]`]: important(explicitThemeVars.light),
+    [`html[${themeOverrideAttr}="dark"]`]: important(explicitThemeVars.dark),
     [`html[${themeResolvedAttr}="light"]`]: { colorScheme: 'light' },
     [`html[${themeResolvedAttr}="dark"]`]: { colorScheme: 'dark' },
     'body': { margin: '0', background: 'surface.100', color: 'ink', fontFamily: 'sans', fontSize: 'body', lineHeight: 'body' },
