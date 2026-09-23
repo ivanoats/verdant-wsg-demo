@@ -60,6 +60,34 @@ export const explicitThemeVars = {
 
 export const themeTokenCount = Object.keys(themeTokens).length
 
+// Stronger values for people whose OS asks for more contrast
+// (prefers-contrast: more). Only the tokens that carry supporting text,
+// status, boundaries and focus change; ink and surfaces are already at the
+// extremes. The build verifies these against stricter targets: 7:1 for text
+// and 4.5:1 for control borders and focus rings.
+export const highContrastTokens = {
+  'ink.muted': { light: '#3f3a30', dark: '#d6cfbf' },
+  'ink.placeholder': { light: '#4f4b42', dark: '#bdb8ab' },
+  border: { light: '#7f735b', dark: '#8f866f' },
+  'border.control': { light: '#4f4636', dark: '#b3a88e' },
+  focusRing: { light: '#8a5200', dark: '#ffc15a' },
+  accent: { light: '#245a3d', dark: '#9be0bb' },
+  'accent.strong': { light: '#1a3f2c', dark: '#7fd0a5' },
+  positive: { light: '#145e52', dark: '#7fdccb' },
+  info: { light: '#1f4f7a', dark: '#a9cff2' },
+  warning: { light: '#6e4700', dark: '#ffd57a' },
+  critical: { light: '#922e08', dark: '#ffab85' },
+}
+
+const highContrastVarsFor = (mode) => Object.fromEntries(
+  Object.entries(highContrastTokens).map(([name, value]) => [themeVarName(name), value[mode]])
+)
+
+export const highContrastVars = {
+  light: highContrastVarsFor('light'),
+  dark: highContrastVarsFor('dark'),
+}
+
 export const interfacePaletteOrder = [
   'accent',
   'accent.strong',

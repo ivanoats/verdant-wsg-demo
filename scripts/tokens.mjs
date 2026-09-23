@@ -84,6 +84,10 @@ const pairingRows = [
   ['functional', 'Focus ring on raised surface', 'focusRing', 'surface.200', 3, 'Visible focus indicator inside cards and bands.'],
 ]
 
+// Stricter targets for the prefers-contrast: more token set: WCAG AAA for
+// text and 4.5:1 for control borders and focus rings.
+export const highContrastMinimum = { text: 7, functional: 4.5 }
+
 export const verifiedPairings = pairingRows.map(([category, title, foreground, background, minimum, note]) => (
   { category, title, foreground, background, minimum, note }
 ))

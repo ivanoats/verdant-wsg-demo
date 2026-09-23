@@ -1,6 +1,6 @@
 import { defineConfig } from '@pandacss/dev'
 import { fontFamilyTokens, spacingTokens, radiiTokens, fontSizeTokens, lineHeightTokens } from './scripts/tokens.mjs'
-import { explicitThemeVars, semanticColorTokens, themeOverrideAttr, themeResolvedAttr } from './scripts/theme.mjs'
+import { explicitThemeVars, highContrastVars, semanticColorTokens, themeOverrideAttr, themeResolvedAttr } from './scripts/theme.mjs'
 
 const important = (vars: Record<string, string>) =>
   Object.fromEntries(Object.entries(vars).map(([name, value]) => [name, `${value} !important`]))
@@ -149,6 +149,19 @@ export default defineConfig({
     // any later layer, which is exactly the override an explicit choice needs.
     [`html[${themeOverrideAttr}="light"]`]: important(explicitThemeVars.light),
     [`html[${themeOverrideAttr}="dark"]`]: important(explicitThemeVars.dark),
+    // prefers-contrast: more — stronger token values in whichever theme is
+    // showing, plus thicker boundaries. Same !important reasoning as above;
+    // these come later in the same layer, so they win over the plain theme.
+    '@media (prefers-contrast: more)': {
+      [`html:not([${themeOverrideAttr}]), html[${themeOverrideAttr}="light"]`]: important(highContrastVars.light),
+      [`html[${themeOverrideAttr}="dark"]`]: important(highContrastVars.dark),
+      '.fieldInput, .btn--variant_secondary, .card': { borderWidth: '2px !important' },
+      ':focus-visible': { outlineWidth: '3px !important' },
+      'a': { textDecorationThickness: '0.12em' },
+    },
+    '@media (prefers-contrast: more) and (prefers-color-scheme: dark)': {
+      [`html:not([${themeOverrideAttr}])`]: important(highContrastVars.dark),
+    },
     [`html[${themeResolvedAttr}="light"]`]: { colorScheme: 'light' },
     [`html[${themeResolvedAttr}="dark"]`]: { colorScheme: 'dark' },
     'body': { margin: '0', background: 'surface.100', color: 'ink', fontFamily: 'sans', fontSize: 'body', lineHeight: 'body' },

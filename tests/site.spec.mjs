@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { highContrastTokens, themeTokens } from '../scripts/theme.mjs'
 
 // WCAG relative-luminance contrast between two computed rgb()/rgba() colors.
 const contrast = ({ foreground, background }) => {
@@ -110,4 +111,28 @@ test('motion preview is bounded and reduced-motion safe', async ({ page }) => {
   await button.click()
   await expect(status).toHaveText(/reduced motion is enabled/i)
   expect(await spinnerClass()).not.toContain('spinner--preview_true')
+})
+
+test('increased contrast swaps in stronger tokens and thicker boundaries', async ({ page }) => {
+  const tokenValue = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--colors-ink-muted').trim())
+  const borderWidth = () => page.locator('#site-url').evaluate((input) => getComputedStyle(input).borderTopWidth)
+  const choice = (value) => page.locator(`input[name="theme-preference"][value="${value}"]`)
+
+  await page.emulateMedia({ colorScheme: 'light', contrast: 'more' })
+  await page.goto('/components')
+  expect(await tokenValue()).toBe(highContrastTokens['ink.muted'].light)
+  expect(await borderWidth()).toBe('2px')
+
+  // System mode follows the OS into dark, still with the stronger set.
+  await page.emulateMedia({ colorScheme: 'dark', contrast: 'more' })
+  await expect.poll(tokenValue).toBe(highContrastTokens['ink.muted'].dark)
+
+  // An explicit theme choice keeps the stronger set for that theme.
+  await choice('light').check()
+  await expect.poll(tokenValue).toBe(highContrastTokens['ink.muted'].light)
+
+  // Without the preference, the explicit theme's standard values return.
+  await page.emulateMedia({ contrast: 'no-preference' })
+  await expect.poll(tokenValue).toBe(themeTokens['ink.muted'].light)
+  expect(await borderWidth()).toBe('1px')
 })
