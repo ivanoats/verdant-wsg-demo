@@ -1,17 +1,17 @@
-# verdant-design
+# @sustainablewebsites/verdant-design
 
 Verdant is a [PandaCSS](https://panda-css.com) preset with defaults aligned to selected [W3C Web Sustainability Guidelines](https://w3c.github.io/sustainableweb-wsg/): system fonts instead of downloaded ones, only the CSS a page actually uses, contrast-verified semantic colour tokens, and dark mode, reduced motion and increased contrast respected out of the box.
 
 It ships tokens, recipes, layout primitives and a theme contract — not a component library. You write your own markup.
 
 ```bash
-npm install -D verdant-design
+npm install -D @sustainablewebsites/verdant-design
 ```
 
 ```js
 // panda.config.ts
 import { defineConfig } from '@pandacss/dev'
-import { verdantPreset } from 'verdant-design'
+import { verdantPreset } from '@sustainablewebsites/verdant-design'
 
 export default defineConfig({
   preflight: true,
@@ -22,7 +22,7 @@ export default defineConfig({
 ```
 
 To make an explicit Light/Dark choice work you also need the theme runtime shipped at
-`verdant-design/theme-toggle.js`. Without it you get `prefers-color-scheme` only.
+`@sustainablewebsites/verdant-design/theme-toggle.js`. Without it you get `prefers-color-scheme` only.
 
 **[Full installation guide, token reference and known gaps →](https://github.com/ivanoats/verdant-wsg-demo/blob/main/docs/INSTALL.md)**
 

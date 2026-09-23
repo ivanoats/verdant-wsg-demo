@@ -15,7 +15,7 @@ It is deliberately small. There is no component library to import, no runtime, a
 ## 1. Install
 
 ```bash
-npm install -D verdant-design
+npm install -D @sustainablewebsites/verdant-design
 ```
 
 ## 2. Register the preset
@@ -23,7 +23,7 @@ npm install -D verdant-design
 ```js
 // panda.config.ts
 import { defineConfig } from '@pandacss/dev'
-import { verdantPreset } from 'verdant-design'
+import { verdantPreset } from '@sustainablewebsites/verdant-design'
 
 export default defineConfig({
   preflight: true,
@@ -58,7 +58,7 @@ The preset's `globalCss` keys off a `data-theme-override` attribute on `<html>`.
 Copy it into whatever directory you serve static files from:
 
 ```bash
-cp node_modules/verdant-design/src/theme-toggle.js public/verdant-theme-toggle.js
+cp node_modules/@sustainablewebsites/verdant-design/src/theme-toggle.js public/verdant-theme-toggle.js
 ```
 
 The script looks for radio inputs named `theme-preference` and keeps them in sync with the stored choice. Give it markup like this anywhere on the page:

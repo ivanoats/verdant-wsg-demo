@@ -3,7 +3,7 @@
 import { css } from '../styled-system/css/index.mjs'
 import { hstack } from '../styled-system/patterns/index.mjs'
 import { mark } from './art.mjs'
-import { themePreferenceControlName, themePreferenceValues, themeTokens } from 'verdant-design/theme'
+import { themePreferenceControlName, themePreferenceValues, themeTokens } from '@sustainablewebsites/verdant-design/theme'
 import { COMPONENTS_ROUTE, REPO, WSG_CHECK } from './config.mjs'
 import {
   barCss, breadcrumbLinkCss, breadcrumbListCss, btnPrimary, btnSecondary,
