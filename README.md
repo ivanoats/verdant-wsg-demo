@@ -2,11 +2,34 @@
 
 A small static site that puts the [Verdant design system](https://claude.ai/artifact/1hu6m4apzrfeM9s8nWcmxf) on the web as a lightweight implementation demo for the W3C [Web Sustainability Guidelines](https://w3c.github.io/sustainableweb-wsg/). The homepage scorecard is generated from the saved [`public/wsg-evidence.json`](public/wsg-evidence.json) record rather than presented as a live conformance audit; the dated evidence register, hosting-provenance notes, and unresolved owner decisions live in [`docs/wsg-evidence-register.md`](docs/wsg-evidence-register.md).
 
-The home page promotes the system; `/components` is the public component-gallery route, backed by the generated `components.html` file. Both are styled entirely with [PandaCSS](https://panda-css.com): tokens and recipes in `panda.config.ts`, a small build script (`scripts/build.mjs`) that generates the HTML and lets Panda statically extract the styles those pages reference — no browser-side CSS-in-JS runtime and no broad pre-generated utility bundle.
+The home page promotes the system; `/components` is the public component-gallery route, backed by the generated `components.html` file. Both are styled entirely with [PandaCSS](https://panda-css.com): the design system itself lives in the `verdant-design` package, and a small build script generates the HTML so Panda can statically extract the styles those pages reference — no browser-side CSS-in-JS runtime and no broad pre-generated utility bundle.
+
+## Using Verdant in your own project
+
+The design system is published as a PandaCSS preset. See **[`docs/INSTALL.md`](docs/INSTALL.md)** for installation, the token reference, the theme contract, and known gaps.
+
+```bash
+npm install -D verdant-design
+```
+
+## Where things live
+
+| Path | What it is |
+| --- | --- |
+| `packages/verdant-design/` | The design system: tokens, semantic colours, recipes, layout patterns, theme contract. An npm workspace this site consumes like any other project would |
+| `content/*.md` | Prose pages. Markdown with frontmatter; rendered through `scripts/lib/markdown.mjs` |
+| `scripts/pages/` | One module per route (`home`, `components`, `green-web`, `status`) |
+| `scripts/styles.mjs` | Shared style bindings — page chrome, type scale, prose |
+| `scripts/shell.mjs` | The page shell: header, nav, breadcrumb, footer, `<head>` |
+| `scripts/client/` | Browser-side scripts: theme toggle, gallery previews, service worker |
+| `scripts/build.mjs` | Orchestration only — imports the pages and writes `dist/` |
+| `panda.config.ts` | Site build config; registers the preset and sets `include`/`outdir` |
+
+To edit page copy, start in `content/` for prose pages and `scripts/pages/` for everything else. Style bindings must stay literal `css()`/recipe/pattern calls so Panda can extract them.
 
 ## Build
 
-```
+```bash
 npm install
 npm run dev     # http://localhost:4321 — rebuilds on save and reloads the browser
 npm run build   # panda codegen -> generate HTML -> panda cssgen -> hash final asset names -> measure finalized assets and transfer
@@ -75,7 +98,7 @@ Tradeoffs:
 
 ## CI coverage
 
-`npm run verify:ci` is what `.github/workflows/ci.yml` runs on every pull request and on `main`, on the Node 20 runtime pinned in `.nvmrc` (the same version `netlify.toml` builds with):
+`npm run verify:ci` is what `.github/workflows/ci.yml` runs on every pull request and on `main`, on the Node 24 runtime pinned in `.nvmrc` (the same version `netlify.toml` builds with):
 
 - `npm ci --ignore-scripts`, then a full `npm run build` from the lockfile.
 - `scripts/check-budgets.mjs` compares the finalized `dist/measurements.json` against the reviewed limits in `ci/budgets.json`, totals any web-font files in `dist/` against `webFontsKiB` (0 by default), and writes `artifacts/ci-audit.json`.

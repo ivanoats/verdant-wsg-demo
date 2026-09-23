@@ -1,0 +1,32 @@
+{
+  "name": "verdant-design",
+  "version": "0.1.0",
+  "description": "Verdant: a PandaCSS preset with defaults aligned to selected W3C Web Sustainability Guidelines — system fonts, semantic colour tokens verified for contrast, a System/Light/Dark theme contract, and prefers-contrast and prefers-reduced-motion support.",
+  "type": "module",
+  "license": "ISC",
+  "author": "Ivan Storck",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivanoats/verdant-wsg-demo.git",
+    "directory": "packages/verdant-design"
+  },
+  "homepage": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/docs/INSTALL.md",
+  "keywords": ["pandacss", "panda-preset", "design-system", "sustainability", "wsg", "accessibility"],
+  "exports": {
+    ".": "./src/preset.mjs",
+    "./tokens": "./src/tokens.mjs",
+    "./theme": "./src/theme.mjs",
+    "./theme-toggle.js": "./src/theme-toggle.js"
+  },
+  "files": ["src", "README.md", "LICENSE"],
+  "sideEffects": false,
+  "peerDependencies": {
+    "@pandacss/dev": ">=1.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -5,3 +5,8 @@ styled-system/
 .tmp/
 artifacts/
 test-results/
+
+# Working artifacts from automation runs, not part of the site source
+GITHUB-ISSUES.json
+PR-COORDINATION.json
+Claude outputs/

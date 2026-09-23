@@ -62,14 +62,17 @@ async function build() {
 
 let timer
 const onChange = (file) => {
-  // Panda's config reads its tokens from scripts/theme.mjs, so either one
-  // changing means the generated styled-system has to be rebuilt.
-  if (file && /panda\.config|theme\.mjs/.test(String(file))) needCodegen = true
+  // Panda's config is built from the Verdant preset, so a change to either the
+  // config or anything in packages/ means the generated styled-system has to be
+  // rebuilt before the pages are.
+  if (file && /panda\.config|preset\.mjs|theme\.mjs|tokens\.mjs/.test(String(file))) needCodegen = true
   clearTimeout(timer)
   timer = setTimeout(build, 80)
 }
 watch('scripts', { recursive: true }, (_, f) => onChange(f))
 watch('public', { recursive: true }, (_, f) => onChange(f))
+watch('content', { recursive: true }, (_, f) => onChange(f))
+watch('packages', { recursive: true }, (_, f) => onChange(f))
 watch('panda.config.ts', () => onChange('panda.config.ts'))
 
 // ---- serve ------------------------------------------------------------------
@@ -104,7 +107,7 @@ createServer(async (req, res) => {
     }
   }
 }).listen(PORT, () => {
-  console.log(`Verdant dev server → http://localhost:${PORT}  (watching scripts/, public/, panda.config.ts)`)
+  console.log(`Verdant dev server → http://localhost:${PORT}  (watching scripts/, public/, content/, packages/, panda.config.ts)`)
 })
 
 function send(res, status, ext, body) {
