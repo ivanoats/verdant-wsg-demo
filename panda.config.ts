@@ -54,6 +54,7 @@ export default defineConfig({
           ink: {
             DEFAULT: { value: { base: '#1c1a15', _dark: '#f1ede2' } },
             muted: { value: { base: '#5b5548', _dark: '#b6ae9c' } },
+            placeholder: { value: { base: '#75726a', _dark: '#8d8a81' } },
           },
           accent: {
             DEFAULT: { value: { base: '#2f6b4a', _dark: '#7fcfa3' } },
@@ -89,7 +90,7 @@ export default defineConfig({
           base: {
             fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', letterSpacing: '0.02em',
             minHeight: '44px', paddingBlock: '2', paddingInline: '4', borderRadius: 'md', border: '1px solid transparent',
-            cursor: 'pointer', outlineOffset: '2px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', outlineOffset: '2px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecorationLine: 'none',
             _motionSafe: { transition: 'background-color 120ms ease, border-color 120ms ease' },
             _disabled: { opacity: '0.5', cursor: 'not-allowed' },
           },
@@ -114,6 +115,7 @@ export default defineConfig({
             fontSize: 'body', lineHeight: 'body', fontFamily: 'sans',
             minHeight: '44px', paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border.control',
             borderRadius: 'sm', background: 'surface.200', color: 'ink',
+            _placeholder: { color: 'ink.placeholder', opacity: '1' },
             _focusVisible: { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '1px', borderColor: 'transparent' },
           },
         },
@@ -160,7 +162,12 @@ export default defineConfig({
   globalCss: {
     'html': { colorScheme: 'light dark' },
     'body': { margin: '0', background: 'surface.100', color: 'ink', fontFamily: 'sans', fontSize: 'body', lineHeight: 'body' },
-    'a': { color: 'accent' },
+    'a': {
+      color: 'accent',
+      textDecoration: 'underline',
+      textUnderlineOffset: '0.15em',
+      textDecorationThickness: '0.08em',
+    },
     'a:hover': { color: 'accent.strong' },
     ':focus-visible': { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '2px' },
     '@keyframes spin': { to: { transform: 'rotate(360deg)' } },
@@ -173,13 +180,16 @@ export default defineConfig({
     '@keyframes sprout': { from: { transform: 'scale(0.2)', opacity: '0' }, to: { transform: 'scale(1)', opacity: '1' } },
     '@keyframes sunRise': { from: { opacity: '0', transform: 'translateY(24px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
     '.switchTrack .knob': {
-       position: 'absolute', top: '12px', left: '2px', width: '20px', height: '20px',
+      position: 'absolute', top: '12px', left: '2px', width: '20px', height: '20px',
       borderRadius: 'var(--radii-full)', background: 'var(--colors-surface-200)',
     },
     '@media (prefers-reduced-motion: no-preference)': {
       '.switchTrack .knob': { transition: 'transform 150ms ease' },
     },
     '.switchTrack[aria-checked="true"] .knob': { transform: 'translateX(20px)' },
+    // The switch's state lives in aria-checked at runtime, so the track colour
+    // follows it here rather than through a build-time recipe variant.
+    '.switchTrack[aria-checked="true"]::before': { background: 'var(--colors-accent)' },
     // Decorative-only art is dropped for anyone who's asked to save data —
     // it costs bytes and carries no content (WSG 3.12's third preference query).
     '@media (prefers-reduced-data: reduce)': {

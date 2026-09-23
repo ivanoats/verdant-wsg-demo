@@ -31,7 +31,7 @@ const WSG = 'https://w3c.github.io/sustainableweb-wsg/'
 const skipLinkCss = css({
   position: 'absolute', left: '3', top: '-48px',
   background: 'surface.200', color: 'ink', paddingBlock: '2', paddingInline: '4',
-  borderRadius: 'sm', border: '1px solid', borderColor: 'border.control', zIndex: '10',
+  borderRadius: 'sm', border: '1px solid', borderColor: 'border.control', zIndex: '10', textDecoration: 'none',
   _motionSafe: { transition: 'top 120ms ease' },
   _focus: { top: '3' },
 })
@@ -44,7 +44,7 @@ const navLinkCss = css({ textDecoration: 'none', fontSize: 'bodySm', fontWeight:
 const navLinkActiveCss = css({ textDecoration: 'underline', textUnderlineOffset: '6px', textDecorationThickness: '2px', fontSize: 'bodySm', fontWeight: '600', color: 'accent' })
 
 const breadcrumbListCss = hstack({ gap: '1', listStyle: 'none', margin: '0', paddingTop: '3', paddingInline: '0', fontSize: 'label', color: 'ink.muted' })
-const breadcrumbLinkCss = css({ color: 'ink.muted' })
+const breadcrumbLinkCss = css({ color: 'ink.muted', textDecoration: 'none' })
 
 const footerCss = css({ borderTop: '1px solid', borderColor: 'border' })
 const footerBarCss = flex({ paddingBlock: '6', align: 'center', justify: 'space-between', gap: '4', wrap: 'wrap' })
@@ -462,8 +462,8 @@ const componentsBody = `
     <form class="${formCss}">
       <div class="${fieldCss}">
         <label class="${labelCss}" for="site-url">Website URL</label>
-        <input class="${inputCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com">
-        <p class="${hintCss}">One field, clear guidance and autocomplete keep the form easy to complete.</p>
+        <input class="${inputCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" aria-describedby="site-url-hint" placeholder="https://example.com">
+        <p class="${hintCss}" id="site-url-hint">One field, clear guidance and autocomplete keep the form easy to complete.</p>
       </div>
     </form>
   </section>
@@ -515,8 +515,8 @@ const notFoundBody = `
 // ---- scripts ---------------------------------------------------------------------
 
 const themeToggleJs = `(function () {
-  var LIGHT = { "surface.100": "#faf8f3", "surface.200": "#ffffff", "border": "#93866c", "ink": "#1c1a15", "ink.muted": "#5b5548", "accent": "#2f6b4a", "accent.strong": "#234f38", "accent.ink": "#ffffff", "focusRing": "#a5670a", "positive": "#1f7a6c", "critical": "#c1440e", "foliage": "#3ca24a", "foliage.far": "#cdeaae", "foliage.mid": "#9ed65f", "foliage.deep": "#1f6a31", "foliage.bright": "#6fcd4f", "sunlight": "#f4b63f" };
-  var DARK = { "surface.100": "#15140f", "surface.200": "#1e1c15", "border": "#726b53", "ink": "#f1ede2", "ink.muted": "#b6ae9c", "accent": "#7fcfa3", "accent.strong": "#5fb98c", "accent.ink": "#10241a", "focusRing": "#e8a83e", "positive": "#5cc9b7", "critical": "#ff8f5e", "foliage": "#45ad55", "foliage.far": "#1c3a22", "foliage.mid": "#2d6b34", "foliage.deep": "#2a7d3a", "foliage.bright": "#86dc62", "sunlight": "#e8a83e" };
+  var LIGHT = { "surface.100": "#faf8f3", "surface.200": "#ffffff", "border": "#c7bda9", "border.control": "#7f735b", "ink": "#1c1a15", "ink.muted": "#5b5548", "ink.placeholder": "#75726a", "accent": "#2f6b4a", "accent.strong": "#234f38", "accent.ink": "#ffffff", "focusRing": "#a5670a", "positive": "#1f7a6c", "critical": "#c1440e", "foliage": "#3ca24a", "foliage.far": "#cdeaae", "foliage.mid": "#9ed65f", "foliage.deep": "#1f6a31", "foliage.bright": "#6fcd4f", "sunlight": "#f4b63f" };
+  var DARK = { "surface.100": "#15140f", "surface.200": "#1e1c15", "border": "#514b3b", "border.control": "#8f866f", "ink": "#f1ede2", "ink.muted": "#b6ae9c", "ink.placeholder": "#8d8a81", "accent": "#7fcfa3", "accent.strong": "#5fb98c", "accent.ink": "#10241a", "focusRing": "#e8a83e", "positive": "#5cc9b7", "critical": "#ff8f5e", "foliage": "#45ad55", "foliage.far": "#1c3a22", "foliage.mid": "#2d6b34", "foliage.deep": "#2a7d3a", "foliage.bright": "#86dc62", "sunlight": "#e8a83e" };
   function varName(key) { return "--colors-" + key.replace(/\\./g, "-"); }
   function apply(map) {
     var root = document.documentElement;
