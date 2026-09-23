@@ -345,12 +345,18 @@ function etag(body) {
   return `"${createHash('sha256').update(body).digest('hex')}"`
 }
 
+function tryReadUrl(url, files) {
+  try {
+    return readUrl(url, files)
+  } catch {
+    return null // missing or outside dist/: answered as a 404
+  }
+}
+
 function serve(req, res, files) {
   const url = new URL(req.url, 'http://127.0.0.1')
-  let body
-  try {
-    body = readUrl(url.pathname, files)
-  } catch {
+  const body = tryReadUrl(url.pathname, files)
+  if (!body) {
     res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' })
     res.end('Not found')
     return
