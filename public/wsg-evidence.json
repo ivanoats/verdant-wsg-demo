@@ -6,54 +6,59 @@
     "label": "W3C Web Sustainability Guidelines TR snapshot reviewed on 2026-09-22",
     "uri": "https://www.w3.org/TR/web-sustainability-guidelines/"
   },
-  "scope": "Selected implementation evidence for the homepage and shared static assets in this repository. This record is not a live deployment audit, does not claim full WSG conformance, and links to related records that own broader hosting, transfer-size, and reduced-data validation.",
+  "scope": "Selected implementation evidence for the homepage, component gallery and shared static assets in this repository. This record is not a live deployment audit, does not claim full WSG conformance, and links to the related pull requests and the evidence register that own broader hosting, transfer-size, and reduced-data validation.",
   "related_records": [
     {
-      "label": "Issue #18 — homepage script delivery",
-      "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/18"
+      "label": "PR #18 — System/Light/Dark theme preference and its head-loaded bootstrap script",
+      "href": "https://github.com/ivanoats/verdant-wsg-demo/pull/18"
     },
     {
-      "label": "Issue #19 — measured and estimated byte reporting",
-      "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/19"
+      "label": "PR #19 — finalized measurements in dist/measurements.json",
+      "href": "https://github.com/ivanoats/verdant-wsg-demo/pull/19"
     },
     {
-      "label": "Issue #20 — reduced-data behavior descriptions",
-      "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/20"
+      "label": "PR #20 — reduced-data behavior description",
+      "href": "https://github.com/ivanoats/verdant-wsg-demo/pull/20"
     },
     {
-      "label": "Issue #26 — broader hosting and governance evidence",
-      "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/26"
+      "label": "Evidence register (PR #26) — hosting provenance and governance",
+      "href": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/docs/wsg-evidence-register.md"
     }
   ],
   "entries": [
     {
       "category": "Performance & efficiency",
-      "scanner_category": "wsg-check category",
-      "wsg_refs": ["3.2", "3.4"],
-      "status": "open",
+      "scanner_category": "Performance & efficiency",
+      "wsg_refs": [
+        "3.2",
+        "3.4"
+      ],
+      "status": "verified",
       "date": "2026-09-22",
-      "scope": "Repository build output and measurement wiring, not final deployed transfer totals or future script-delivery changes.",
+      "scope": "Repository build output: finalized, fingerprinted assets measured locally after every build. Production-network transfer is not measured here.",
       "tool": {
         "name": "npm run build",
         "version": "Node 20 + PandaCSS 1.12.1"
       },
-      "summary": "The repo build generates the homepage HTML, a shared stylesheet, and local compressed-size estimates. Final byte reporting and script-delivery conclusions are tracked in linked records rather than fixed here.",
+      "summary": "The build measures the finalized pages, stylesheet and scripts after fingerprinting and writes dist/measurements.json, which also fills the homepage numbers. Pages load one shared stylesheet plus small same-origin scripts, including the head-loaded theme bootstrap that applies a saved preference before first paint.",
       "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/scripts/stats.mjs",
       "linked_records": [
         {
-          "label": "Issue #18",
-          "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/18"
+          "label": "PR #18",
+          "href": "https://github.com/ivanoats/verdant-wsg-demo/pull/18"
         },
         {
-          "label": "Issue #19",
-          "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/19"
+          "label": "PR #19",
+          "href": "https://github.com/ivanoats/verdant-wsg-demo/pull/19"
         }
       ]
     },
     {
       "category": "Semantic & standards",
-      "scanner_category": "wsg-check category",
-      "wsg_refs": ["3.2"],
+      "scanner_category": "Semantic & standards",
+      "wsg_refs": [
+        "3.2"
+      ],
       "status": "verified",
       "date": "2026-09-22",
       "scope": "Generated page structure and metadata for the homepage and component gallery.",
@@ -61,51 +66,63 @@
         "name": "npm run build",
         "version": "Node 20 + PandaCSS 1.12.1"
       },
-      "summary": "Generated pages include landmarks, a skip link, a single h1 per page, a canonical URL, and JSON-LD website metadata.",
+      "summary": "Generated pages include landmarks, a skip link, a single h1 per page, and a canonical URL. JSON-LD website metadata is emitted on the homepage only.",
       "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/scripts/build.mjs"
     },
     {
-      "category": "Selected WSG-aligned defaults",
-      "scanner_category": "Not a WSG section",
-      "wsg_refs": ["2.10", "3.9"],
-      "status": "open",
+      "category": "Sustainability-specific",
+      "scanner_category": "Sustainability-specific",
+      "wsg_refs": [
+        "2.10",
+        "3.9"
+      ],
+      "status": "verified",
       "date": "2026-09-22",
       "scope": "Defaults shown in the generated pages and PandaCSS output.",
       "tool": {
         "name": "Manual source review"
       },
-      "summary": "Color-scheme and reduced-motion defaults are implemented in the generated UI. Reduced-data behavior is currently limited and is described in linked records rather than treated as broad conformance evidence here.",
+      "summary": "System, Light and Dark theme preferences share one token source with prefers-color-scheme as the no-script default, and every animation is gated on prefers-reduced-motion. Reduced-data behavior is intentionally not claimed: decorative art is inline, so there is nothing optional to skip.",
       "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/panda.config.ts",
       "linked_records": [
         {
-          "label": "Issue #20",
-          "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/20"
+          "label": "PR #18",
+          "href": "https://github.com/ivanoats/verdant-wsg-demo/pull/18"
+        },
+        {
+          "label": "PR #20",
+          "href": "https://github.com/ivanoats/verdant-wsg-demo/pull/20"
         }
       ]
     },
     {
       "category": "Security & maintenance",
-      "scanner_category": "wsg-check category",
-      "wsg_refs": ["3.2"],
+      "scanner_category": "Security & maintenance",
+      "wsg_refs": [
+        "3.2"
+      ],
       "status": "open",
       "date": "2026-09-22",
       "scope": "Repository-managed static assets and configuration files, not human-reviewed governance or hosting assurances.",
       "tool": {
         "name": "Manual source review"
       },
-      "summary": "The repo includes CSP, HSTS, Permissions-Policy, nosniff, cache rules, robots.txt, and a sitemap. Broader hosting and governance evidence remains linked work, and deployed responses still depend on the platform applying these files as configured.",
+      "summary": "The repo includes CSP, HSTS, Permissions-Policy, nosniff, cache rules, robots.txt, and a sitemap. Maintenance commitments such as dependency cadence, browser support, releases and licensing are recorded as gaps in the evidence register, and deployed responses still depend on the platform applying these files as configured.",
       "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/public/_headers",
       "linked_records": [
         {
-          "label": "Issue #26",
-          "href": "https://github.com/ivanoats/verdant-wsg-demo/issues/26"
+          "label": "Evidence register",
+          "href": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/docs/wsg-evidence-register.md"
         }
       ]
     },
     {
       "category": "UX & design",
-      "scanner_category": "wsg-check category",
-      "wsg_refs": ["2.10", "3.9"],
+      "scanner_category": "UX & design",
+      "wsg_refs": [
+        "2.10",
+        "3.9"
+      ],
       "status": "verified",
       "date": "2026-09-22",
       "scope": "Generated form, focus, theme, and motion examples in the component gallery.",
@@ -118,7 +135,7 @@
     },
     {
       "category": "Hosting & infrastructure",
-      "scanner_category": "wsg-check category",
+      "scanner_category": "Hosting & infrastructure",
       "wsg_refs": [],
       "status": "open",
       "date": "2026-09-22",
@@ -126,8 +143,14 @@
       "tool": {
         "name": "Not assessed in-repo"
       },
-      "summary": "Green hosting provenance, CDN compression behavior, and final live-response headers need external verification. The repo can prepare assets and configuration, but it cannot prove deployed infrastructure outcomes on its own.",
-      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/netlify.toml"
+      "summary": "The evidence register identifies Netlify as the hosting platform from the published netlify.app origin and checked-in config. Energy provenance is not independently verified by the Green Web Foundation at the review date, and CDN compression and live-response headers need external verification; the repository cannot prove deployed infrastructure outcomes on its own.",
+      "evidence_link": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/netlify.toml",
+      "linked_records": [
+        {
+          "label": "Evidence register",
+          "href": "https://github.com/ivanoats/verdant-wsg-demo/blob/main/docs/wsg-evidence-register.md"
+        }
+      ]
     }
   ]
 }

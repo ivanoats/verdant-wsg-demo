@@ -133,11 +133,11 @@ export const heroArt = () => {
   // Dense grass along the crest.
   const rand = rng(7)
   let grass = ''
-  for (let x = 2; x <= 558; x += 5.2) {
-    const len = 12 + rand() * 20
+  for (let x = 2; x <= 558; x += 6.6) {
+    const len = 14 + rand() * 22
     const angle = -90 + (rand() - 0.5) * 56
     const t = [tone.leaf, tone.bright, tone.deep, tone.bright][Math.floor(rand() * 4)]
-    grass += uleaf(L, { x: x + rand() * 3, y: crestY(segs, x) + 3, len, angle, fill: t })
+    grass += uleaf(L, { x: x + rand() * 4, y: crestY(segs, x) + 3, len, angle, fill: t })
   }
   // Flowers scattered in the grass.
   const frand = rng(21)
@@ -248,15 +248,16 @@ export const stageGlyph = {
 const meadowA = css({ fill: 'foliage.bright', opacity: '0.35' })
 const meadowB = css({ fill: 'foliage.mid', opacity: '0.3' })
 export const leafRow = () => {
+  const meadowLeaf = 'mw'
   const rand = rng(42)
-  let out = ''
-  for (let x = 4; x < 600; x += 7) {
-    out += leaf({ x: x + rand() * 3, y: 118, len: 18 + rand() * 30, angle: -90 + (rand() - 0.5) * 60, fill: rand() > 0.5 ? meadowA : meadowB })
+  let out = leafDefs(meadowLeaf)
+  for (let x = 4; x < 600; x += 8.5) {
+    out += uleaf(meadowLeaf, { x: x + rand() * 3, y: 118, len: 20 + rand() * 30, angle: -90 + (rand() - 0.5) * 60, fill: rand() > 0.5 ? meadowA : meadowB })
   }
   for (const [bx, sd] of [[120, 1], [330, 2], [520, 3]]) {
     const r = rng(sd)
     for (let i = 0; i < 9; i++) {
-      out += leaf({ x: bx, y: 118, len: 40 + r() * 34, angle: -165 + i * 18.75 + (r() - 0.5) * 8, fill: i % 2 ? meadowA : meadowB })
+      out += uleaf(meadowLeaf, { x: bx, y: 118, len: 40 + r() * 34, angle: -165 + i * 18.75 + (r() - 0.5) * 8, fill: i % 2 ? meadowA : meadowB })
     }
   }
   return `<svg viewBox="0 0 600 120" width="600" height="120" aria-hidden="true" focusable="false">${out}</svg>`
