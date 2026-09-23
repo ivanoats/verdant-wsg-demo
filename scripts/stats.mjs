@@ -7,9 +7,10 @@ import { brotliCompressSync, constants } from 'node:zlib'
 const br = (path) =>
   brotliCompressSync(readFileSync(path), { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length
 
-// Everything a first visit to / downloads: the page, its stylesheet, its one
-// script, the icon and the manifest. (sw.js installs after load and is left out.)
-const homeFiles = ['dist/index.html', 'dist/styles.css', 'dist/sw-register.js', 'dist/favicon.svg', 'dist/manifest.json']
+// Everything a first visit to / downloads: the page, its stylesheet, its theme
+// bootstrap, the service-worker register script, the icon and the manifest.
+// (sw.js installs after load and is left out.)
+const homeFiles = ['dist/index.html', 'dist/styles.css', 'dist/theme-toggle.js', 'dist/sw-register.js', 'dist/favicon.svg', 'dist/manifest.json']
 const kb = (bytes) => (bytes / 1024).toFixed(1)
 
 const html = readFileSync('dist/index.html', 'utf8')

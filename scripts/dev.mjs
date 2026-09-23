@@ -62,7 +62,9 @@ async function build() {
 
 let timer
 const onChange = (file) => {
-  if (file && String(file).includes('panda.config')) needCodegen = true
+  // Panda's config reads its tokens from scripts/theme.mjs, so either one
+  // changing means the generated styled-system has to be rebuilt.
+  if (file && /panda\.config|theme\.mjs/.test(String(file))) needCodegen = true
   clearTimeout(timer)
   timer = setTimeout(build, 80)
 }

@@ -8,6 +8,18 @@ import { css } from '../styled-system/css/index.mjs'
 import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
 import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
+import {
+  illustrationPaletteOrder,
+  interfacePaletteOrder,
+  themeOverrideAttr,
+  themePreferenceAttr,
+  themePreferenceControlName,
+  themePreferenceStorageKey,
+  themePreferenceValues,
+  themeResolvedAttr,
+  themeTokenCount,
+  themeTokens,
+} from './theme.mjs'
 
 // A hand-rolled recursive copy: some mounted/virtual filesystems choke on
 // Node's native cpSync fast paths (fcopyfile/clonefile), so this sticks to
@@ -33,7 +45,7 @@ const COMPONENTS_FILE = '/components.html'
 const skipLinkCss = css({
   position: 'absolute', left: '3', top: '-48px',
   background: 'surface.200', color: 'ink', paddingBlock: '2', paddingInline: '4',
-  borderRadius: 'sm', border: '1px solid', borderColor: 'border', zIndex: '10',
+  borderRadius: 'sm', border: '1px solid', borderColor: 'border.control', zIndex: '10', textDecoration: 'none',
   _motionSafe: { transition: 'top 120ms ease' },
   _focus: { top: '3' },
 })
@@ -41,12 +53,24 @@ const wrapCss = css({ maxWidth: '1080px', marginX: 'auto', paddingInline: { base
 const headerCss = css({ borderBottom: '1px solid', borderColor: 'border' })
 const barCss = flex({ paddingBlock: '3', align: 'center', justify: 'space-between', gap: '4', wrap: 'wrap' })
 const wordmarkCss = hstack({ gap: '2', color: 'ink', textDecoration: 'none', fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '700' })
+const headerActionsCss = flex({ align: 'center', gap: '4', wrap: 'wrap' })
 const navListCss = hstack({ gap: { base: '3', md: '6' }, listStyle: 'none', margin: '0', padding: '0' })
 const navLinkCss = css({ textDecoration: 'none', fontSize: 'bodySm', fontWeight: '600', color: 'ink', _hover: { color: 'accent' } })
 const navLinkActiveCss = css({ textDecoration: 'underline', textUnderlineOffset: '6px', textDecorationThickness: '2px', fontSize: 'bodySm', fontWeight: '600', color: 'accent' })
+const themePrefCss = css({
+  display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px',
+  border: '0', margin: '0', padding: '0',
+})
+const themePrefLegendCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted', margin: '0', padding: '0' })
+const themePrefOptionCss = css({
+  display: 'inline-flex', alignItems: 'center', gap: '2',
+  paddingBlock: '1', paddingInline: '3', border: '1px solid', borderColor: 'border',
+  borderRadius: 'full', background: 'surface.200', fontSize: 'label', lineHeight: 'label', fontWeight: '600',
+})
+const themePrefRadioCss = css({ margin: '0', accentColor: 'accent' })
 
 const breadcrumbListCss = hstack({ gap: '1', listStyle: 'none', margin: '0', paddingTop: '3', paddingInline: '0', fontSize: 'label', color: 'ink.muted' })
-const breadcrumbLinkCss = css({ color: 'ink.muted' })
+const breadcrumbLinkCss = css({ color: 'ink.muted', textDecoration: 'none' })
 
 const footerCss = css({ borderTop: '1px solid', borderColor: 'border' })
 const footerBarCss = flex({ paddingBlock: '6', align: 'center', justify: 'space-between', gap: '4', wrap: 'wrap' })
@@ -82,10 +106,10 @@ const heroHtml = `
 <section class="${wrapCss}" aria-labelledby="hero-title">
   <div class="${heroCss}">
     <div>
-      <p class="${eyebrowCss}">A design system for the W3C Web Sustainability Guidelines</p>
+      <p class="${eyebrowCss}">A design system for the <a href="${WSG}">W3C Web Sustainability Guidelines</a></p>
       <h1 id="hero-title" class="${heroTitleCss}">Verdant</h1>
       <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
-      <p class="${heroLedeCss}">Every default already satisfies the <a href="${WSG}">WSG</a>: system fonts, native dark mode, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
+      <p class="${heroLedeCss}">Start with the parts teams usually add later: system fonts, a System/Light/Dark theme preference, restrained motion, and only the CSS each page uses. Verdant gives a product page or docs site those lighter defaults from the first commit.</p>
       <div class="${btnRowCss}">
         <a class="${btnPrimary}" href="${COMPONENTS_ROUTE}">Browse components</a>
         <a class="${btnSecondary}" href="${REPO}">View source on GitHub</a>
@@ -111,7 +135,7 @@ const statsHtml = `
     <div class="${statCss}"><dt class="${statLabelCss}">This whole page, compressed &mdash; art included</dt><dd class="${statValueCss}">__HOME_KB__&nbsp;KB</dd></div>
     <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
     <div class="${statCss}"><dt class="${statLabelCss}">Stylesheet, extracted to only the rules in use</dt><dd class="${statValueCss}">__CSS_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Color tokens, each with a light and dark value</dt><dd class="${statValueCss}">17&thinsp;&times;&thinsp;2</dd></div>
+    <div class="${statCss}"><dt class="${statLabelCss}">Public palette pairs shown below</dt><dd class="${statValueCss}">${themeTokenCount}&thinsp;&times;&thinsp;2</dd></div>
   </dl>
 </section>`
 
@@ -128,16 +152,16 @@ const stageTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', font
 const stageBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0' })
 
 const stages = [
-  ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Small enough to hold in your head, so nothing gets a one-off value.'],
-  ['sprout', 'Sprout', 'Components', 'Button, card, field, theme toggle and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
-  ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one stylesheet and at most one small deferred script, from the first page on.'],
+  ['seed', 'Seed', 'Tokens', `${themeTokenCount} colors, a 4px spacing grid, four radii and system type. Small enough to stay consistent without one-off values.`],
+  ['sprout', 'Sprout', 'Components', 'Button, card, field, theme preference, switch specimen and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
+  ['sapling', 'Sapling', 'Pages', 'A product page or docs page gets landmarks, a skip link, one focus ring, one stylesheet and two small same-origin scripts from day one.'],
   ['canopy', 'Canopy', 'Sites', 'Security headers, cache rules, an offline shell and a real 404 &mdash; the hosting checks, handled before launch.'],
 ]
 const stagesHtml = `
 <section class="${wrapCss} ${sectionCss}" aria-labelledby="grows-title">
   <p class="${eyebrowCss}">How it grows</p>
-  <h2 id="grows-title" class="${h2Css}">From four seeds of tokens to a whole site.</h2>
-  <p class="${introCss}">Each layer only adds what the one below it can't do alone, which is why the finished site stays small.</p>
+  <h2 id="grows-title" class="${h2Css}">From a small token set to a whole site.</h2>
+  <p class="${introCss}">Each layer only adds the parts the previous one cannot, which keeps the finished site small.</p>
   <ol class="${stagesCss}">
     ${stages.map(([key, stage, layer, body], i) => `
     <li class="${stageCss}">
@@ -158,57 +182,50 @@ const paletteGridCss = css({
 const swatchItemCss = hstack({ gap: '3', alignItems: 'center' })
 // A leaf is a square with two opposite corners fully rounded.
 const sw = {
-  'surface-100': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.100' }),
-  'surface-200': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.200' }),
+  'surface.100': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.100' }),
+  'surface.200': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.200' }),
   border: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'border' }),
+  'border.control': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'border.control' }),
   ink: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink' }),
-  'ink-muted': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.muted' }),
+  'ink.muted': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.muted' }),
+  'ink.placeholder': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.placeholder' }),
   accent: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent' }),
-  'accent-strong': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.strong' }),
-  'accent-ink': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.ink' }),
-  'focus-ring': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'focusRing' }),
+  'accent.strong': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.strong' }),
+  'accent.ink': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.ink' }),
+  focusRing: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'focusRing' }),
   positive: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'positive' }),
   critical: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'critical' }),
   foliage: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage' }),
-  'foliage-far': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.far' }),
-  'foliage-mid': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.mid' }),
-  'foliage-deep': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.deep' }),
-  'foliage-bright': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.bright' }),
+  'foliage.far': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.far' }),
+  'foliage.mid': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.mid' }),
+  'foliage.deep': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.deep' }),
+  'foliage.bright': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.bright' }),
   sunlight: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'sunlight' }),
 }
 const swatchNameCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
 const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '4px 0 0' })
-const palette = [
-  ['accent', '#2f6b4a', '#7fcfa3'], ['accent-strong', '#234f38', '#5fb98c'], ['positive', '#1f7a6c', '#5cc9b7'],
-  ['focus-ring', '#a5670a', '#e8a83e'], ['critical', '#c1440e', '#ff8f5e'], ['accent-ink', '#ffffff', '#10241a'],
-  ['ink', '#1c1a15', '#f1ede2'], ['ink-muted', '#5b5548', '#b6ae9c'], ['border', '#93866c', '#726b53'],
-  ['surface-200', '#ffffff', '#1e1c15'], ['surface-100', '#faf8f3', '#15140f'],
-]
-const foliage = [
-  ['foliage-bright', '#6fcd4f', '#86dc62'], ['foliage', '#3ca24a', '#45ad55'], ['foliage-deep', '#1f6a31', '#2a7d3a'],
-  ['foliage-mid', '#9ed65f', '#2d6b34'], ['foliage-far', '#cdeaae', '#1c3a22'], ['sunlight', '#f4b63f', '#e8a83e'],
-]
 const paletteGroupCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 4px' })
 const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '62ch' })
 const paletteGapCss = css({ marginTop: '12' })
-const swatches = (list) => list.map(([name, light, dark]) => `
+const tokenLabel = (name) => name.replace(/\./g, '-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+const swatches = (list) => list.map((name) => `
       <li class="${swatchItemCss}">
         <span class="${sw[name]}" aria-hidden="true"></span>
-        <span><span class="${swatchNameCss}">${name}</span><span class="${swatchHexCss}">Light ${light}</span><span class="${swatchHexCss}">Dark ${dark}</span></span>
+        <span><span class="${swatchNameCss}">${tokenLabel(name)}</span><span class="${swatchHexCss}">Light ${themeTokens[name].light}</span><span class="${swatchHexCss}">Dark ${themeTokens[name].dark}</span></span>
       </li>`).join('')
 const paletteHtml = `
 <section id="palette" class="${bandCss}" aria-labelledby="palette-title">
   <div class="${wrapCss} ${sectionCss}">
     <p class="${eyebrowCss}">Palette</p>
-    <h2 id="palette-title" class="${h2Css}">Seventeen colors, two seasons.</h2>
-    <p class="${introCss}">One token set with a light and a dark value each, switched by <code class="${codeCss}">prefers-color-scheme</code> &mdash; no second stylesheet. Flip your OS theme and the valley above turns to night.</p>
+    <h2 id="palette-title" class="${h2Css}">${themeTokenCount} colors, two themes.</h2>
+    <p class="${introCss}">One token set with a light and a dark value each. System mode follows <code class="${codeCss}">prefers-color-scheme</code>; explicit Light and Dark choices reuse the same tokens without a second stylesheet.</p>
     <h3 class="${paletteGroupCss}">Interface</h3>
     <p class="${paletteGroupNoteCss}">Text, controls and state. Every text pair clears 4.5:1 in both themes.</p>
-    <ul class="${paletteGridCss}">${swatches(palette)}
+    <ul class="${paletteGridCss}">${swatches(interfacePaletteOrder)}
     </ul>
     <h3 class="${paletteGroupCss} ${paletteGapCss}">Illustration</h3>
     <p class="${paletteGroupNoteCss}">Hills, leaves, grass and sun. Picked for lushness, not contrast, so they never carry text or meaning.</p>
-    <ul class="${paletteGridCss}">${swatches(foliage)}
+    <ul class="${paletteGridCss}">${swatches(illustrationPaletteOrder)}
     </ul>
   </div>
 </section>`
@@ -225,7 +242,7 @@ const scoreBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink
 const scoreNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', marginTop: '6', maxWidth: '70ch' })
 
 const scores = [
-  ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, one deferred script, nothing render-blocking.'],
+  ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, two small same-origin scripts, nothing third-party.'],
   ['Semantic &amp; standards', true, 'Landmarks, a single h1 with ordered headings, canonical URL and structured data.'],
   ['Sustainability-specific', true, 'Color-scheme, reduced-motion and reduced-data queries all present; no unused CSS shipped.'],
   ['Security &amp; maintenance', true, 'CSP, HSTS, Permissions-Policy, nosniff and frame protection; robots.txt and a sitemap.'],
@@ -236,7 +253,7 @@ const scoreHtml = `
 <section class="${wrapCss} ${sectionCss}" aria-labelledby="score-title">
   <p class="${eyebrowCss}">Checked live</p>
   <h2 id="score-title" class="${h2Css}">How the deployed site holds up.</h2>
-  <p class="${introCss}">Audited against the live deploy across the six categories <a href="${WSG_CHECK}">wsg-check</a> scans. Five pass outright; one has a gap we can&rsquo;t fix in code.</p>
+  <p class="${introCss}">Checked against the live deploy with <a href="${WSG_CHECK}">wsg-check</a>. Five categories pass; one still depends on hosting verification.</p>
   <ul class="${scoreListCss}">
     ${scores.map(([title, pass, body]) => `
     <li class="${scoreItemCss}">
@@ -265,7 +282,7 @@ conditions: {
 },
 theme: { extend: { semanticTokens: { colors: {
   accent: { value: { base: '#2f6b4a', _dark: '#7fcfa3' } },
-  // …the other sixteen, same shape
+  // …the other ${themeTokenCount - 1}, same shape
 } } } },
 // No staticCss: ship only the rules pages use.`
 const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -277,7 +294,7 @@ const pandaHtml = `
       <div>
         <p class="${eyebrowCss}">Built with PandaCSS</p>
         <h2 id="panda-title" class="${h2Css}">Tokens in, only-what-you-use CSS out.</h2>
-        <p class="${introCss}">Verdant maps onto a <a href="https://panda-css.com">PandaCSS</a> config in one file. Panda extracts styles at build time, so the stylesheet grows with your pages &mdash; never with the size of the framework.</p>
+        <p class="${introCss}">Verdant fits in one <a href="https://panda-css.com">PandaCSS</a> config. Build-time extraction keeps the stylesheet tied to what the page actually renders.</p>
         <ul class="${listCss}">
           <li>Semantic tokens carry both themes; <code class="${codeCss}">_dark</code> maps to the OS preference.</li>
           <li>Recipes for button, card, field and switch mirror the component guidelines.</li>
@@ -296,14 +313,14 @@ const ctaInnerCss = css({ position: 'relative', paddingBlock: { base: '12', md: 
 const ctaTitleCss = css({ fontSize: { base: 'displayMd', md: 'displayLg' }, lineHeight: { base: 'displayMd', md: 'displayLg' }, fontWeight: '700', margin: '0', maxWidth: '22ch' })
 const ctaBodyCss = css({ margin: '12px 0 0', maxWidth: '56ch' })
 const ctaBtnCss = css({
-  display: 'inline-block', fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', letterSpacing: '0.02em',
   paddingBlock: '3', paddingInline: '4', borderRadius: 'md', textDecoration: 'none',
   background: 'accent.ink', color: 'accent', border: '1px solid', borderColor: 'accent.ink',
   _hover: { color: 'accent.strong' },
   _focusVisible: { outline: '2px solid', outlineColor: 'accent.ink', outlineOffset: '3px' },
 })
 const ctaLinkCss = css({
-  display: 'inline-block', fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', letterSpacing: '0.02em',
   paddingBlock: '3', paddingInline: '4', borderRadius: 'md', textDecoration: 'none',
   color: 'accent.ink', border: '1px solid', borderColor: 'accent.ink',
   _hover: { color: 'accent.ink', textDecoration: 'underline' },
@@ -315,8 +332,8 @@ const ctaHtml = `
 <section class="${ctaCss}" aria-labelledby="cta-title">
   <div class="${ctaArtCss}">${leafRow()}</div>
   <div class="${wrapCss} ${ctaInnerCss}">
-    <h2 id="cta-title" class="${ctaTitleCss}">Plant it in your next project.</h2>
-    <p class="${ctaBodyCss}">Clone the repo, copy <code class="${codeCss}">panda.config.ts</code>, and keep the checklist. Everything else is optional &mdash; which is the point.</p>
+    <h2 id="cta-title" class="${ctaTitleCss}">Use it in your next project.</h2>
+    <p class="${ctaBodyCss}">Clone the repo, copy <code class="${codeCss}">panda.config.ts</code>, and keep the checklist. Start with the defaults, then layer in only the styling your product needs.</p>
     <div class="${btnRowCss}">
       <a class="${ctaBtnCss}" href="${REPO}">Get the source</a>
       <a class="${ctaLinkCss}" href="${COMPONENTS_ROUTE}">See the components</a>
@@ -329,17 +346,30 @@ const ctaHtml = `
 const nav = (active) => {
   const link = (key, href, label) =>
     `<li><a class="${active === key ? navLinkActiveCss : navLinkCss}" href="${href}"${active === key ? ' aria-current="page"' : ''}>${label}</a></li>`
+  const themeOption = (value, label) => `
+          <label class="${themePrefOptionCss}" for="theme-pref-${value}">
+            <input class="${themePrefRadioCss}" type="radio" id="theme-pref-${value}" name="${themePreferenceControlName}" value="${value}"${value === themePreferenceValues[0] ? ' checked' : ''}>
+            <span>${label}</span>
+          </label>`
   return `
   <header class="${headerCss}">
     <div class="${wrapCss} ${barCss}">
       <a class="${wordmarkCss}" href="/">${mark(28)}<span>Verdant</span></a>
-      <nav aria-label="Primary">
-        <ul class="${navListCss}">
-          ${link('components', COMPONENTS_ROUTE, 'Components')}
-          ${link('palette', '/#palette', 'Palette')}
-          ${link('github', REPO, 'GitHub')}
-        </ul>
-      </nav>
+      <div class="${headerActionsCss}">
+        <nav aria-label="Primary">
+          <ul class="${navListCss}">
+            ${link('components', COMPONENTS_ROUTE, 'Components')}
+            ${link('palette', '/#palette', 'Palette')}
+            ${link('github', REPO, 'GitHub')}
+          </ul>
+        </nav>
+        <fieldset class="${themePrefCss}" aria-label="Theme preference">
+          <legend class="${themePrefLegendCss}">Theme</legend>
+          ${themeOption('system', 'System')}
+          ${themeOption('light', 'Light')}
+          ${themeOption('dark', 'Dark')}
+        </fieldset>
+      </div>
     </div>
   </header>`
 }
@@ -403,8 +433,9 @@ const page = ({ title, description, path, active, jsonLd, bodyHtml, scripts = []
 <meta property="og:type" content="website">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2f6b4a" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#15140f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="${themeTokens['surface.100'].light}" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="${themeTokens['surface.100'].dark}" media="(prefers-color-scheme: dark)">
+<script src="/theme-toggle.js"></script>
 <link rel="stylesheet" href="/styles.css">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>` : ''}
 </head>
@@ -445,20 +476,26 @@ const hintCss = css({ fontSize: 'bodySm', color: 'ink.muted', margin: '0' })
 const inputCss = fieldInput()
 const switchRowCss = flex({ align: 'center', gap: '3' })
 const switchOffCss = switchTrack()
+const switchOnCss = switchTrack({ on: true })
 const noteCss = css({ marginTop: '3', fontSize: 'label', color: 'ink.muted', maxWidth: '60ch' })
 const motionRowCss = flex({ align: 'center', gap: '6', wrap: 'wrap' })
 const motionGroupCss = vstack({ gap: '2', alignItems: 'flex-start' })
 const spinnerCss = spinner()
+const spinnerPreviewCss = spinner({ preview: true })
 // Widths live in classes, not style="" — the CSP's style-src 'self' blocks
 // inline style attributes, which silently collapsed these bars before.
 const skeletonWideCss = `${skeleton()} ${css({ width: '160px', height: '14px' })}`
+const skeletonWidePreviewCss = `${skeleton({ preview: true })} ${css({ width: '160px', height: '14px' })}`
 const skeletonNarrowCss = `${skeleton()} ${css({ width: '110px', height: '14px' })}`
+const skeletonNarrowPreviewCss = `${skeleton({ preview: true })} ${css({ width: '110px', height: '14px' })}`
+const motionIntroCss = css({ color: 'ink.muted', maxWidth: '62ch', margin: '0 0 16px' })
+const motionControlsCss = flex({ align: 'center', gap: '3', wrap: 'wrap', marginTop: '4' })
 const decorCss = css({ display: 'block' })
 
 const componentsBody = `
 <div class="${wrapCss} ${compMainCss}">
   <h1 class="${compTitleCss}">Components</h1>
-  <p class="${ledeCss}">Five patterns, each demonstrating one WSG-relevant behavior live rather than just describing it.</p>
+  <p class="${ledeCss}">Five component patterns, plus the site-wide theme preference in the header, each demonstrating one WSG-relevant behavior live rather than just describing it.</p>
 
   <section class="${compSectionCss}">
     <h2 class="${compH2Css}">Buttons</h2>
@@ -474,8 +511,8 @@ const componentsBody = `
     <h2 class="${compH2Css}">Cards</h2>
     <div class="${gridCss}">
       <div class="${cardCss}">
-        <h3 class="${cardHeadingCss}">Homepage scan</h3>
-        <p class="${cardBodyCss}">18 checks passed, 2 warnings, 0 failures.</p>
+        <h3 class="${cardHeadingCss}">Product launch page</h3>
+        <p class="${cardBodyCss}">Fast hero, readable pricing cards and a primary CTA that stays easy to tap.</p>
         <div class="${statusCss} ${statusPositiveCss}">&#10003; Passing</div>
       </div>
       <div class="${cardCss}">
@@ -491,36 +528,43 @@ const componentsBody = `
     <form class="${formCss}">
       <div class="${fieldCss}">
         <label class="${labelCss}" for="site-url">Website URL</label>
-        <input class="${inputCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com">
-        <p class="${hintCss}">One field &mdash; enough to run a scan, nothing else required.</p>
+        <input class="${inputCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" aria-describedby="site-url-hint" placeholder="https://example.com">
+        <p class="${hintCss}" id="site-url-hint">One field, clear guidance and autocomplete keep the form easy to complete.</p>
       </div>
     </form>
   </section>
 
   <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">Theme toggle</h2>
+    <h2 class="${compH2Css}">Switch specimen</h2>
     <div class="${switchRowCss}">
-      <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" id="theme-switch">
+      <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" aria-labelledby="specimen-switch-label" id="theme-switch">
         <span class="knob"></span>
       </button>
-      <label class="${labelCss}" for="theme-switch">Dark theme</label>
+      <span class="${labelCss}" id="specimen-switch-label">Email alerts</span>
     </div>
-    <p class="${noteCss}">This page already switches with your OS. The toggle overrides that by setting the same tokens on the root through the CSSOM &mdash; it never fights the stylesheet for priority.</p>
+    <p class="${noteCss}">Demonstration only: the site-wide System/Light/Dark preference lives in the header. This specimen keeps its checked track and knob in sync with its own state.</p>
   </section>
 
   <section class="${compSectionCss}">
     <h2 class="${compH2Css}">Motion</h2>
+    <p class="${motionIntroCss}">Static by default. Use the preview button to run four spinner turns and three skeleton pulses (about four seconds total). If your device prefers reduced motion, these examples stay still.</p>
     <div class="${motionRowCss}">
       <div class="${motionGroupCss}">
-        <div class="${spinnerCss}" role="status" aria-label="Scanning"></div>
-        <span class="${captionCss}">Spinner</span>
+        <div id="demo-spinner" class="${spinnerCss}" aria-hidden="true"></div>
+        <span class="${labelCss}">Spinner</span>
+        <span class="${captionCss}">Static status: Scanning site data</span>
       </div>
       <div class="${motionGroupCss}">
-        <div class="${skeletonWideCss}"></div>
-        <div class="${skeletonNarrowCss}"></div>
-        <span class="${captionCss}">Skeleton</span>
+        <div id="demo-skeleton-wide" class="${skeletonWideCss}" aria-hidden="true"></div>
+        <div id="demo-skeleton-narrow" class="${skeletonNarrowCss}" aria-hidden="true"></div>
+        <span class="${labelCss}">Skeleton</span>
+        <span class="${captionCss}">Static placeholder: Loading summary card</span>
       </div>
     </div>
+    <div class="${motionControlsCss}">
+      <button class="${btnSecondary}" type="button" id="motion-preview">Preview loading motion</button>
+    </div>
+    <p class="${noteCss}" id="motion-preview-status" role="status" aria-live="polite">Static by default. Preview runs once, then stops automatically.</p>
   </section>
 
   <section class="${compSectionCss}">
@@ -551,24 +595,160 @@ const offlineBody = `
 // ---- scripts ---------------------------------------------------------------------
 
 const themeToggleJs = `(function () {
-  var LIGHT = { "surface.100": "#faf8f3", "surface.200": "#ffffff", "border": "#93866c", "ink": "#1c1a15", "ink.muted": "#5b5548", "accent": "#2f6b4a", "accent.strong": "#234f38", "accent.ink": "#ffffff", "focusRing": "#a5670a", "positive": "#1f7a6c", "critical": "#c1440e", "foliage": "#3ca24a", "foliage.far": "#cdeaae", "foliage.mid": "#9ed65f", "foliage.deep": "#1f6a31", "foliage.bright": "#6fcd4f", "sunlight": "#f4b63f" };
-  var DARK = { "surface.100": "#15140f", "surface.200": "#1e1c15", "border": "#726b53", "ink": "#f1ede2", "ink.muted": "#b6ae9c", "accent": "#7fcfa3", "accent.strong": "#5fb98c", "accent.ink": "#10241a", "focusRing": "#e8a83e", "positive": "#5cc9b7", "critical": "#ff8f5e", "foliage": "#45ad55", "foliage.far": "#1c3a22", "foliage.mid": "#2d6b34", "foliage.deep": "#2a7d3a", "foliage.bright": "#86dc62", "sunlight": "#e8a83e" };
-  function varName(key) { return "--colors-" + key.replace(/\\./g, "-"); }
-  function apply(map) {
-    var root = document.documentElement;
-    Object.keys(map).forEach(function (k) { root.style.setProperty(varName(k), map[k]); });
+  var STORAGE_KEY = ${JSON.stringify(themePreferenceStorageKey)};
+  var OVERRIDE_ATTR = ${JSON.stringify(themeOverrideAttr)};
+  var PREFERENCE_ATTR = ${JSON.stringify(themePreferenceAttr)};
+  var RESOLVED_ATTR = ${JSON.stringify(themeResolvedAttr)};
+  var CONTROL_NAME = ${JSON.stringify(themePreferenceControlName)};
+  var SWITCH_OFF = ${JSON.stringify(switchOffCss)};
+  var SWITCH_ON = ${JSON.stringify(switchOnCss)};
+  var media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  function systemTheme() {
+    return media && media.matches ? "dark" : "light";
   }
-  var btn = document.getElementById("theme-switch");
-  if (!btn) return;
-  // Reflect the OS-driven theme that's already on screen, so the switch
-  // never lies about the current state before it's touched.
-  var forcedDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  btn.setAttribute("aria-checked", String(forcedDark));
-  btn.addEventListener("click", function () {
-    forcedDark = !forcedDark;
-    btn.setAttribute("aria-checked", String(forcedDark));
-    apply(forcedDark ? DARK : LIGHT);
+  function readPreference() {
+    try {
+      var saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved === "light" || saved === "dark") return saved;
+    } catch (_) {}
+    return "system";
+  }
+  function persistPreference(value) {
+    try {
+      if (value === "system") window.localStorage.removeItem(STORAGE_KEY);
+      else window.localStorage.setItem(STORAGE_KEY, value);
+    } catch (_) {}
+  }
+  var THEME_COLOR = ${JSON.stringify({ light: themeTokens['surface.100'].light, dark: themeTokens['surface.100'].dark })};
+  // Browser chrome follows the resolved theme: an explicit choice pins every
+  // theme-color meta to that theme; System restores the media-query fallbacks.
+  function syncThemeColor(value, resolved) {
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    for (var i = 0; i < metas.length; i += 1) {
+      var meta = metas[i];
+      if (!meta.hasAttribute("data-media")) {
+        meta.setAttribute("data-media", meta.getAttribute("media") || "");
+        meta.setAttribute("data-content", meta.getAttribute("content") || "");
+      }
+      if (value === "system") {
+        meta.setAttribute("media", meta.getAttribute("data-media"));
+        meta.setAttribute("content", meta.getAttribute("data-content"));
+      } else {
+        meta.removeAttribute("media");
+        meta.setAttribute("content", THEME_COLOR[resolved]);
+      }
+    }
+  }
+  function applyPreference(value) {
+    var resolved = value === "system" ? systemTheme() : value;
+    var root = document.documentElement;
+    root.setAttribute(PREFERENCE_ATTR, value);
+    root.setAttribute(RESOLVED_ATTR, resolved);
+    if (value === "system") root.removeAttribute(OVERRIDE_ATTR);
+    else root.setAttribute(OVERRIDE_ATTR, value);
+    syncThemeColor(value, resolved);
+    return resolved;
+  }
+  function syncControls() {
+    var radios = document.querySelectorAll('input[name="' + CONTROL_NAME + '"]');
+    for (var i = 0; i < radios.length; i += 1) radios[i].checked = radios[i].value === currentPreference;
+  }
+  var currentPreference = readPreference();
+  applyPreference(currentPreference);
+  document.addEventListener("DOMContentLoaded", function () {
+    syncControls();
+    var radios = document.querySelectorAll('input[name="' + CONTROL_NAME + '"]');
+    for (var i = 0; i < radios.length; i += 1) {
+      radios[i].addEventListener("change", function (event) {
+        currentPreference = event.target.value;
+        persistPreference(currentPreference);
+        applyPreference(currentPreference);
+      });
+    }
+    var btn = document.getElementById("theme-switch");
+    if (btn) {
+      var specimenOn = btn.getAttribute("aria-checked") === "true";
+      var renderSwitch = function () {
+        btn.className = specimenOn ? SWITCH_ON : SWITCH_OFF;
+        btn.setAttribute("aria-checked", String(specimenOn));
+      };
+      renderSwitch();
+      btn.addEventListener("click", function () {
+        specimenOn = !specimenOn;
+        renderSwitch();
+      });
+    }
   });
+  // A page restored from the back/forward cache keeps its old DOM state:
+  // re-read the stored choice in case it changed on another page meanwhile.
+  window.addEventListener("pageshow", function (event) {
+    if (!event.persisted) return;
+    currentPreference = readPreference();
+    applyPreference(currentPreference);
+    syncControls();
+  });
+  if (media) {
+    var onSystemChange = function () {
+      if (currentPreference === "system") applyPreference("system");
+    };
+    if (typeof media.addEventListener === "function") media.addEventListener("change", onSystemChange);
+    else if (typeof media.addListener === "function") media.addListener(onSystemChange);
+  }
+})();
+`
+
+const motionPreviewJs = `(function () {
+  var btn = document.getElementById("motion-preview");
+  if (!btn) return;
+  var status = document.getElementById("motion-preview-status");
+  var spinnerEl = document.getElementById("demo-spinner");
+  var skeletonWideEl = document.getElementById("demo-skeleton-wide");
+  var skeletonNarrowEl = document.getElementById("demo-skeleton-narrow");
+  var media = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  var timer = 0;
+  function setStatus(text) {
+    if (status) status.textContent = text;
+  }
+  function setStatic() {
+    if (spinnerEl) spinnerEl.className = ${JSON.stringify(spinnerCss)};
+    if (skeletonWideEl) skeletonWideEl.className = ${JSON.stringify(skeletonWideCss)};
+    if (skeletonNarrowEl) skeletonNarrowEl.className = ${JSON.stringify(skeletonNarrowCss)};
+  }
+  function restartAnimation(el, className) {
+    if (!el) return;
+    el.className = className.static;
+    void el.offsetWidth;
+    el.className = className.preview;
+  }
+  function syncReducedMotionStatus() {
+    window.clearTimeout(timer);
+    setStatic();
+    if (media && media.matches) {
+      setStatus("Reduced motion is enabled, so the loading preview stays still.");
+      return true;
+    }
+    setStatus("Static by default. Preview runs once, then stops automatically.");
+    return false;
+  }
+  btn.addEventListener("click", function () {
+    if (syncReducedMotionStatus()) return;
+    restartAnimation(spinnerEl, { static: ${JSON.stringify(spinnerCss)}, preview: ${JSON.stringify(spinnerPreviewCss)} });
+    restartAnimation(skeletonWideEl, { static: ${JSON.stringify(skeletonWideCss)}, preview: ${JSON.stringify(skeletonWidePreviewCss)} });
+    restartAnimation(skeletonNarrowEl, { static: ${JSON.stringify(skeletonNarrowCss)}, preview: ${JSON.stringify(skeletonNarrowPreviewCss)} });
+    setStatus("Preview running for about four seconds. It stops automatically.");
+    timer = window.setTimeout(function () {
+      setStatic();
+      setStatus("Preview finished. Loading demos are static again.");
+    }, 4200);
+  });
+  if (media) {
+    if (media.addEventListener) {
+      media.addEventListener("change", syncReducedMotionStatus);
+    } else if (media.addListener) {
+      media.addListener(syncReducedMotionStatus);
+    }
+  }
+  syncReducedMotionStatus();
 })();
 `
 
@@ -691,6 +871,8 @@ const minifyHtml = (html) => {
 
 mkdirSync('dist', { recursive: true })
 writeFileSync('dist/theme-toggle.js', themeToggleJs)
+// The gallery's motion preview needs the DOM, so it ships separately and deferred.
+writeFileSync('dist/gallery.js', motionPreviewJs)
 writeFileSync('dist/sw-register.js', swRegisterJs)
 writeFileSync('dist/sw.js', swJs)
 copyDir('public', 'dist')
@@ -712,11 +894,11 @@ writeFileSync('dist/index.html', minifyHtml(page({
 
 writeFileSync('dist/components.html', minifyHtml(page({
   title: 'Components — Verdant',
-  description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, theme toggle, and motion patterns.',
+  description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, a switch specimen, and motion patterns.',
   path: COMPONENTS_ROUTE,
   active: 'components',
   bodyHtml: componentsBody,
-  scripts: ['/theme-toggle.js'],
+  scripts: ['/gallery.js'],
 })))
 
 writeFileSync('dist/404.html', minifyHtml(page({

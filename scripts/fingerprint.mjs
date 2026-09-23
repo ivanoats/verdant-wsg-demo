@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync, writeFileSync, mkdirSync, renameSync, readdirSync } from 'node:fs'
 
 const hash = (buf) => createHash('sha256').update(buf).digest('hex').slice(0, 10)
-const ASSETS = ['styles.css', 'sw-register.js', 'theme-toggle.js']
+const ASSETS = ['styles.css', 'sw-register.js', 'theme-toggle.js', 'gallery.js']
 const PAGES = readdirSync('dist').filter((f) => f.endsWith('.html'))
 
 mkdirSync('dist/assets', { recursive: true })
