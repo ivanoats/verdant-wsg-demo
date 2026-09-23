@@ -16,7 +16,7 @@ import {
 
 const runtime = readFileSync('packages/verdant-design/src/theme-toggle.js', 'utf8')
 const constant = (name) => {
-  const match = runtime.match(new RegExp(`var ${name} = (.+);`))
+  const match = runtime.match(new RegExp(`(?:const|let|var) ${name} = (.+);`))
   assert.ok(match, `${name} not found in the published theme runtime`)
   // The runtime is plain JS, so object literals use bare keys — quote them
   // before parsing rather than eval'ing the file.

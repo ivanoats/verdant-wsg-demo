@@ -1,11 +1,9 @@
 // The /components gallery: documented specimens for links, buttons, fields,
 // switches, status cards, layout primitives and loading patterns.
 import { css } from '../../styled-system/css/index.mjs'
-import { flex, vstack, hstack, container, stack, grid } from '../../styled-system/patterns/index.mjs'
-import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../../styled-system/recipes/index.mjs'
-import { COMPONENTS_ROUTE, REPO } from '../config.mjs'
+import { flex, vstack, hstack, stack, grid } from '../../styled-system/patterns/index.mjs'
+import { card, fieldInput, switchTrack, spinner, skeleton } from '../../styled-system/recipes/index.mjs'
 import { escapeHtml } from '../lib/html.mjs'
-import { contrast, formatRatio } from '../lib/contrast.mjs'
 import {
   btnPrimary, btnSecondary, codeCss, compTitleCss, ledeCss, proseLinkCss,
   tokenCode, wrapCss,

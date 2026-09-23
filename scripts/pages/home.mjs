@@ -1,9 +1,9 @@
 // Home page sections, in render order: hero, measured stats, how it grows,
 // palette + token scope, saved WSG evidence, PandaCSS, and the CTA band.
 import { css } from '../../styled-system/css/index.mjs'
-import { flex, vstack, hstack, grid } from '../../styled-system/patterns/index.mjs'
+import { flex, grid } from '../../styled-system/patterns/index.mjs'
 import { card } from '../../styled-system/recipes/index.mjs'
-import { heroArt, stageGlyph, leafRow, seedlingArt } from '../art.mjs'
+import { heroArt, stageGlyph, leafRow } from '../art.mjs'
 import { themeTokenCount, highContrastTokens, themeTokens } from 'verdant-design/theme'
 import { paletteSections, verifiedPairings, publicTokenScope, highContrastMinimum } from 'verdant-design/tokens'
 import { COMPONENTS_ROUTE, GREEN_WEB_ROUTE, REPO, WSG, WSG_CHECK, evidenceRecord } from '../config.mjs'

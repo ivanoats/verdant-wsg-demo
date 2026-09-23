@@ -174,10 +174,12 @@ export const verdantPreset = definePreset({
         defaultValues: { gap: '4' },
         transform(props, { map }) {
           const { gap, columns, minChildWidth, ...rest } = props
-          let gridTemplateColumns
-          if (columns != null) gridTemplateColumns = map(columns, (v) => `repeat(${v}, minmax(0, 1fr))`)
-          else if (minChildWidth != null) gridTemplateColumns = map(minChildWidth, (v) => `repeat(auto-fit, minmax(min(${v}, 100%), 1fr))`)
-          return { display: 'grid', gridTemplateColumns, gap, ...rest }
+          const tracks = () => {
+            if (columns != null) return map(columns, (v) => `repeat(${v}, minmax(0, 1fr))`)
+            if (minChildWidth != null) return map(minChildWidth, (v) => `repeat(auto-fit, minmax(min(${v}, 100%), 1fr))`)
+            return undefined
+          }
+          return { display: 'grid', gridTemplateColumns: tracks(), gap, ...rest }
         },
       },
     },
