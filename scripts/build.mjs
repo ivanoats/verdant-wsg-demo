@@ -199,6 +199,10 @@ const pairingTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fo
 const pairingTokenCss = css({ fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', margin: '8px 0 0' })
 const pairingBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '8px 0 0' })
 const pairingMetaCss = css({ fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '12px 0 0' })
+const levelBadgeCss = css({
+  display: 'inline-block', marginInlineStart: '1', paddingInline: '2', border: '1px solid', borderColor: 'border.control',
+  borderRadius: 'full', fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink', whiteSpace: 'nowrap',
+})
 const scopeGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: '4' })
 const scopeCardCss = card()
 const scopeTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 8px' })
@@ -251,11 +255,22 @@ const evaluatedPairings = verifiedPairings.map((pairing) => {
   }
   return { ...pairing, lightContrast, darkContrast }
 })
+// WCAG 2.2 levels, reported from the same ratios the build enforces. Text:
+// AAA at 7:1, AA at 4.5:1 (1.4.6 / 1.4.3). Borders and focus rings follow
+// 1.4.11, which has a single 3:1 non-text threshold and no AAA level.
+const wcagLevel = (category, ratio) => {
+  if (category === 'functional') return ratio >= 3 ? '3:1 non-text' : 'Below 3:1'
+  if (ratio >= 7) return 'AAA'
+  return ratio >= 4.5 ? 'AA' : 'Below AA'
+}
+const levelBadge = (category, ratio) => `<span class="${levelBadgeCss}">WCAG ${wcagLevel(category, ratio)}</span>`
+const textPairings = evaluatedPairings.filter((pairing) => pairing.category === 'text')
+const aaaBothThemes = textPairings.filter((pairing) => Math.min(pairing.lightContrast, pairing.darkContrast) >= 7).length
 const pairingGroups = [
   {
     key: 'text',
     title: 'Verified text pairings',
-    note: 'Measured from the shared theme tokens at build time. These are the approved readable combinations — not every token can be mixed freely.',
+    note: `Measured from the shared theme tokens at build time. These are the approved readable combinations — not every token can be mixed freely. ${aaaBothThemes} of ${textPairings.length} reach WCAG AAA (7:1) in both themes; every one meets AA (4.5:1), which also makes it AAA for large text. The build fails below the stated target, and AAA is reported, not required.`,
   },
   {
     key: 'functional',
@@ -270,7 +285,7 @@ const pairingCards = (category) => evaluatedPairings
         <h4 class="${pairingTitleCss}">${pairing.title}</h4>
         <p class="${pairingTokenCss}">${tokenCode(pairing.foreground)} on ${tokenCode(pairing.background)}</p>
         <p class="${pairingBodyCss}">${pairing.note}</p>
-        <p class="${pairingMetaCss}">Light ${formatRatio(pairing.lightContrast)} &middot; Dark ${formatRatio(pairing.darkContrast)} &middot; Target ${pairing.minimum}:1</p>
+        <p class="${pairingMetaCss}">Light ${formatRatio(pairing.lightContrast)} ${levelBadge(pairing.category, pairing.lightContrast)} &middot; Dark ${formatRatio(pairing.darkContrast)} ${levelBadge(pairing.category, pairing.darkContrast)} &middot; Target ${pairing.minimum}:1</p>
       </li>`).join('')
 
 const tokenList = (items) => items.map((item) => `<code class="${scopeCodeCss}">${item}</code>`).join(', ')
