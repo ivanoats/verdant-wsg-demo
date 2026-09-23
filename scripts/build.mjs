@@ -8,6 +8,18 @@ import { css } from '../styled-system/css/index.mjs'
 import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
 import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
+import {
+  illustrationPaletteOrder,
+  interfacePaletteOrder,
+  themeOverrideAttr,
+  themePreferenceAttr,
+  themePreferenceControlName,
+  themePreferenceStorageKey,
+  themePreferenceValues,
+  themeResolvedAttr,
+  themeTokenCount,
+  themeTokens,
+} from './theme.mjs'
 
 // A hand-rolled recursive copy: some mounted/virtual filesystems choke on
 // Node's native cpSync fast paths (fcopyfile/clonefile), so this sticks to
@@ -39,9 +51,21 @@ const wrapCss = css({ maxWidth: '1080px', marginX: 'auto', paddingInline: { base
 const headerCss = css({ borderBottom: '1px solid', borderColor: 'border' })
 const barCss = flex({ paddingBlock: '3', align: 'center', justify: 'space-between', gap: '4', wrap: 'wrap' })
 const wordmarkCss = hstack({ gap: '2', color: 'ink', textDecoration: 'none', fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '700' })
+const headerActionsCss = flex({ align: 'center', gap: '4', wrap: 'wrap' })
 const navListCss = hstack({ gap: { base: '3', md: '6' }, listStyle: 'none', margin: '0', padding: '0' })
 const navLinkCss = css({ textDecoration: 'none', fontSize: 'bodySm', fontWeight: '600', color: 'ink', _hover: { color: 'accent' } })
 const navLinkActiveCss = css({ textDecoration: 'underline', textUnderlineOffset: '6px', textDecorationThickness: '2px', fontSize: 'bodySm', fontWeight: '600', color: 'accent' })
+const themePrefCss = css({
+  display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px',
+  border: '0', margin: '0', padding: '0',
+})
+const themePrefLegendCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted', margin: '0', padding: '0' })
+const themePrefOptionCss = css({
+  display: 'inline-flex', alignItems: 'center', gap: '2',
+  paddingBlock: '1', paddingInline: '3', border: '1px solid', borderColor: 'border',
+  borderRadius: 'full', background: 'surface.200', fontSize: 'label', lineHeight: 'label', fontWeight: '600',
+})
+const themePrefRadioCss = css({ margin: '0', accentColor: 'accent' })
 
 const breadcrumbListCss = hstack({ gap: '1', listStyle: 'none', margin: '0', paddingTop: '3', paddingInline: '0', fontSize: 'label', color: 'ink.muted' })
 const breadcrumbLinkCss = css({ color: 'ink.muted', textDecoration: 'none' })
@@ -83,7 +107,7 @@ const heroHtml = `
       <p class="${eyebrowCss}">A design system for the <a href="${WSG}">W3C Web Sustainability Guidelines</a></p>
       <h1 id="hero-title" class="${heroTitleCss}">Verdant</h1>
       <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
-      <p class="${heroLedeCss}">Start with the parts teams usually add later: system fonts, OS-level dark mode, restrained motion, and only the CSS each page uses. Verdant gives a product page or docs site those lighter defaults from the first commit.</p>
+      <p class="${heroLedeCss}">Start with the parts teams usually add later: system fonts, a System/Light/Dark theme preference, restrained motion, and only the CSS each page uses. Verdant gives a product page or docs site those lighter defaults from the first commit.</p>
       <div class="${btnRowCss}">
         <a class="${btnPrimary}" href="/components.html">Browse components</a>
         <a class="${btnSecondary}" href="${REPO}">View source on GitHub</a>
@@ -109,7 +133,7 @@ const statsHtml = `
     <div class="${statCss}"><dt class="${statLabelCss}">This whole page, compressed &mdash; art included</dt><dd class="${statValueCss}">__HOME_KB__&nbsp;KB</dd></div>
     <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
     <div class="${statCss}"><dt class="${statLabelCss}">Stylesheet, extracted to only the rules in use</dt><dd class="${statValueCss}">__CSS_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Public palette pairs shown below</dt><dd class="${statValueCss}">17&thinsp;&times;&thinsp;2</dd></div>
+    <div class="${statCss}"><dt class="${statLabelCss}">Public palette pairs shown below</dt><dd class="${statValueCss}">${themeTokenCount}&thinsp;&times;&thinsp;2</dd></div>
   </dl>
 </section>`
 
@@ -126,9 +150,9 @@ const stageTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', font
 const stageBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0' })
 
 const stages = [
-  ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Small enough to stay consistent without one-off values.'],
-  ['sprout', 'Sprout', 'Components', 'Button, card, field, theme toggle and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
-  ['sapling', 'Sapling', 'Pages', 'A product page or docs page gets landmarks, a skip link, one focus ring, one stylesheet and one small deferred script from day one.'],
+  ['seed', 'Seed', 'Tokens', `${themeTokenCount} colors, a 4px spacing grid, four radii and system type. Small enough to stay consistent without one-off values.`],
+  ['sprout', 'Sprout', 'Components', 'Button, card, field, theme preference, switch specimen and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
+  ['sapling', 'Sapling', 'Pages', 'A product page or docs page gets landmarks, a skip link, one focus ring, one stylesheet and two small same-origin scripts from day one.'],
   ['canopy', 'Canopy', 'Sites', 'Security headers, cache rules, an offline shell and a real 404 &mdash; the hosting checks, handled before launch.'],
 ]
 const stagesHtml = `
@@ -156,57 +180,50 @@ const paletteGridCss = css({
 const swatchItemCss = hstack({ gap: '3', alignItems: 'center' })
 // A leaf is a square with two opposite corners fully rounded.
 const sw = {
-  'surface-100': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.100' }),
-  'surface-200': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.200' }),
+  'surface.100': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.100' }),
+  'surface.200': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.200' }),
   border: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'border' }),
+  'border.control': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'border.control' }),
   ink: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink' }),
-  'ink-muted': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.muted' }),
+  'ink.muted': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.muted' }),
+  'ink.placeholder': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.placeholder' }),
   accent: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent' }),
-  'accent-strong': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.strong' }),
-  'accent-ink': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.ink' }),
-  'focus-ring': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'focusRing' }),
+  'accent.strong': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.strong' }),
+  'accent.ink': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.ink' }),
+  focusRing: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'focusRing' }),
   positive: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'positive' }),
   critical: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'critical' }),
   foliage: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage' }),
-  'foliage-far': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.far' }),
-  'foliage-mid': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.mid' }),
-  'foliage-deep': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.deep' }),
-  'foliage-bright': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.bright' }),
+  'foliage.far': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.far' }),
+  'foliage.mid': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.mid' }),
+  'foliage.deep': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.deep' }),
+  'foliage.bright': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.bright' }),
   sunlight: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'sunlight' }),
 }
 const swatchNameCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
 const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '4px 0 0' })
-const palette = [
-  ['accent', '#2f6b4a', '#7fcfa3'], ['accent-strong', '#234f38', '#5fb98c'], ['positive', '#1f7a6c', '#5cc9b7'],
-  ['focus-ring', '#a5670a', '#e8a83e'], ['critical', '#c1440e', '#ff8f5e'], ['accent-ink', '#ffffff', '#10241a'],
-  ['ink', '#1c1a15', '#f1ede2'], ['ink-muted', '#5b5548', '#b6ae9c'], ['border', '#c7bda9', '#514b3b'],
-  ['surface-200', '#ffffff', '#1e1c15'], ['surface-100', '#faf8f3', '#15140f'],
-]
-const foliage = [
-  ['foliage-bright', '#6fcd4f', '#86dc62'], ['foliage', '#3ca24a', '#45ad55'], ['foliage-deep', '#1f6a31', '#2a7d3a'],
-  ['foliage-mid', '#9ed65f', '#2d6b34'], ['foliage-far', '#cdeaae', '#1c3a22'], ['sunlight', '#f4b63f', '#e8a83e'],
-]
 const paletteGroupCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 4px' })
 const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '62ch' })
 const paletteGapCss = css({ marginTop: '12' })
-const swatches = (list) => list.map(([name, light, dark]) => `
+const tokenLabel = (name) => name.replace(/\./g, '-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+const swatches = (list) => list.map((name) => `
       <li class="${swatchItemCss}">
         <span class="${sw[name]}" aria-hidden="true"></span>
-        <span><span class="${swatchNameCss}">${name}</span><span class="${swatchHexCss}">Light ${light}</span><span class="${swatchHexCss}">Dark ${dark}</span></span>
+        <span><span class="${swatchNameCss}">${tokenLabel(name)}</span><span class="${swatchHexCss}">Light ${themeTokens[name].light}</span><span class="${swatchHexCss}">Dark ${themeTokens[name].dark}</span></span>
       </li>`).join('')
 const paletteHtml = `
 <section id="palette" class="${bandCss}" aria-labelledby="palette-title">
   <div class="${wrapCss} ${sectionCss}">
     <p class="${eyebrowCss}">Palette</p>
-    <h2 id="palette-title" class="${h2Css}">Seventeen colors, two themes.</h2>
-    <p class="${introCss}">One token set carries a light and dark value for each color, switched by <code class="${codeCss}">prefers-color-scheme</code> &mdash; no second stylesheet.</p>
+    <h2 id="palette-title" class="${h2Css}">${themeTokenCount} colors, two themes.</h2>
+    <p class="${introCss}">One token set with a light and a dark value each. System mode follows <code class="${codeCss}">prefers-color-scheme</code>; explicit Light and Dark choices reuse the same tokens without a second stylesheet.</p>
     <h3 class="${paletteGroupCss}">Interface</h3>
     <p class="${paletteGroupNoteCss}">Text, controls and state. Every text pair clears 4.5:1 in both themes.</p>
-    <ul class="${paletteGridCss}">${swatches(palette)}
+    <ul class="${paletteGridCss}">${swatches(interfacePaletteOrder)}
     </ul>
     <h3 class="${paletteGroupCss} ${paletteGapCss}">Illustration</h3>
     <p class="${paletteGroupNoteCss}">Hills, leaves, grass and sun. Picked for lushness, not contrast, so they never carry text or meaning.</p>
-    <ul class="${paletteGridCss}">${swatches(foliage)}
+    <ul class="${paletteGridCss}">${swatches(illustrationPaletteOrder)}
     </ul>
   </div>
 </section>`
@@ -223,7 +240,7 @@ const scoreBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink
 const scoreNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', marginTop: '6', maxWidth: '70ch' })
 
 const scores = [
-  ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, one deferred script, nothing render-blocking.'],
+  ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, two small same-origin scripts, nothing third-party.'],
   ['Semantic &amp; standards', true, 'Landmarks, a single h1 with ordered headings, canonical URL and structured data.'],
   ['Sustainability-specific', true, 'Color-scheme, reduced-motion and reduced-data queries all present; no unused CSS shipped.'],
   ['Security &amp; maintenance', true, 'CSP, HSTS, Permissions-Policy, nosniff and frame protection; robots.txt and a sitemap.'],
@@ -263,7 +280,7 @@ conditions: {
 },
 theme: { extend: { semanticTokens: { colors: {
   accent: { value: { base: '#2f6b4a', _dark: '#7fcfa3' } },
-  // …the other sixteen, same shape
+  // …the other ${themeTokenCount - 1}, same shape
 } } } },
 // No staticCss: ship only the rules pages use.`
 const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -327,17 +344,30 @@ const ctaHtml = `
 const nav = (active) => {
   const link = (key, href, label) =>
     `<li><a class="${active === key ? navLinkActiveCss : navLinkCss}" href="${href}"${active === key ? ' aria-current="page"' : ''}>${label}</a></li>`
+  const themeOption = (value, label) => `
+          <label class="${themePrefOptionCss}" for="theme-pref-${value}">
+            <input class="${themePrefRadioCss}" type="radio" id="theme-pref-${value}" name="${themePreferenceControlName}" value="${value}"${value === themePreferenceValues[0] ? ' checked' : ''}>
+            <span>${label}</span>
+          </label>`
   return `
   <header class="${headerCss}">
     <div class="${wrapCss} ${barCss}">
       <a class="${wordmarkCss}" href="/">${mark(28)}<span>Verdant</span></a>
-      <nav aria-label="Primary">
-        <ul class="${navListCss}">
-          ${link('components', '/components.html', 'Components')}
-          ${link('palette', '/#palette', 'Palette')}
-          ${link('github', REPO, 'GitHub')}
-        </ul>
-      </nav>
+      <div class="${headerActionsCss}">
+        <nav aria-label="Primary">
+          <ul class="${navListCss}">
+            ${link('components', '/components.html', 'Components')}
+            ${link('palette', '/#palette', 'Palette')}
+            ${link('github', REPO, 'GitHub')}
+          </ul>
+        </nav>
+        <fieldset class="${themePrefCss}" aria-label="Theme preference">
+          <legend class="${themePrefLegendCss}">Theme</legend>
+          ${themeOption('system', 'System')}
+          ${themeOption('light', 'Light')}
+          ${themeOption('dark', 'Dark')}
+        </fieldset>
+      </div>
     </div>
   </header>`
 }
@@ -375,8 +405,9 @@ const page = ({ title, description, path, active, jsonLd, bodyHtml, scripts = []
 <meta property="og:type" content="website">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2f6b4a" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#15140f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="${themeTokens['surface.100'].light}" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="${themeTokens['surface.100'].dark}" media="(prefers-color-scheme: dark)">
+<script src="/theme-toggle.js"></script>
 <link rel="stylesheet" href="/styles.css">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>` : ''}
 </head>
@@ -416,6 +447,7 @@ const hintCss = css({ fontSize: 'bodySm', color: 'ink.muted', margin: '0' })
 const inputCss = fieldInput()
 const switchRowCss = flex({ align: 'center', gap: '3' })
 const switchOffCss = switchTrack()
+const switchOnCss = switchTrack({ on: true })
 const noteCss = css({ marginTop: '3', fontSize: 'label', color: 'ink.muted', maxWidth: '60ch' })
 const motionRowCss = flex({ align: 'center', gap: '6', wrap: 'wrap' })
 const motionGroupCss = vstack({ gap: '2', alignItems: 'flex-start' })
@@ -434,7 +466,7 @@ const decorCss = css({ display: 'block' })
 const componentsBody = `
 <div class="${wrapCss} ${compMainCss}">
   <h1 class="${compTitleCss}">Components</h1>
-  <p class="${ledeCss}">Five patterns, each demonstrating one WSG-relevant behavior live rather than just describing it.</p>
+  <p class="${ledeCss}">Five component patterns, plus the site-wide theme preference in the header, each demonstrating one WSG-relevant behavior live rather than just describing it.</p>
 
   <section class="${compSectionCss}">
     <h2 class="${compH2Css}">Buttons</h2>
@@ -474,14 +506,14 @@ const componentsBody = `
   </section>
 
   <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">Theme toggle</h2>
+    <h2 class="${compH2Css}">Switch specimen</h2>
     <div class="${switchRowCss}">
-      <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" id="theme-switch">
+      <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" aria-labelledby="specimen-switch-label" id="theme-switch">
         <span class="knob"></span>
       </button>
-      <label class="${labelCss}" for="theme-switch">Dark theme</label>
+      <span class="${labelCss}" id="specimen-switch-label">Email alerts</span>
     </div>
-    <p class="${noteCss}">This page already switches with your OS. The toggle overrides that by setting the same tokens on the root through the CSSOM &mdash; it never fights the stylesheet for priority.</p>
+    <p class="${noteCss}">Demonstration only: the site-wide System/Light/Dark preference lives in the header. This specimen keeps its checked track and knob in sync with its own state.</p>
   </section>
 
   <section class="${compSectionCss}">
@@ -527,24 +559,105 @@ const notFoundBody = `
 // ---- scripts ---------------------------------------------------------------------
 
 const themeToggleJs = `(function () {
-  var LIGHT = { "surface.100": "#faf8f3", "surface.200": "#ffffff", "border": "#c7bda9", "border.control": "#7f735b", "ink": "#1c1a15", "ink.muted": "#5b5548", "ink.placeholder": "#75726a", "accent": "#2f6b4a", "accent.strong": "#234f38", "accent.ink": "#ffffff", "focusRing": "#a5670a", "positive": "#1f7a6c", "critical": "#c1440e", "foliage": "#3ca24a", "foliage.far": "#cdeaae", "foliage.mid": "#9ed65f", "foliage.deep": "#1f6a31", "foliage.bright": "#6fcd4f", "sunlight": "#f4b63f" };
-  var DARK = { "surface.100": "#15140f", "surface.200": "#1e1c15", "border": "#514b3b", "border.control": "#8f866f", "ink": "#f1ede2", "ink.muted": "#b6ae9c", "ink.placeholder": "#8d8a81", "accent": "#7fcfa3", "accent.strong": "#5fb98c", "accent.ink": "#10241a", "focusRing": "#e8a83e", "positive": "#5cc9b7", "critical": "#ff8f5e", "foliage": "#45ad55", "foliage.far": "#1c3a22", "foliage.mid": "#2d6b34", "foliage.deep": "#2a7d3a", "foliage.bright": "#86dc62", "sunlight": "#e8a83e" };
-  function varName(key) { return "--colors-" + key.replace(/\\./g, "-"); }
-  function apply(map) {
-    var root = document.documentElement;
-    Object.keys(map).forEach(function (k) { root.style.setProperty(varName(k), map[k]); });
+  var STORAGE_KEY = ${JSON.stringify(themePreferenceStorageKey)};
+  var OVERRIDE_ATTR = ${JSON.stringify(themeOverrideAttr)};
+  var PREFERENCE_ATTR = ${JSON.stringify(themePreferenceAttr)};
+  var RESOLVED_ATTR = ${JSON.stringify(themeResolvedAttr)};
+  var CONTROL_NAME = ${JSON.stringify(themePreferenceControlName)};
+  var SWITCH_OFF = ${JSON.stringify(switchOffCss)};
+  var SWITCH_ON = ${JSON.stringify(switchOnCss)};
+  var media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  function systemTheme() {
+    return media && media.matches ? "dark" : "light";
   }
-  var btn = document.getElementById("theme-switch");
-  if (!btn) return;
-  // Reflect the OS-driven theme that's already on screen, so the switch
-  // never lies about the current state before it's touched.
-  var forcedDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  btn.setAttribute("aria-checked", String(forcedDark));
-  btn.addEventListener("click", function () {
-    forcedDark = !forcedDark;
-    btn.setAttribute("aria-checked", String(forcedDark));
-    apply(forcedDark ? DARK : LIGHT);
+  function readPreference() {
+    try {
+      var saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved === "light" || saved === "dark") return saved;
+    } catch (_) {}
+    return "system";
+  }
+  function persistPreference(value) {
+    try {
+      if (value === "system") window.localStorage.removeItem(STORAGE_KEY);
+      else window.localStorage.setItem(STORAGE_KEY, value);
+    } catch (_) {}
+  }
+  var THEME_COLOR = ${JSON.stringify({ light: themeTokens['surface.100'].light, dark: themeTokens['surface.100'].dark })};
+  // Browser chrome follows the resolved theme: an explicit choice pins every
+  // theme-color meta to that theme; System restores the media-query fallbacks.
+  function syncThemeColor(value, resolved) {
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    for (var i = 0; i < metas.length; i += 1) {
+      var meta = metas[i];
+      if (!meta.hasAttribute("data-media")) {
+        meta.setAttribute("data-media", meta.getAttribute("media") || "");
+        meta.setAttribute("data-content", meta.getAttribute("content") || "");
+      }
+      if (value === "system") {
+        meta.setAttribute("media", meta.getAttribute("data-media"));
+        meta.setAttribute("content", meta.getAttribute("data-content"));
+      } else {
+        meta.removeAttribute("media");
+        meta.setAttribute("content", THEME_COLOR[resolved]);
+      }
+    }
+  }
+  function applyPreference(value) {
+    var resolved = value === "system" ? systemTheme() : value;
+    var root = document.documentElement;
+    root.setAttribute(PREFERENCE_ATTR, value);
+    root.setAttribute(RESOLVED_ATTR, resolved);
+    if (value === "system") root.removeAttribute(OVERRIDE_ATTR);
+    else root.setAttribute(OVERRIDE_ATTR, value);
+    syncThemeColor(value, resolved);
+    return resolved;
+  }
+  function syncControls() {
+    var radios = document.querySelectorAll('input[name="' + CONTROL_NAME + '"]');
+    for (var i = 0; i < radios.length; i += 1) radios[i].checked = radios[i].value === currentPreference;
+  }
+  var currentPreference = readPreference();
+  applyPreference(currentPreference);
+  document.addEventListener("DOMContentLoaded", function () {
+    syncControls();
+    var radios = document.querySelectorAll('input[name="' + CONTROL_NAME + '"]');
+    for (var i = 0; i < radios.length; i += 1) {
+      radios[i].addEventListener("change", function (event) {
+        currentPreference = event.target.value;
+        persistPreference(currentPreference);
+        applyPreference(currentPreference);
+      });
+    }
+    var btn = document.getElementById("theme-switch");
+    if (btn) {
+      var specimenOn = btn.getAttribute("aria-checked") === "true";
+      var renderSwitch = function () {
+        btn.className = specimenOn ? SWITCH_ON : SWITCH_OFF;
+        btn.setAttribute("aria-checked", String(specimenOn));
+      };
+      renderSwitch();
+      btn.addEventListener("click", function () {
+        specimenOn = !specimenOn;
+        renderSwitch();
+      });
+    }
   });
+  // A page restored from the back/forward cache keeps its old DOM state:
+  // re-read the stored choice in case it changed on another page meanwhile.
+  window.addEventListener("pageshow", function (event) {
+    if (!event.persisted) return;
+    currentPreference = readPreference();
+    applyPreference(currentPreference);
+    syncControls();
+  });
+  if (media) {
+    var onSystemChange = function () {
+      if (currentPreference === "system") applyPreference("system");
+    };
+    if (typeof media.addEventListener === "function") media.addEventListener("change", onSystemChange);
+    else if (typeof media.addListener === "function") media.addListener(onSystemChange);
+  }
 })();
 `
 
@@ -669,7 +782,9 @@ const minifyHtml = (html) => {
 // ---- write ---------------------------------------------------------------------
 
 mkdirSync('dist', { recursive: true })
-writeFileSync('dist/theme-toggle.js', `${themeToggleJs}\n${motionPreviewJs}`)
+writeFileSync('dist/theme-toggle.js', themeToggleJs)
+// The gallery's motion preview needs the DOM, so it ships separately and deferred.
+writeFileSync('dist/gallery.js', motionPreviewJs)
 writeFileSync('dist/sw-register.js', swRegisterJs)
 writeFileSync('dist/sw.js', swJs)
 copyDir('public', 'dist')
@@ -691,11 +806,11 @@ writeFileSync('dist/index.html', minifyHtml(page({
 
 writeFileSync('dist/components.html', minifyHtml(page({
   title: 'Components — Verdant',
-  description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, theme toggle, and motion patterns.',
+  description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, a switch specimen, and motion patterns.',
   path: '/components.html',
   active: 'components',
   bodyHtml: componentsBody,
-  scripts: ['/theme-toggle.js'],
+  scripts: ['/gallery.js'],
 })))
 
 writeFileSync('dist/404.html', minifyHtml(page({

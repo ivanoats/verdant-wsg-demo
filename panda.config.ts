@@ -1,4 +1,8 @@
 import { defineConfig } from '@pandacss/dev'
+import { explicitThemeVars, semanticColorTokens, themeOverrideAttr, themeResolvedAttr } from './scripts/theme.mjs'
+
+const important = (vars: Record<string, string>) =>
+  Object.fromEntries(Object.entries(vars).map(([name, value]) => [name, `${value} !important`]))
 
 export default defineConfig({
   preflight: true,
@@ -9,11 +13,11 @@ export default defineConfig({
   exclude: [],
   outdir: 'styled-system',
 
-  // Dark mode is driven by the OS preference, full stop — this is the WSG
-  // check (3.12) a scanner looks for. The ThemeToggle demo does not use a
-  // Panda condition at all: it overrides the same CSS custom properties
-  // inline at runtime, which always wins over a stylesheet rule without
-  // needing a second selector-based condition to fight the cascade with.
+  // System mode is the default: `_dark` values apply through
+  // prefers-color-scheme (the WSG 3.12 preference query), with no script.
+  // An explicit Light or Dark choice sets data-theme-override on <html>,
+  // and the globalCss rules below map every token to that theme's value,
+  // so the same token set serves all three preferences.
   conditions: {
     dark: '@media (prefers-color-scheme: dark)',
   },
@@ -43,37 +47,7 @@ export default defineConfig({
       },
       semanticTokens: {
         colors: {
-          surface: {
-            100: { value: { base: '#faf8f3', _dark: '#15140f' } },
-            200: { value: { base: '#ffffff', _dark: '#1e1c15' } },
-          },
-          border: {
-            DEFAULT: { value: { base: '#c7bda9', _dark: '#514b3b' } },
-            control: { value: { base: '#7f735b', _dark: '#8f866f' } },
-          },
-          ink: {
-            DEFAULT: { value: { base: '#1c1a15', _dark: '#f1ede2' } },
-            muted: { value: { base: '#5b5548', _dark: '#b6ae9c' } },
-            placeholder: { value: { base: '#75726a', _dark: '#8d8a81' } },
-          },
-          accent: {
-            DEFAULT: { value: { base: '#2f6b4a', _dark: '#7fcfa3' } },
-            strong: { value: { base: '#234f38', _dark: '#5fb98c' } },
-            ink: { value: { base: '#ffffff', _dark: '#10241a' } },
-          },
-          focusRing: { value: { base: '#a5670a', _dark: '#e8a83e' } },
-          // Illustration-only greens: the "verdant" in Verdant. Never text or
-          // UI state — they're chosen for lushness, not 4.5:1 contrast.
-          foliage: {
-            DEFAULT: { value: { base: '#3ca24a', _dark: '#45ad55' } },
-            far: { value: { base: '#cdeaae', _dark: '#1c3a22' } },
-            mid: { value: { base: '#9ed65f', _dark: '#2d6b34' } },
-            deep: { value: { base: '#1f6a31', _dark: '#2a7d3a' } },
-            bright: { value: { base: '#6fcd4f', _dark: '#86dc62' } },
-          },
-          sunlight: { value: { base: '#f4b63f', _dark: '#e8a83e' } },
-          positive: { value: { base: '#1f7a6c', _dark: '#5cc9b7' } },
-          critical: { value: { base: '#c1440e', _dark: '#ff8f5e' } },
+          ...semanticColorTokens,
         },
         shadows: {
           sm: {
@@ -176,6 +150,14 @@ export default defineConfig({
 
   globalCss: {
     'html': { colorScheme: 'light dark' },
+    // Panda emits token variables in the `tokens` layer, which comes after
+    // `base` (where globalCss lives), so a plain declaration here would lose
+    // to them. `!important` in an earlier layer beats normal declarations in
+    // any later layer, which is exactly the override an explicit choice needs.
+    [`html[${themeOverrideAttr}="light"]`]: important(explicitThemeVars.light),
+    [`html[${themeOverrideAttr}="dark"]`]: important(explicitThemeVars.dark),
+    [`html[${themeResolvedAttr}="light"]`]: { colorScheme: 'light' },
+    [`html[${themeResolvedAttr}="dark"]`]: { colorScheme: 'dark' },
     'body': { margin: '0', background: 'surface.100', color: 'ink', fontFamily: 'sans', fontSize: 'body', lineHeight: 'body' },
     'a': {
       color: 'accent',
