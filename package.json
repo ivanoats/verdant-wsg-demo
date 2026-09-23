@@ -2,23 +2,24 @@
   "name": "verdant-site",
   "version": "1.0.0",
   "private": true,
-  "description": "Verdant design system, demoed as a static site built to score well on the W3C Web Sustainability Guidelines. Styled with PandaCSS.",
+  "description": "Verdant design system, demoed as a lightweight static site starter with defaults aligned to selected Web Sustainability Guidelines. Styled with PandaCSS.",
   "type": "module",
   "scripts": {
     "predev": "panda codegen",
     "dev": "node scripts/dev.mjs",
     "prebuild": "panda codegen",
-    "build": "node scripts/build.mjs && panda cssgen -m --lightningcss -o dist/styles.css && node scripts/finalize.mjs",
+    "build": "node scripts/build.mjs && panda cssgen -m --lightningcss -o dist/styles.css && node scripts/fingerprint.mjs && node scripts/stats.mjs",
+    "profile:art": "node scripts/profile-art.mjs",
     "check:budgets": "node scripts/check-budgets.mjs",
-    "test:worker": "node --test tests/service-worker.test.mjs tests/measurements.test.mjs",
+    "test:unit": "node --test tests/service-worker.test.mjs tests/measurements.test.mjs",
     "test:browser": "playwright test",
-    "test": "npm run test:worker && npm run test:browser",
-    "verify:ci": "npm run build && npm run check:budgets && npm run test"
+    "test": "npm run test:unit && npm run test:browser",
+    "verify:ci": "npm run build && npm run check:budgets && npm test"
   },
   "license": "ISC",
   "devDependencies": {
     "@pandacss/dev": "^1.12.1",
-    "@playwright/test": "^1.63.0",
-    "ajv": "^8.20.0"
+    "@playwright/test": "1.63.0",
+    "ajv": "8.20.0"
   }
 }

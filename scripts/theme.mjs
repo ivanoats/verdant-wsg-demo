@@ -11,7 +11,8 @@ export const themeVarName = (name) =>
 export const themeTokens = {
   'surface.100': { light: '#faf8f3', dark: '#15140f' },
   'surface.200': { light: '#ffffff', dark: '#1e1c15' },
-  border: { light: '#93866c', dark: '#726b53' },
+  border: { light: '#c7bda9', dark: '#514b3b' },
+  'border.control': { light: '#7f735b', dark: '#8f866f' },
   ink: { light: '#1c1a15', dark: '#f1ede2' },
   'ink.muted': { light: '#5b5548', dark: '#b6ae9c' },
   'ink.placeholder': { light: '#75726a', dark: '#8d8a81' },
@@ -68,6 +69,7 @@ export const interfacePaletteOrder = [
   'ink.muted',
   'ink.placeholder',
   'border',
+  'border.control',
   'surface.200',
   'surface.100',
 ]

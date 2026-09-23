@@ -4,27 +4,26 @@
   "report": "dist/measurements.json",
   "schema": "dist/measurements.schema.json",
   "baselines": {
-    "initialRenderEstimateKiB": 17.7,
-    "offlineShellEstimateKiB": 23.3,
-    "coldFirstSessionTransferKiB": 28.9,
-    "warmRepeatVisitTransferKiB": 9.3
+    "initialRenderEstimateKiB": 19.2,
+    "offlineShellEstimateKiB": 29.4,
+    "coldFirstSessionTransferKiB": 76.8,
+    "warmRepeatVisitTransferKiB": 10.6
   },
   "thresholds": {
-    "initialRenderEstimateKiB": 18.5,
-    "offlineShellEstimateKiB": 24.5,
-    "coldFirstSessionTransferKiB": 31.0,
-    "warmRepeatVisitTransferKiB": 11.0
+    "initialRenderEstimateKiB": 20.5,
+    "offlineShellEstimateKiB": 31.0,
+    "coldFirstSessionTransferKiB": 80.5,
+    "warmRepeatVisitTransferKiB": 11.5
   },
   "rationale": {
-    "initialRenderEstimateKiB": "Keep the homepage first render within about 1 KiB of the reviewed compressed baseline from the finalized measurement report.",
-    "offlineShellEstimateKiB": "Allow about 1.2 KiB of headroom above the reviewed offline shell estimate while #21 finalizes the update UI and canonical route contract.",
-    "coldFirstSessionTransferKiB": "Budget the first-session local transfer measurement with modest headroom now that duplicate shell requests are no longer counted during precache simulation.",
-    "warmRepeatVisitTransferKiB": "Keep the warm repeat-visit transfer small while acknowledging that deployed-host caching behavior remains unmeasured until upstream integration completes."
+    "initialRenderEstimateKiB": "Keep the homepage first render (HTML, stylesheet and head scripts) within about 1.3 KiB of the reviewed Brotli estimate.",
+    "offlineShellEstimateKiB": "Allow about 1.6 KiB above the reviewed estimate for the precached shell: both pages, the offline page, hashed assets and the worker.",
+    "coldFirstSessionTransferKiB": "The cold session counts the page visit plus the worker's precache fetches, which re-request the shell; allow about 5% headroom.",
+    "warmRepeatVisitTransferKiB": "A repeat visit re-fetches only the network-first HTML; keep it within about 1 KiB of the reviewed measurement."
   },
-  "blockedOn": {
-    "theme": "#18 shared theme token/runtime contract",
-    "measurements": "#19 finalized measurement report and schema",
-    "offline": "#21 update prompt and canonical offline-route contract",
-    "motion": "#17 bounded loading demo specimen details"
-  }
+  "manualChecksStillNeeded": [
+    "Assistive-technology coverage, additional browser/device combinations, and human usability validation are tracked in VALIDATION.md.",
+    "Production-network transfer and CDN compression are not measured by this local run.",
+    "wsg-check remains a targeted homepage scanner and is not treated as blanket WSG conformance."
+  ]
 }

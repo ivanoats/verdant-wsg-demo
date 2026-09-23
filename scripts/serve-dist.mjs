@@ -1,9 +1,12 @@
+// Serves the built dist/ folder for the Playwright checks, with the same
+// pretty routes Netlify uses (/components -> components.html). Every
+// resolved path is confined to dist/, and malformed URLs get a 400.
 import { createServer } from 'node:http'
 import { readFile, stat } from 'node:fs/promises'
-import { extname, join, normalize } from 'node:path'
+import { extname, resolve, sep } from 'node:path'
 
-const PORT = Number(process.env.PORT) || 4173
-const DIST = 'dist'
+const PORT = Number.parseInt(process.env.PORT ?? '', 10) || 4173
+const DIST_ROOT = resolve('dist')
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -14,45 +17,51 @@ const TYPES = {
   '.txt': 'text/plain; charset=utf-8',
 }
 
-const send = (res, status, body) => {
-  const ext = extname(body.path || '')
-  res.writeHead(status, { 'content-type': TYPES[ext] || 'application/octet-stream', 'cache-control': 'no-store' })
-  res.end(body.contents)
-}
+const inDist = (file) => file === DIST_ROOT || file.startsWith(`${DIST_ROOT}${sep}`)
 
-const badRequest = (res) => {
-  res.writeHead(400, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' })
-  res.end('Bad request')
-}
-
-const resolvePath = (pathname) => {
-  let path
+// Returns an absolute path inside dist/, or null for a malformed or escaping URL.
+const confine = (pathname) => {
+  let decoded
   try {
-    path = normalize(`.${decodeURIComponent(pathname)}`)
+    decoded = decodeURIComponent(pathname)
   } catch {
     return null
   }
-  if (path === '..' || path.startsWith('../') || path.startsWith('..\\') || path.startsWith('/') || path.startsWith('\\') || /^[A-Za-z]:/.test(path)) {
+  if (decoded.includes('\0')) return null
+  const relative = decoded.endsWith('/') ? `${decoded}index.html` : decoded
+  const file = resolve(DIST_ROOT, `.${relative}`)
+  return inDist(file) ? file : null
+}
+
+const isFile = async (file) => {
+  try {
+    return (await stat(file)).isFile()
+  } catch {
     return false
   }
-  if (path === './' || path === '.') return 'index.html'
-  return path.endsWith('/') ? `${path}index.html` : path
+}
+
+// First existing candidate: the file itself, a directory index, or a pretty route.
+const findFile = async (file) => {
+  const candidates = [file, resolve(file, 'index.html')]
+  if (!extname(file)) candidates.push(`${file}.html`)
+  for (const candidate of candidates) {
+    if (inDist(candidate) && await isFile(candidate)) return candidate
+  }
+  return null
+}
+
+const reply = (res, status, type, body) => {
+  res.writeHead(status, { 'content-type': type, 'cache-control': 'no-store' })
+  res.end(body)
 }
 
 createServer(async (req, res) => {
-  const url = new URL(req.url, 'http://localhost')
-  const path = resolvePath(url.pathname)
-  if (path === null || path === false) return badRequest(res)
-  let file = join(DIST, path)
-  try {
-    if ((await stat(file)).isDirectory()) file = join(file, 'index.html')
-  } catch {
-    if (!extname(file)) {
-      try { file = `${file}.html`; await stat(file) }
-      catch { file = join(DIST, '404.html') }
-    } else file = join(DIST, '404.html')
-  }
-  send(res, file.endsWith('404.html') ? 404 : 200, { path: file, contents: await readFile(file) })
+  const file = confine(new URL(req.url, 'http://localhost').pathname)
+  if (!file) return reply(res, 400, TYPES['.txt'], 'Bad request')
+  const found = await findFile(file)
+  if (found) return reply(res, 200, TYPES[extname(found)] ?? 'application/octet-stream', await readFile(found))
+  return reply(res, 404, TYPES['.html'], await readFile(resolve(DIST_ROOT, '404.html')))
 }).listen(PORT, () => {
   console.log(`Serving dist on http://127.0.0.1:${PORT}`)
 })

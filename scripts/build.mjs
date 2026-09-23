@@ -6,12 +6,9 @@ import { writeFileSync, mkdirSync, readFileSync, readdirSync, statSync } from 'n
 import { join } from 'node:path'
 import { css } from '../styled-system/css/index.mjs'
 import { flex, vstack, hstack } from '../styled-system/patterns/index.mjs'
-import { button, card, fieldInput, spinner, skeleton } from '../styled-system/recipes/index.mjs'
+import { button, card, fieldInput, switchTrack, spinner, skeleton } from '../styled-system/recipes/index.mjs'
 import { heroArt, mark, stageGlyph, leafRow, seedlingArt } from './art.mjs'
 import {
-  explicitThemeVars,
-  illustrationPaletteOrder,
-  interfacePaletteOrder,
   themeOverrideAttr,
   themePreferenceAttr,
   themePreferenceControlName,
@@ -20,8 +17,8 @@ import {
   themeResolvedAttr,
   themeTokenCount,
   themeTokens,
-  themeVarName,
 } from './theme.mjs'
+import { paletteSections, verifiedPairings, publicTokenScope } from './tokens.mjs'
 
 // A hand-rolled recursive copy: some mounted/virtual filesystems choke on
 // Node's native cpSync fast paths (fcopyfile/clonefile), so this sticks to
@@ -39,21 +36,16 @@ function copyDir(src, dest) {
 const REPO = 'https://github.com/ivanoats/verdant-wsg-demo'
 const WSG_CHECK = 'https://github.com/ivanoats/wsg-check'
 const WSG = 'https://w3c.github.io/sustainableweb-wsg/'
-const offlineCacheContract = JSON.parse(readFileSync('public/offline-cache.json', 'utf8'))
-const workerRouteMap = Object.fromEntries([
-  ...new Set([
-    '/',
-    ...(offlineCacheContract.canonicalCacheKeys || []),
-    ...Object.keys(offlineCacheContract.routeAliases || {}),
-  ]),
-].map((path) => [path, offlineCacheContract.routeAliases?.[path] || path]))
+const COMPONENTS_ROUTE = '/components'
+const COMPONENTS_FILE = '/components.html'
+const evidenceRecord = JSON.parse(readFileSync('public/wsg-evidence.json', 'utf8'))
 
 // ---- shell ------------------------------------------------------------------
 
 const skipLinkCss = css({
   position: 'absolute', left: '3', top: '-48px',
   background: 'surface.200', color: 'ink', paddingBlock: '2', paddingInline: '4',
-  borderRadius: 'sm', border: '1px solid', borderColor: 'border', zIndex: '10',
+  borderRadius: 'sm', border: '1px solid', borderColor: 'border.control', zIndex: '10', textDecoration: 'none',
   _motionSafe: { transition: 'top 120ms ease' },
   _focus: { top: '3' },
 })
@@ -61,21 +53,30 @@ const wrapCss = css({ maxWidth: '1080px', marginX: 'auto', paddingInline: { base
 const headerCss = css({ borderBottom: '1px solid', borderColor: 'border' })
 const barCss = flex({ paddingBlock: '3', align: 'center', justify: 'space-between', gap: '4', wrap: 'wrap' })
 const wordmarkCss = hstack({ gap: '2', color: 'ink', textDecoration: 'none', fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '700' })
+const headerActionsCss = flex({ align: 'center', gap: '4', wrap: 'wrap' })
 const navListCss = hstack({ gap: { base: '3', md: '6' }, listStyle: 'none', margin: '0', padding: '0' })
 const navLinkCss = css({ textDecoration: 'none', fontSize: 'bodySm', fontWeight: '600', color: 'ink', _hover: { color: 'accent' } })
 const navLinkActiveCss = css({ textDecoration: 'underline', textUnderlineOffset: '6px', textDecorationThickness: '2px', fontSize: 'bodySm', fontWeight: '600', color: 'accent' })
+const themePrefCss = css({
+  display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px',
+  border: '0', margin: '0', padding: '0',
+})
+const themePrefLegendCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted', margin: '0', padding: '0' })
+const themePrefOptionCss = css({
+  display: 'inline-flex', alignItems: 'center', gap: '2',
+  paddingBlock: '1', paddingInline: '3', border: '1px solid', borderColor: 'border',
+  borderRadius: 'full', background: 'surface.200', fontSize: 'label', lineHeight: 'label', fontWeight: '600',
+})
+const themePrefRadioCss = css({ margin: '0', accentColor: 'accent' })
 
 const breadcrumbListCss = hstack({ gap: '1', listStyle: 'none', margin: '0', paddingTop: '3', paddingInline: '0', fontSize: 'label', color: 'ink.muted' })
-const breadcrumbLinkCss = css({ color: 'ink.muted' })
+const breadcrumbLinkCss = css({ color: 'ink.muted', textDecoration: 'none' })
 
 const footerCss = css({ borderTop: '1px solid', borderColor: 'border' })
 const footerBarCss = flex({ paddingBlock: '6', align: 'center', justify: 'space-between', gap: '4', wrap: 'wrap' })
 const footerBrandCss = hstack({ gap: '2' })
 const footerTextCss = css({ color: 'ink.muted', fontSize: 'label', lineHeight: 'label', margin: '0' })
 const footerLinksCss = hstack({ gap: '4', listStyle: 'none', margin: '0', padding: '0', fontSize: 'label' })
-const themeControlCss = hstack({ gap: '2', alignItems: 'center' })
-const themeLabelCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted' })
-const themeSelectCss = fieldInput()
 
 // ---- shared type & blocks ------------------------------------------------------
 
@@ -85,13 +86,6 @@ const eyebrowCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '60
 const h2Css = css({ fontSize: { base: 'displayMd', md: 'displayLg' }, lineHeight: { base: 'displayMd', md: 'displayLg' }, fontWeight: '700', margin: '0 0 12px', maxWidth: '24ch' })
 const introCss = css({ color: 'ink.muted', margin: '0 0 32px', maxWidth: '62ch' })
 const codeCss = css({ fontFamily: 'mono', fontSize: 'label' })
-const proseLinkCss = css({
-  color: 'accent',
-  textDecoration: 'underline',
-  textUnderlineOffset: '0.16em',
-  textDecorationThickness: '0.08em',
-  _hover: { color: 'accent.strong' },
-})
 const btnPrimary = button({ variant: 'primary' })
 const btnSecondary = button({ variant: 'secondary' })
 const btnRowCss = flex({ gap: '3', wrap: 'wrap', marginTop: '6' })
@@ -112,12 +106,12 @@ const heroHtml = `
 <section class="${wrapCss}" aria-labelledby="hero-title">
   <div class="${heroCss}">
     <div>
-      <p class="${eyebrowCss}">A design system for the W3C Web Sustainability Guidelines</p>
+      <p class="${eyebrowCss}">A design system for the <a href="${WSG}">W3C Web Sustainability Guidelines</a></p>
       <h1 id="hero-title" class="${heroTitleCss}">Verdant</h1>
       <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
-      <p class="${heroLedeCss}">Every default already satisfies the <a class="${proseLinkCss}" href="${WSG}">WSG</a>: system fonts, native dark mode, motion you opt into, and CSS extracted down to exactly what a page uses. Sites grown from it start light and stay that way.</p>
+      <p class="${heroLedeCss}">Start with the parts teams usually add later: system fonts, a System/Light/Dark theme preference, restrained motion, and only the CSS each page uses. Verdant gives a product page or docs site those lighter defaults from the first commit.</p>
       <div class="${btnRowCss}">
-        <a class="${btnPrimary}" href="/components">Browse components</a>
+        <a class="${btnPrimary}" href="${COMPONENTS_ROUTE}">Browse components</a>
         <a class="${btnSecondary}" href="${REPO}">View source on GitHub</a>
       </div>
     </div>
@@ -125,7 +119,7 @@ const heroHtml = `
   </div>
 </section>`
 
-// ---- index: measured stats (filled in by scripts/stats.mjs after the build)
+// ---- index: measured stats (filled in by scripts/stats.mjs after fingerprinting)
 
 const statsGridCss = css({
   display: 'grid', gridTemplateColumns: { base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
@@ -134,15 +128,19 @@ const statsGridCss = css({
 const statCss = css({ display: 'flex', flexDirection: 'column-reverse', margin: '0' })
 const statValueCss = css({ fontSize: { base: 'displayLg', md: '40px' }, lineHeight: { base: 'displayLg', md: '48px' }, fontWeight: '700', color: 'accent', margin: '0' })
 const statLabelCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '4px 0 0' })
+const statsNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 8px' })
 
 const statsHtml = `
 <section class="${bandCss}" aria-label="By the numbers">
-  <dl class="${wrapCss} ${statsGridCss}">
-    <div class="${statCss}"><dt class="${statLabelCss}">This whole page, compressed &mdash; art included</dt><dd class="${statValueCss}">__HOME_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Web fonts, raster images, or third-party requests</dt><dd class="${statValueCss}">0</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Stylesheet, extracted to only the rules in use</dt><dd class="${statValueCss}">__CSS_KB__&nbsp;KB</dd></div>
-    <div class="${statCss}"><dt class="${statLabelCss}">Color tokens, each with a light and dark value</dt><dd class="${statValueCss}">${themeTokenCount}&thinsp;&times;&thinsp;2</dd></div>
-  </dl>
+  <div class="${wrapCss}">
+    <dl class="${statsGridCss}">
+      <div class="${statCss}"><dt class="${statLabelCss}">Initial render assets, local Brotli estimate</dt><dd class="${statValueCss}">__INITIAL_RENDER_KIB__&nbsp;KiB</dd></div>
+      <div class="${statCss}"><dt class="${statLabelCss}">Offline shell + worker, unique local Brotli estimate</dt><dd class="${statValueCss}">__OFFLINE_SHELL_KIB__&nbsp;KiB</dd></div>
+      <div class="${statCss}"><dt class="${statLabelCss}">Cold first session, measured local transfer</dt><dd class="${statValueCss}">__COLD_SESSION_KIB__&nbsp;KiB</dd></div>
+      <div class="${statCss}"><dt class="${statLabelCss}">Warm repeat visit, measured local transfer</dt><dd class="${statValueCss}">__WARM_SESSION_KIB__&nbsp;KiB</dd></div>
+    </dl>
+    <p class="${statsNoteCss}">Measured __MEASURED_ON__ locally over HTTP with Brotli response bodies in KiB (1024 bytes), excluding headers, then rounded up to a stable tenth for this summary. Cold includes the service worker install and its duplicate precache fetches; warm is a repeat visit with the shell already cached. Production-network transfer is unmeasured here.</p>
+  </div>
 </section>`
 
 // ---- index: how it grows ----------------------------------------------------------
@@ -158,16 +156,16 @@ const stageTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', font
 const stageBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0' })
 
 const stages = [
-  ['seed', 'Seed', 'Tokens', 'Seventeen colors, a 4px spacing grid, four radii and system type. Small enough to hold in your head, so nothing gets a one-off value.'],
-  ['sprout', 'Sprout', 'Components', 'Button, card, field, theme preference and motion preview &mdash; each one demonstrates a WSG behavior live rather than just describing it.'],
-  ['sapling', 'Sapling', 'Pages', 'Landmarks, a skip link, one focus ring, one stylesheet and at most one small deferred script, from the first page on.'],
+  ['seed', 'Seed', 'Tokens', `${themeTokenCount} colors, a 4px spacing grid, four radii and system type. Small enough to stay consistent without one-off values.`],
+  ['sprout', 'Sprout', 'Components', 'Button, card, field, theme preference, switch specimen and motion &mdash; each one demonstrates a WSG behavior live instead of describing it.'],
+  ['sapling', 'Sapling', 'Pages', 'A product page or docs page gets landmarks, a skip link, one focus ring, one stylesheet and two small same-origin scripts from day one.'],
   ['canopy', 'Canopy', 'Sites', 'Security headers, cache rules, an offline shell and a real 404 &mdash; the hosting checks, handled before launch.'],
 ]
 const stagesHtml = `
 <section class="${wrapCss} ${sectionCss}" aria-labelledby="grows-title">
   <p class="${eyebrowCss}">How it grows</p>
-  <h2 id="grows-title" class="${h2Css}">From four seeds of tokens to a whole site.</h2>
-  <p class="${introCss}">Each layer only adds what the one below it can't do alone, which is why the finished site stays small.</p>
+  <h2 id="grows-title" class="${h2Css}">From a small token set to a whole site.</h2>
+  <p class="${introCss}">Each layer only adds the parts the previous one cannot, which keeps the finished site small.</p>
   <ol class="${stagesCss}">
     ${stages.map(([key, stage, layer, body], i) => `
     <li class="${stageCss}">
@@ -179,101 +177,217 @@ const stagesHtml = `
   </ol>
 </section>`
 
-// ---- index: palette, as leaves ----------------------------------------------------
+// ---- index: palette, pairings and token scope --------------------------------------
 
 const paletteGridCss = css({
-  display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(176px, 1fr))',
-  gap: { base: '4', md: '6' }, listStyle: 'none', margin: '0', padding: '0',
+  display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' },
+  gap: '4', listStyle: 'none', margin: '0', padding: '0',
 })
-const swatchItemCss = hstack({ gap: '3', alignItems: 'center' })
-// A leaf is a square with two opposite corners fully rounded.
-const sw = {
-  'surface-100': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.100' }),
-  'surface-200': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'surface.200' }),
-  border: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'border' }),
-  ink: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink' }),
-  'ink-muted': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'ink.muted' }),
-  accent: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent' }),
-  'accent-strong': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.strong' }),
-  'accent-ink': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'accent.ink' }),
-  'focus-ring': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'focusRing' }),
-  positive: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'positive' }),
-  critical: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', border: '1px solid', borderColor: 'border', background: 'critical' }),
-  foliage: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage' }),
-  'foliage-far': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.far' }),
-  'foliage-mid': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.mid' }),
-  'foliage-deep': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.deep' }),
-  'foliage-bright': css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'foliage.bright' }),
-  sunlight: css({ width: '48px', height: '48px', flex: 'none', borderRadius: '100% 0', background: 'sunlight' }),
-}
-const swatchNameCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
-const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '4px 0 0' })
-const swatchKey = (name) => name.replace(/\./g, '-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
-const tokenPair = (name) => [swatchKey(name), themeTokens[name].light, themeTokens[name].dark]
-const palettePairs = interfacePaletteOrder.map(tokenPair)
-const foliagePairs = illustrationPaletteOrder.map(tokenPair)
-const palette = palettePairs
-const foliage = foliagePairs
+const swatchCardCss = card()
+const swatchNameCss = css({ fontFamily: 'mono', fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', margin: '0' })
+const swatchThemeGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: '3', marginTop: '3' })
+const swatchThemeTileCss = css({
+  display: 'grid', gridTemplateColumns: '48px 1fr', gap: '3', alignItems: 'center',
+  border: '1px solid', borderColor: 'border', borderRadius: 'sm', padding: '3', background: 'surface.100',
+})
+const swatchThemeLabelCss = css({ display: 'block', fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
+const swatchHexCss = css({ display: 'block', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink.muted', marginTop: '4px' })
+const pairingGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: '4', listStyle: 'none', margin: '0', padding: '0' })
+const pairingCardCss = card()
+const pairingTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0' })
+const pairingTokenCss = css({ fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', margin: '8px 0 0' })
+const pairingBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '8px 0 0' })
+const pairingMetaCss = css({ fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '12px 0 0' })
+const scopeGridCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: '4' })
+const scopeCardCss = card()
+const scopeTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 8px' })
+const scopeBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 12px' })
+const scopeListCss = css({ margin: '0', paddingLeft: '20px', color: 'ink.muted', '& li + li': { marginTop: '2' } })
+const scopeCodeCss = css({ fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', color: 'ink' })
 const paletteGroupCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0 0 4px' })
-const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '62ch' })
+const paletteGroupNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '0 0 20px', maxWidth: '68ch' })
 const paletteGapCss = css({ marginTop: '12' })
-const swatches = (list) => list.map(([name, light, dark]) => `
-      <li class="${swatchItemCss}">
-        <span class="${sw[name]}" aria-hidden="true"></span>
-        <span><span class="${swatchNameCss}">${name}</span><span class="${swatchHexCss}">Light ${light}</span><span class="${swatchHexCss}">Dark ${dark}</span></span>
+
+const hexToRgb = (hex) => [0, 2, 4].map((offset) => Number.parseInt(hex.slice(offset + 1, offset + 3), 16) / 255)
+const relativeLuminance = (hex) => {
+  const [r, g, b] = hexToRgb(hex).map((channel) => (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4))
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+const contrast = (foreground, background) => {
+  const [lighter, darker] = [relativeLuminance(foreground), relativeLuminance(background)].sort((a, b) => b - a)
+  return (lighter + 0.05) / (darker + 0.05)
+}
+const formatRatio = (ratio) => `${ratio.toFixed(2)}:1`
+const tokenCode = (token) => `<code class="${codeCss}">${token}</code>`
+const leafSwatch = (fill, stroke) => `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true" focusable="false"><path d="M8 40V14c0-3.3 2.7-6 6-6h26v26c0 3.3-2.7 6-6 6H8Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/></svg>`
+const swatchTile = (themeLabel, fill, stroke) => `
+        <div class="${swatchThemeTileCss}">
+          ${leafSwatch(fill, stroke)}
+          <span><span class="${swatchThemeLabelCss}">${themeLabel}</span><span class="${swatchHexCss}">${fill}</span></span>
+        </div>`
+const themeValueMaps = {
+  light: Object.fromEntries(Object.entries(themeTokens).map(([key, value]) => [key, value.light])),
+  dark: Object.fromEntries(Object.entries(themeTokens).map(([key, value]) => [key, value.dark])),
+}
+
+const swatches = (keys) => keys.map((key) => {
+  const token = themeTokens[key]
+  return `
+      <li class="${swatchCardCss}">
+        <p class="${swatchNameCss}">${key}</p>
+        <div class="${swatchThemeGridCss}">
+          ${swatchTile('Light', token.light, themeValueMaps.light.border)}
+          ${swatchTile('Dark', token.dark, themeValueMaps.dark.border)}
+        </div>
+      </li>`
+}).join('')
+
+const evaluatedPairings = verifiedPairings.map((pairing) => {
+  const lightContrast = contrast(themeValueMaps.light[pairing.foreground], themeValueMaps.light[pairing.background])
+  const darkContrast = contrast(themeValueMaps.dark[pairing.foreground], themeValueMaps.dark[pairing.background])
+  if (lightContrast < pairing.minimum || darkContrast < pairing.minimum) {
+    throw new Error(`Verified pairing failed ${pairing.title}: ${formatRatio(lightContrast)} light / ${formatRatio(darkContrast)} dark`)
+  }
+  return { ...pairing, lightContrast, darkContrast }
+})
+const pairingGroups = [
+  {
+    key: 'text',
+    title: 'Verified text pairings',
+    note: 'Measured from the shared theme tokens at build time. These are the approved readable combinations — not every token can be mixed freely.',
+  },
+  {
+    key: 'functional',
+    title: 'Verified functional boundaries',
+    note: 'Borders and focus indicators target at least 3:1 non-text contrast against the surfaces they appear on.',
+  },
+]
+const pairingCards = (category) => evaluatedPairings
+  .filter((pairing) => pairing.category === category)
+  .map((pairing) => `
+      <li class="${pairingCardCss}">
+        <h4 class="${pairingTitleCss}">${pairing.title}</h4>
+        <p class="${pairingTokenCss}">${tokenCode(pairing.foreground)} on ${tokenCode(pairing.background)}</p>
+        <p class="${pairingBodyCss}">${pairing.note}</p>
+        <p class="${pairingMetaCss}">Light ${formatRatio(pairing.lightContrast)} &middot; Dark ${formatRatio(pairing.darkContrast)} &middot; Target ${pairing.minimum}:1</p>
       </li>`).join('')
+
+const tokenList = (items) => items.map((item) => `<code class="${scopeCodeCss}">${item}</code>`).join(', ')
+const scopeList = (items) => items.map((item) => `<li>${item}</li>`).join('')
+const typographyList = publicTokenScope.typography.sizes
+  .map(({ token, fontSize, lineHeight }) => `<li><code class="${scopeCodeCss}">${token}</code> &mdash; ${fontSize} / ${lineHeight}</li>`)
+  .join('')
+
 const paletteHtml = `
 <section id="palette" class="${bandCss}" aria-labelledby="palette-title">
   <div class="${wrapCss} ${sectionCss}">
     <p class="${eyebrowCss}">Palette</p>
-    <h2 id="palette-title" class="${h2Css}">Seventeen colors, two seasons.</h2>
-    <p class="${introCss}">One token set with a light and a dark value each, switched by <code class="${codeCss}">prefers-color-scheme</code> &mdash; no second stylesheet. Flip your OS theme and the valley above turns to night.</p>
-    <h3 class="${paletteGroupCss}">Interface</h3>
-    <p class="${paletteGroupNoteCss}">Text, controls and state. Every text pair clears 4.5:1 in both themes.</p>
-    <ul class="${paletteGridCss}">${swatches(palette)}
-    </ul>
-    <h3 class="${paletteGroupCss} ${paletteGapCss}">Illustration</h3>
-    <p class="${paletteGroupNoteCss}">Hills, leaves, grass and sun. Picked for lushness, not contrast, so they never carry text or meaning.</p>
-    <ul class="${paletteGridCss}">${swatches(foliage)}
-    </ul>
+    <h2 id="palette-title" class="${h2Css}">${themeTokenCount} colors, shown in both themes.</h2>
+    <p class="${introCss}">One token set with a light and a dark value each. System mode follows <code class="${codeCss}">prefers-color-scheme</code>; explicit Light and Dark choices reuse the same tokens without a second stylesheet. Both values of every token are shown side by side.</p>
+    ${paletteSections.map((section, index) => `
+    <h3 class="${paletteGroupCss}${index ? ` ${paletteGapCss}` : ''}">${section.title}</h3>
+    <p class="${paletteGroupNoteCss}">${section.note}</p>
+    <ul class="${paletteGridCss}">${swatches(section.keys)}</ul>`).join('')}
+    ${pairingGroups.map(({ key, title, note }) => `
+    <h3 class="${paletteGroupCss} ${paletteGapCss}">${title}</h3>
+    <p class="${paletteGroupNoteCss}">${note}</p>
+    <ul class="${pairingGridCss}">${pairingCards(key)}</ul>`).join('')}
   </div>
 </section>`
 
-// ---- index: live scorecard -----------------------------------------------------
+const tokensHtml = `
+<section class="${wrapCss} ${sectionCss}" aria-labelledby="tokens-title">
+  <p class="${eyebrowCss}">Public token scope</p>
+  <h2 id="tokens-title" class="${h2Css}">What Verdant publishes, inherits, and keeps page-specific.</h2>
+  <p class="${introCss}">The palette above defines the supported color API. These cards document the rest of the token surface so adopters can tell reusable design tokens from Panda defaults and demo-only layout values.</p>
+  <div class="${scopeGridCss}">
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Colors</h3>
+      <p class="${scopeBodyCss}">Interface colors are the public text, control and status tokens. Illustration colors stay public for artwork only.</p>
+      <ul class="${scopeListCss}">
+        <li>Interface: ${tokenList(paletteSections[0].keys)}</li>
+        <li>Illustration only: ${tokenList(paletteSections[1].keys)}</li>
+      </ul>
+    </section>
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Spacing</h3>
+      <p class="${scopeBodyCss}">Public spacing tokens follow a 4px rhythm.</p>
+      <ul class="${scopeListCss}">${scopeList(publicTokenScope.spacing.map(({ token, value }) => `<code class="${scopeCodeCss}">${token}</code> &mdash; ${value}`))}</ul>
+    </section>
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Radii</h3>
+      <p class="${scopeBodyCss}">Rounded corners stay on four reusable steps.</p>
+      <ul class="${scopeListCss}">${scopeList(publicTokenScope.radii.map(({ token, value }) => `<code class="${scopeCodeCss}">${token}</code> &mdash; ${value}`))}</ul>
+    </section>
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Typography</h3>
+      <p class="${scopeBodyCss}">System fonts plus six public size/line-height pairs.</p>
+      <ul class="${scopeListCss}">
+        ${scopeList(publicTokenScope.typography.families.map(({ token, value }) => `<code class="${scopeCodeCss}">${token}</code> &mdash; ${value}`))}
+        ${typographyList}
+      </ul>
+    </section>
+    <section class="${scopeCardCss}">
+      <h3 class="${scopeTitleCss}">Layout &amp; breakpoints</h3>
+      <p class="${scopeBodyCss}">Verdant keeps its public token surface small, so responsive and page-art values are called out separately here.</p>
+      <ul class="${scopeListCss}">
+        ${scopeList(publicTokenScope.layout.inherited)}
+        ${scopeList(publicTokenScope.layout.pageSpecific)}
+      </ul>
+    </section>
+  </div>
+</section>`
+
+// ---- index: saved WSG evidence --------------------------------------------------
 
 const scoreListCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)' }, gap: '4', listStyle: 'none', margin: '0', padding: '0' })
 const scoreItemCss = card()
 const scoreHeadCss = flex({ justify: 'space-between', align: 'baseline', gap: '3', wrap: 'wrap' })
 const scoreTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0' })
 const scorePassCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'positive', margin: '0' })
-const scorePartCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'critical', margin: '0' })
+const scoreOpenCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'critical', margin: '0' })
+const scorePendingCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted', margin: '0' })
 const scoreBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '8px 0 0' })
+const scoreMetaCss = css({ fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '8px 0 0' })
 const scoreNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', marginTop: '6', maxWidth: '70ch' })
+const scoreLinksCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '16px 0 0', maxWidth: '70ch' })
 
-const scores = [
-  ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, one deferred script, nothing render-blocking.'],
-  ['Semantic &amp; standards', true, 'Landmarks, a single h1 with ordered headings, canonical URL and structured data.'],
-  ['Sustainability-specific', true, 'Color-scheme, reduced-motion and reduced-data queries all present; no unused CSS shipped.'],
-  ['Security &amp; maintenance', true, 'CSP, HSTS, Permissions-Policy, nosniff and frame protection; robots.txt and a sitemap.'],
-  ['UX &amp; design', true, 'Labelled fields with autocomplete and inputmode, one visible focus ring, no autoplay, no web fonts.'],
-  ['Hosting &amp; infrastructure', false, 'Offline service worker, cache rules and a custom 404 pass. Green hosting isn&rsquo;t verified by the Green Web Foundation for this Netlify subdomain.'],
-]
+const statusCopy = {
+  verified: { label: '&#10003; Verified', word: 'verified', css: scorePassCss },
+  open: { label: '&#9888; Open', word: 'open', css: scoreOpenCss },
+  'not-assessed': { label: '&#9675; Not assessed', word: 'not assessed', css: scorePendingCss },
+  'not-applicable': { label: '&#8212; Not applicable', word: 'not applicable', css: scorePendingCss },
+}
+const statusOf = (entry) => statusCopy[entry.status] || statusCopy['not-assessed']
+const linkSummary = (records = []) => records.map((record) => `<a href="${record.href}">${record.label}</a>`).join(', ')
+// Every status the record can hold is counted, in a fixed order, so the
+// summary always adds up to the number of cards below it.
+const statusSummary = Object.keys(statusCopy)
+  .map((key) => [key, evidenceRecord.entries.filter((entry) => statusOf(entry) === statusCopy[key]).length])
+  .filter(([, count]) => count)
+  .map(([key, count]) => `${count} ${statusCopy[key].word}`)
+  .join(', ')
 const scoreHtml = `
 <section class="${wrapCss} ${sectionCss}" aria-labelledby="score-title">
-  <p class="${eyebrowCss}">Checked live</p>
-  <h2 id="score-title" class="${h2Css}">How the deployed site holds up.</h2>
-  <p class="${introCss}">Audited against the live deploy across the six categories <a class="${proseLinkCss}" href="${WSG_CHECK}">wsg-check</a> scans. Five pass outright; one has a gap we can&rsquo;t fix in code.</p>
+  <p class="${eyebrowCss}">Saved evidence record</p>
+  <h2 id="score-title" class="${h2Css}">Implementation checklist for selected WSG-aligned defaults.</h2>
+  <p class="${introCss}">${evidenceRecord.title} reviewed on ${evidenceRecord.reviewed_on} (${statusSummary}). This section is generated from a saved artifact, not a live deploy audit, and it documents selected evidence rather than full WSG conformance.</p>
+  <p class="${scoreLinksCss}">Linked records: ${linkSummary(evidenceRecord.related_records)}</p>
   <ul class="${scoreListCss}">
-    ${scores.map(([title, pass, body]) => `
+    ${evidenceRecord.entries.map((entry) => `
     <li class="${scoreItemCss}">
       <div class="${scoreHeadCss}">
-        <h3 class="${scoreTitleCss}">${title}</h3>
-        <p class="${pass ? scorePassCss : scorePartCss}">${pass ? '&#10003; Pass' : '&#9888; Partial'}</p>
+        <h3 class="${scoreTitleCss}">${entry.scanner_category}</h3>
+        <p class="${statusOf(entry).css}">${statusOf(entry).label}</p>
       </div>
-      <p class="${scoreBodyCss}">${body}</p>
+      <p class="${scoreBodyCss}">${entry.summary}</p>
+      <p class="${scoreMetaCss}">Reviewed ${entry.date} &middot; ${evidenceRecord.wsg_edition.label} &middot; ${entry.wsg_refs.length ? `WSG refs ${entry.wsg_refs.join(', ')}` : 'No WSG section claimed'}</p>
+      <p class="${scoreMetaCss}">Scope: ${entry.scope}</p>
+      <p class="${scoreMetaCss}">${entry.tool.version ? `Tool: ${entry.tool.name} (${entry.tool.version})` : `Tool: ${entry.tool.name}`} &middot; <a href="${entry.evidence_link}">Evidence link</a></p>
+      ${entry.linked_records?.length ? `<p class="${scoreMetaCss}">Linked records: ${linkSummary(entry.linked_records)}</p>` : ''}
     </li>`).join('')}
   </ul>
-  <p class="${scoreNoteCss}">Status is always a word plus a symbol, never color alone.</p>
+  <p class="${scoreNoteCss}">The card headings follow <a href="${WSG_CHECK}">wsg-check</a>'s scanner categories, not the WSG section structure. Status is always a word plus a symbol, never color alone, and the full record is also available as <a href="/wsg-evidence.json">JSON</a>.</p>
 </section>`
 
 // ---- index: PandaCSS ------------------------------------------------------------
@@ -291,7 +405,7 @@ conditions: {
 },
 theme: { extend: { semanticTokens: { colors: {
   accent: { value: { base: '#2f6b4a', _dark: '#7fcfa3' } },
-  // …the other sixteen, same shape
+  // …the other ${themeTokenCount - 1}, same shape
 } } } },
 // No staticCss: ship only the rules pages use.`
 const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -303,7 +417,7 @@ const pandaHtml = `
       <div>
         <p class="${eyebrowCss}">Built with PandaCSS</p>
         <h2 id="panda-title" class="${h2Css}">Tokens in, only-what-you-use CSS out.</h2>
-        <p class="${introCss}">Verdant maps onto a <a class="${proseLinkCss}" href="https://panda-css.com">PandaCSS</a> config in one file. Panda extracts styles at build time, so the stylesheet grows with your pages &mdash; never with the size of the framework.</p>
+        <p class="${introCss}">Verdant fits in one <a href="https://panda-css.com">PandaCSS</a> config. Build-time extraction keeps the stylesheet tied to what the page actually renders.</p>
         <ul class="${listCss}">
           <li>Semantic tokens carry both themes; <code class="${codeCss}">_dark</code> maps to the OS preference.</li>
           <li>Recipes for button, card, field and switch mirror the component guidelines.</li>
@@ -322,14 +436,14 @@ const ctaInnerCss = css({ position: 'relative', paddingBlock: { base: '12', md: 
 const ctaTitleCss = css({ fontSize: { base: 'displayMd', md: 'displayLg' }, lineHeight: { base: 'displayMd', md: 'displayLg' }, fontWeight: '700', margin: '0', maxWidth: '22ch' })
 const ctaBodyCss = css({ margin: '12px 0 0', maxWidth: '56ch' })
 const ctaBtnCss = css({
-  display: 'inline-block', fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', letterSpacing: '0.02em',
   paddingBlock: '3', paddingInline: '4', borderRadius: 'md', textDecoration: 'none',
   background: 'accent.ink', color: 'accent', border: '1px solid', borderColor: 'accent.ink',
   _hover: { color: 'accent.strong' },
   _focusVisible: { outline: '2px solid', outlineColor: 'accent.ink', outlineOffset: '3px' },
 })
 const ctaLinkCss = css({
-  display: 'inline-block', fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', fontSize: 'bodySm', lineHeight: 'bodySm', fontWeight: '600', letterSpacing: '0.02em',
   paddingBlock: '3', paddingInline: '4', borderRadius: 'md', textDecoration: 'none',
   color: 'accent.ink', border: '1px solid', borderColor: 'accent.ink',
   _hover: { color: 'accent.ink', textDecoration: 'underline' },
@@ -341,11 +455,11 @@ const ctaHtml = `
 <section class="${ctaCss}" aria-labelledby="cta-title">
   <div class="${ctaArtCss}">${leafRow()}</div>
   <div class="${wrapCss} ${ctaInnerCss}">
-    <h2 id="cta-title" class="${ctaTitleCss}">Plant it in your next project.</h2>
-    <p class="${ctaBodyCss}">Clone the repo, copy <code class="${codeCss}">panda.config.ts</code>, and keep the checklist. Everything else is optional &mdash; which is the point.</p>
+    <h2 id="cta-title" class="${ctaTitleCss}">Use it in your next project.</h2>
+    <p class="${ctaBodyCss}">Clone the repo, copy <code class="${codeCss}">panda.config.ts</code>, and keep the checklist. Start with the defaults, then layer in only the styling your product needs.</p>
     <div class="${btnRowCss}">
       <a class="${ctaBtnCss}" href="${REPO}">Get the source</a>
-      <a class="${ctaLinkCss}" href="/components">See the components</a>
+      <a class="${ctaLinkCss}" href="${COMPONENTS_ROUTE}">See the components</a>
     </div>
   </div>
 </section>`
@@ -355,22 +469,29 @@ const ctaHtml = `
 const nav = (active) => {
   const link = (key, href, label) =>
     `<li><a class="${active === key ? navLinkActiveCss : navLinkCss}" href="${href}"${active === key ? ' aria-current="page"' : ''}>${label}</a></li>`
+  const themeOption = (value, label) => `
+          <label class="${themePrefOptionCss}" for="theme-pref-${value}">
+            <input class="${themePrefRadioCss}" type="radio" id="theme-pref-${value}" name="${themePreferenceControlName}" value="${value}"${value === themePreferenceValues[0] ? ' checked' : ''}>
+            <span>${label}</span>
+          </label>`
   return `
   <header class="${headerCss}">
     <div class="${wrapCss} ${barCss}">
       <a class="${wordmarkCss}" href="/">${mark(28)}<span>Verdant</span></a>
-      <nav aria-label="Primary">
-        <ul class="${navListCss}">
-          ${link('components', '/components', 'Components')}
-          ${link('palette', '/#palette', 'Palette')}
-          ${link('github', REPO, 'GitHub')}
-        </ul>
-      </nav>
-      <div class="${themeControlCss}">
-        <label class="${themeLabelCss}" for="${themePreferenceControlName}">Theme</label>
-        <select class="${themeSelectCss}" id="${themePreferenceControlName}" name="${themePreferenceControlName}" data-theme-preference>
-          ${themePreferenceValues.map((value) => `<option value="${value}">${value[0].toUpperCase()}${value.slice(1)}</option>`).join('')}
-        </select>
+      <div class="${headerActionsCss}">
+        <nav aria-label="Primary">
+          <ul class="${navListCss}">
+            ${link('components', COMPONENTS_ROUTE, 'Components')}
+            ${link('palette', '/#palette', 'Palette')}
+            ${link('github', REPO, 'GitHub')}
+          </ul>
+        </nav>
+        <fieldset class="${themePrefCss}" aria-label="Theme preference">
+          <legend class="${themePrefLegendCss}">Theme</legend>
+          ${themeOption('system', 'System')}
+          ${themeOption('light', 'Light')}
+          ${themeOption('dark', 'Dark')}
+        </fieldset>
       </div>
     </div>
   </header>`
@@ -388,13 +509,39 @@ const breadcrumb = (label) => `
 const footer = () => `
   <footer class="${footerCss}">
     <div class="${wrapCss} ${footerBarCss}">
-      <div class="${footerBrandCss}">${mark(20)}<p class="${footerTextCss}">Verdant &mdash; built by Ivan with PandaCSS, tuned to the W3C Web Sustainability Guidelines.</p></div>
+      <div class="${footerBrandCss}">${mark(20)}<p class="${footerTextCss}">Verdant &mdash; built by Ivan with PandaCSS, with defaults aligned to selected Web Sustainability Guidelines.</p></div>
       <ul class="${footerLinksCss}">
         <li><a href="${WSG_CHECK}">wsg-check</a></li>
         <li><a href="${REPO}">Source</a></li>
       </ul>
     </div>
   </footer>`
+
+const updateBannerCss = css({
+  position: 'fixed',
+  insetInline: { base: '4', md: '6' },
+  bottom: { base: '4', md: '6' },
+  zIndex: '10',
+  maxWidth: '640px',
+  marginInline: 'auto',
+  padding: '4',
+  background: 'surface.200',
+  border: '1px solid',
+  borderColor: 'border',
+  borderRadius: 'md',
+  boxShadow: 'md',
+})
+const updateBannerTextCss = css({ margin: '0', fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink' })
+const updateBannerActionsCss = hstack({ gap: '3', marginTop: '3', flexWrap: 'wrap' })
+
+const updateBanner = `
+  <section id="sw-update" class="${updateBannerCss}" hidden aria-labelledby="sw-update-title" aria-live="polite" aria-atomic="true">
+    <p id="sw-update-title" class="${updateBannerTextCss}">A fresh Verdant update is ready. Apply it when you&rsquo;re ready.</p>
+    <div class="${updateBannerActionsCss}">
+      <button id="sw-update-apply" type="button" class="${btnPrimary}">Update now</button>
+      <button id="sw-update-dismiss" type="button" class="${btnSecondary}">Later</button>
+    </div>
+  </section>`
 
 const page = ({ title, description, path, active, jsonLd, bodyHtml, scripts = [] }) => `<!doctype html>
 <html lang="en">
@@ -409,8 +556,9 @@ const page = ({ title, description, path, active, jsonLd, bodyHtml, scripts = []
 <meta property="og:type" content="website">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2f6b4a" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#15140f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="${themeTokens['surface.100'].light}" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="${themeTokens['surface.100'].dark}" media="(prefers-color-scheme: dark)">
+<script src="/theme-toggle.js"></script>
 <link rel="stylesheet" href="/styles.css">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>` : ''}
 </head>
@@ -418,11 +566,12 @@ ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script
 <a class="${skipLinkCss}" href="#main">Skip to content</a>
 ${nav(active)}
 ${active === 'components' ? breadcrumb('Components') : ''}
-<main id="main" tabindex="-1">
+<main id="main">
 ${bodyHtml}
 </main>
 ${footer()}
-${['/site-ui.js', '/sw-register.js', ...scripts].map((s) => `<script src="${s}" defer></script>`).join('\n')}
+${updateBanner}
+${['/sw-register.js', ...scripts].map((s) => `<script src="${s}" defer></script>`).join('\n')}
 </body>
 </html>
 `
@@ -432,7 +581,7 @@ ${['/site-ui.js', '/sw-register.js', ...scripts].map((s) => `<script src="${s}" 
 const compMainCss = css({ paddingBlock: { base: '8', md: '12' } })
 const compTitleCss = css({ fontSize: { base: '40px', md: '56px' }, lineHeight: '1', fontWeight: '700', letterSpacing: '-0.01em', margin: '0 0 16px' })
 const compSectionCss = css({ marginTop: '12' })
-const compH2Css = css({ fontSize: 'displayMd', lineHeight: 'displayMd', fontWeight: '700', margin: '0 0 16px' })
+const compH2Css = css({ fontSize: 'displayMd', lineHeight: 'displayMd', fontWeight: '700', margin: '0' })
 const ledeCss = css({ color: 'ink.muted', maxWidth: '62ch', margin: '0' })
 const gridCss = css({ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '4' })
 const cardCss = card()
@@ -442,94 +591,380 @@ const statusCss = hstack({ gap: '1', fontSize: 'label', lineHeight: 'label', fon
 const statusPositiveCss = css({ color: 'positive' })
 const statusCriticalCss = css({ color: 'critical' })
 const rowCss = flex({ gap: '3', align: 'center', wrap: 'wrap' })
-const captionCss = css({ fontSize: 'label', color: 'ink.muted' })
-const formCss = vstack({ gap: '3', alignItems: 'flex-start', maxWidth: '360px' })
-const fieldCss = vstack({ gap: '1', alignItems: 'flex-start', width: '100%' })
+const captionCss = css({ fontSize: 'label', color: 'ink.muted', margin: '0' })
+const formCss = vstack({ gap: '3', alignItems: 'stretch', width: '100%', maxWidth: '360px' })
+// stretch: hints and errors match the input's width, even on narrow screens
+const fieldCss = vstack({ gap: '1', alignItems: 'stretch', width: '100%' })
 const labelCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600' })
 const hintCss = css({ fontSize: 'bodySm', color: 'ink.muted', margin: '0' })
 const inputCss = fieldInput()
+const switchRowCss = flex({ align: 'center', gap: '3' })
+const switchOffCss = switchTrack()
+const switchOnCss = switchTrack({ on: true })
 const noteCss = css({ marginTop: '3', fontSize: 'label', color: 'ink.muted', maxWidth: '60ch' })
 const motionRowCss = flex({ align: 'center', gap: '6', wrap: 'wrap' })
 const motionGroupCss = vstack({ gap: '2', alignItems: 'flex-start' })
-const motionDemoCss = vstack({ gap: '4', alignItems: 'flex-start' })
 const spinnerCss = spinner()
+const spinnerPreviewCss = spinner({ preview: true })
 // Widths live in classes, not style="" — the CSP's style-src 'self' blocks
 // inline style attributes, which silently collapsed these bars before.
 const skeletonWideCss = `${skeleton()} ${css({ width: '160px', height: '14px' })}`
+const skeletonWidePreviewCss = `${skeleton({ preview: true })} ${css({ width: '160px', height: '14px' })}`
 const skeletonNarrowCss = `${skeleton()} ${css({ width: '110px', height: '14px' })}`
-const decorCss = css({ display: 'block' })
+const skeletonNarrowPreviewCss = `${skeleton({ preview: true })} ${css({ width: '110px', height: '14px' })}`
+const motionIntroCss = css({ color: 'ink.muted', maxWidth: '62ch', margin: '0 0 16px' })
+const motionControlsCss = flex({ align: 'center', gap: '3', wrap: 'wrap', marginTop: '4' })
+const specimenGridCss = css({ display: 'grid', gap: '6' })
+const specimenCss = css({ background: 'surface.200', border: '1px solid', borderColor: 'border', borderRadius: 'lg', padding: { base: '4', md: '6' }, display: 'grid', gap: '4' })
+const specimenHeaderCss = vstack({ gap: '2', alignItems: 'flex-start' })
+const specimenLabelCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', letterSpacing: '0.02em', color: 'accent', margin: '0' })
+const specimenBlockCss = vstack({ gap: '2', alignItems: 'stretch' })
+const specimenPreviewCss = css({ border: '1px solid', borderColor: 'border', borderRadius: 'md', background: 'surface.100', padding: '4' })
+const specimenStateGridCss = css({ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '3' })
+const specimenStateCss = css({ border: '1px dashed', borderColor: 'border', borderRadius: 'md', padding: '3', display: 'grid', gap: '2', alignContent: 'start' })
+const specimenStateTitleCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', margin: '0' })
+const specimenStateBodyCss = css({ display: 'grid', gap: '2' })
+const specimenListCss = css({ margin: '0', paddingInlineStart: '20px', color: 'ink.muted', display: 'grid', gap: '1' })
+const specimenCodeStackCss = css({ display: 'grid', gap: '2' })
+const specimenDetailsCss = css({ border: '1px solid', borderColor: 'border', borderRadius: 'md', background: 'surface.100' })
+const specimenSummaryCss = css({ cursor: 'pointer', paddingInline: '3', paddingBlock: '2', fontSize: 'label', lineHeight: 'label', fontWeight: '600' })
+const specimenPreCss = css({ margin: '0', paddingInline: '3', paddingBottom: '3', overflowX: 'auto', fontFamily: 'mono', fontSize: 'label', lineHeight: 'label', whiteSpace: 'pre-wrap' })
+const prosePreviewCss = css({ margin: '0', maxWidth: '48ch' })
+const proseLinkCss = css({
+  color: 'accent',
+  textDecoration: 'underline',
+  textUnderlineOffset: '3px',
+  textDecorationThickness: '1.5px',
+  _hover: { color: 'accent.strong' },
+  _visited: { color: 'accent.strong' },
+})
+const demoVisitedCss = css({ color: 'accent.strong' })
+const demoFocusCss = css({ outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '2px' })
+const demoPrimaryHoverCss = css({ background: 'accent.strong' })
+const inputErrorCss = css({ borderColor: 'critical' })
+const inputSuccessCss = css({ borderColor: 'positive' })
+const successTextCss = css({ fontSize: 'bodySm', color: 'positive', margin: '0' })
+const errorTextCss = css({ fontSize: 'bodySm', color: 'critical', margin: '0' })
+const previewStackCss = vstack({ gap: '4', alignItems: 'stretch' })
+const loadingFrameCss = css({ border: '1px dashed', borderColor: 'border', borderRadius: 'md', padding: '4', display: 'grid', gap: '3', maxWidth: '300px' })
+const switchDisabledCss = css({ opacity: '0.55', cursor: 'not-allowed' })
+
+const snippet = (label, code) => `
+<details class="${specimenDetailsCss}">
+  <summary class="${specimenSummaryCss}">${label}</summary>
+  <pre class="${specimenPreCss}"><code>${escapeHtml(code.trim())}</code></pre>
+</details>`
+
+const stateTile = (title, body, note = '') => `
+<div class="${specimenStateCss}">
+  <p class="${specimenStateTitleCss}">${title}</p>
+  <div class="${specimenStateBodyCss}">${body}</div>
+  ${note ? `<p class="${captionCss}">${note}</p>` : ''}
+</div>`
+
+const specimen = ({ id, title, blurb, preview, states, guidance, htmlCode, pandaCode }) => `
+<section class="${specimenCss}" aria-labelledby="${id}-title">
+  <header class="${specimenHeaderCss}">
+    <h2 id="${id}-title" class="${compH2Css}">${title}</h2>
+    <p class="${cardBodyCss}">${blurb}</p>
+  </header>
+  <div class="${specimenBlockCss}">
+    <p class="${specimenLabelCss}">Preview</p>
+    <div class="${specimenPreviewCss}">${preview}</div>
+  </div>
+  <div class="${specimenBlockCss}">
+    <p class="${specimenLabelCss}">State examples</p>
+    <div class="${specimenStateGridCss}">${states}</div>
+  </div>
+  <div class="${specimenBlockCss}">
+    <p class="${specimenLabelCss}">Usage guidance</p>
+    <ul class="${specimenListCss}">
+      ${guidance.map((item) => `<li>${item}</li>`).join('')}
+    </ul>
+  </div>
+  <div class="${specimenBlockCss}">
+    <p class="${specimenLabelCss}">Copyable examples</p>
+    <div class="${specimenCodeStackCss}">
+      ${snippet('HTML', htmlCode)}
+      ${snippet('Panda', pandaCode)}
+    </div>
+  </div>
+</section>`
 
 const componentsBody = `
 <div class="${wrapCss} ${compMainCss}">
   <h1 class="${compTitleCss}">Components</h1>
-  <p class="${ledeCss}">Five patterns, each demonstrating one WSG-relevant behavior live rather than just describing it.</p>
+  <p class="${ledeCss}">Six documented specimens pair preview states, concise guidance, and copyable snippets without implying a live backend. The site-wide System/Light/Dark preference lives in the header.</p>
 
-  <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">Buttons</h2>
-    <p class="${captionCss}">Default &mdash; hover is real, try it</p>
-    <div class="${rowCss}">
-      <button class="${btnPrimary}">Save changes</button>
-      <button class="${btnSecondary}">Cancel</button>
-      <button class="${btnPrimary}" disabled>Save changes</button>
-    </div>
-  </section>
+  <div class="${specimenGridCss} ${compSectionCss}">
+    ${specimen({
+      id: 'link-specimen',
+      title: 'Links',
+      blurb: 'Use anchors for navigation in prose. The gallery keeps a deliberate visited style and leaves keyboard focus to the browser.',
+      preview: `
+        <p class="${prosePreviewCss}">
+          Read the <a class="${proseLinkCss}" href="#field-specimen-title">field guidance</a>,
+          revisit the <a class="${proseLinkCss}" href="#status-specimen-title">sample scan findings</a>,
+          or inspect the <a class="${proseLinkCss} ${demoFocusCss}" href="#loading-specimen-title">loading specimen</a>.
+        </p>
+        <p class="${noteCss}">Visited styling appears after your browser records a destination, so the sample above uses real anchors instead of a fake disabled link.</p>`,
+      states: [
+        stateTile('Default', `<a class="${proseLinkCss}" href="#button-specimen-title">Browse button guidance</a>`),
+        stateTile('Visited tone', `<a class="${proseLinkCss} ${demoVisitedCss}" href="#status-specimen-title">Revisit sample results</a>`, 'Browser-controlled once followed.'),
+        stateTile('Focus-visible', `<a class="${proseLinkCss} ${demoFocusCss}" href="#switch-specimen-title">Move to the switch specimen</a>`, 'Tab to links; Enter follows them.'),
+      ].join(''),
+      guidance: [
+        'Keep link text specific to the destination instead of repeating “click here.”',
+        'Visited styling is intentional for prose links so readers can tell which references they have opened.',
+        'Never present navigation as disabled; if an action is unavailable, use a button or explanatory text instead.',
+      ],
+      htmlCode: `
+<p>
+  Read the <a href="#field-specimen-title">field guidance</a>.
+</p>`,
+      pandaCode: `
+const proseLink = css({
+  color: 'accent',
+  textDecoration: 'underline',
+  textUnderlineOffset: '3px',
+  _visited: { color: 'accent.strong' },
+})`,
+    })}
 
-  <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">Cards</h2>
-    <div class="${gridCss}">
-      <div class="${cardCss}">
-        <h3 class="${cardHeadingCss}">Homepage scan</h3>
-        <p class="${cardBodyCss}">18 checks passed, 2 warnings, 0 failures.</p>
-        <div class="${statusCss} ${statusPositiveCss}">&#10003; Passing</div>
-      </div>
-      <div class="${cardCss}">
-        <h3 class="${cardHeadingCss}">Checkout flow</h3>
-        <p class="${cardBodyCss}">Render-blocking script found on the payment step.</p>
-        <div class="${statusCss} ${statusCriticalCss}">&#9888; Needs attention</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">Form field</h2>
-    <form class="${formCss}">
-      <div class="${fieldCss}">
-        <label class="${labelCss}" for="site-url">Website URL</label>
-        <input class="${inputCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" aria-describedby="site-url-hint" placeholder="https://example.com">
-        <p class="${hintCss}" id="site-url-hint">One field &mdash; enough to run a scan, nothing else required.</p>
-      </div>
-    </form>
-  </section>
-
-  <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">Theme preference</h2>
-    <p class="${ledeCss}">The site-wide control in the header offers System, Light, and Dark modes. System follows live OS changes; explicit choices persist as you move between pages.</p>
-  </section>
-
-  <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">Motion</h2>
-    <div class="${motionDemoCss}">
-      <button type="button" class="${btnSecondary}" id="motion-preview" data-motion-preview>Preview loading motion</button>
-      <p class="${noteCss}" id="motion-status" aria-live="polite">Animations stay still until you preview them.</p>
-      <div class="${motionRowCss}" data-motion-demo data-running="false">
-        <div class="${motionGroupCss}">
-          <div class="${spinnerCss}" role="status" aria-label="Scanning"></div>
-          <span class="${captionCss}">Spinner</span>
+    ${specimen({
+      id: 'button-specimen',
+      title: 'Buttons',
+      blurb: 'Buttons stay native for actions. Show a pressed state only on toggle buttons, and use the disabled attribute when the action truly cannot run.',
+      preview: `
+        <div class="${rowCss}">
+          <button class="${btnPrimary}" type="button">Save changes</button>
+          <button class="${btnSecondary}" type="button">Cancel</button>
+          <button class="${btnPrimary}" type="button" aria-pressed="true">Updates enabled</button>
         </div>
-        <div class="${motionGroupCss}">
-          <div class="${skeletonWideCss}"></div>
-          <div class="${skeletonNarrowCss}"></div>
-          <span class="${captionCss}">Skeleton</span>
-        </div>
-      </div>
-    </div>
-  </section>
+        <p class="${noteCss}">The pressed example is a toggle button specimen only; ordinary submit buttons should not use <code class="${codeCss}">aria-pressed</code>.</p>`,
+      states: [
+        stateTile('Default', `<button class="${btnPrimary}" type="button">Run sample scan</button>`),
+        stateTile('Hover', `<button class="${btnPrimary} ${demoPrimaryHoverCss}" type="button">Run sample scan</button>`, 'Hover should reinforce the action without changing the label.'),
+        stateTile('Focus-visible', `<button class="${btnSecondary} ${demoFocusCss}" type="button">Review changes</button>`, 'Tab to buttons; Space or Enter activates them.'),
+        stateTile('Pressed toggle', `<button class="${btnPrimary}" type="button" aria-pressed="true">Sample alerts on</button>`, 'Use only when the button keeps an on/off state.'),
+        stateTile('Disabled', `<button class="${btnPrimary}" type="button" disabled>Scan unavailable</button>`, 'Disabled buttons are skipped by keyboard focus.'),
+      ].join(''),
+      guidance: [
+        'Choose links for navigation and buttons for in-page actions or form submission.',
+        `Only persistent toggles should use <code class="${codeCss}">aria-pressed</code>; one-off actions stay unpressed.`,
+        'Disabled buttons should explain why elsewhere when the next step is not obvious.',
+      ],
+      htmlCode: `
+<button type="button" aria-pressed="true">
+  Sample alerts on
+</button>`,
+      pandaCode: `
+const actionButton = button({ variant: 'primary' })
+const quietButton = button({ variant: 'secondary' })`,
+    })}
 
-  <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">A decorative image</h2>
-    <p class="${ledeCss}">The Verdant leaf, as a real file: purely decorative, so it carries <code class="${codeCss}">alt=""</code>, explicit dimensions, lazy loading, and drops out entirely for anyone who's asked to save data.</p>
-    <img class="${decorCss} decor" src="/favicon.svg" width="64" height="64" alt="" loading="lazy">
-  </section>
+    ${specimen({
+      id: 'field-specimen',
+      title: 'Fields',
+      blurb: 'Single-field forms still need associated hints, actionable errors, and room for read-only or success states.',
+      preview: `
+        <form class="${formCss}">
+          <div class="${fieldCss}">
+            <label class="${labelCss}" for="site-url">Website URL <span aria-hidden="true">*</span></label>
+            <input class="${inputCss}" id="site-url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com" required aria-describedby="site-url-hint">
+            <p class="${hintCss}" id="site-url-hint">Use a full <code class="${codeCss}">https://</code> URL for this static example.</p>
+          </div>
+        </form>`,
+      states: [
+        stateTile('Required', `
+          <label class="${labelCss}" for="site-url-required">Website URL <span aria-hidden="true">*</span></label>
+          <input class="${inputCss}" id="site-url-required" type="url" required aria-describedby="site-url-required-hint" placeholder="https://example.com">
+          <p class="${hintCss}" id="site-url-required-hint">Hints match the input width on narrow screens.</p>`),
+        stateTile('Error', `
+          <label class="${labelCss}" for="site-url-error">Website URL <span aria-hidden="true">*</span></label>
+          <input class="${inputCss} ${inputErrorCss}" id="site-url-error" type="url" aria-invalid="true" aria-describedby="site-url-error-hint site-url-error-note" value="verdant.example">
+          <p class="${hintCss}" id="site-url-error-hint">Provide a reachable sample URL.</p>
+          <p class="${errorTextCss}" id="site-url-error-note">&#9888; Add <code class="${codeCss}">https://</code> so the address is complete.</p>`),
+        stateTile('Read-only success', `
+          <label class="${labelCss}" for="site-url-readonly">Website URL</label>
+          <input class="${inputCss} ${inputSuccessCss}" id="site-url-readonly" type="url" readonly aria-describedby="site-url-readonly-note" value="https://verdant.example">
+          <p class="${successTextCss}" id="site-url-readonly-note">&#10003; Sample target saved for the next review.</p>`),
+      ].join(''),
+      guidance: [
+        `Keep every hint and error associated with the field through <code class="${codeCss}">aria-describedby</code>.`,
+        'Error text should explain the fix, not just restate that something is invalid.',
+        'Read-only fields remain focusable and selectable, which helps people copy sample values.',
+      ],
+      htmlCode: `
+<label for="site-url">Website URL</label>
+<input id="site-url" type="url" aria-invalid="true"
+  aria-describedby="site-url-hint site-url-error">
+<p id="site-url-hint">Provide a reachable URL.</p>
+<p id="site-url-error">Add https:// so the address is complete.</p>`,
+      pandaCode: `
+const field = fieldInput()
+const invalidField = css({ borderColor: 'critical' })
+const successField = css({ borderColor: 'positive' })`,
+    })}
+
+    ${specimen({
+      id: 'switch-specimen',
+      title: 'Switches',
+      blurb: 'Switches represent an immediate on/off setting. The track and knob follow aria-checked, so visual and announced state cannot drift.',
+      preview: `
+        <div class="${previewStackCss}">
+          <div>
+            <p class="${captionCss}">Live specimen</p>
+            <div class="${switchRowCss}">
+              <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" aria-labelledby="specimen-switch-label" id="theme-switch">
+                <span class="knob"></span>
+              </button>
+              <span class="${labelCss}" id="specimen-switch-label">Email alerts</span>
+            </div>
+          </div>
+          <p class="${noteCss}">Demonstration only: the site-wide System/Light/Dark preference lives in the header. This specimen keeps its track and knob in sync with its own state.</p>
+        </div>`,
+      states: [
+        stateTile('Off', `
+          <div class="${switchRowCss}">
+            <button type="button" class="${switchOffCss}" role="switch" aria-checked="false" aria-labelledby="switch-state-off">
+              <span class="knob"></span>
+            </button>
+            <span class="${captionCss}" id="switch-state-off">Motion follows system</span>
+          </div>`),
+        stateTile('On', `
+          <div class="${switchRowCss}">
+            <button type="button" class="${switchOnCss}" role="switch" aria-checked="true" aria-labelledby="switch-state-on">
+              <span class="knob"></span>
+            </button>
+            <span class="${captionCss}" id="switch-state-on">Email alerts on</span>
+          </div>`, `Use <code class="${codeCss}">aria-checked</code> to expose state.`),
+        stateTile('Disabled', `
+          <div class="${switchRowCss}">
+            <button type="button" class="${switchOffCss} ${switchDisabledCss}" role="switch" aria-checked="false" aria-labelledby="switch-state-disabled" disabled>
+              <span class="knob"></span>
+            </button>
+            <span class="${captionCss}" id="switch-state-disabled">Locked by policy</span>
+          </div>`, 'Space toggles switches; disabled ones stay inert.'),
+      ].join(''),
+      guidance: [
+        'Use switches for immediate preferences, not deferred form submissions.',
+        `A switch needs a visible label plus <code class="${codeCss}">aria-checked</code> to announce its state.`,
+        `Native buttons already support Space and Enter, so <code class="${codeCss}">role="switch"</code> can build on that behavior.`,
+      ],
+      htmlCode: `
+<button type="button" role="switch" aria-checked="false"
+  aria-labelledby="alerts-label">
+  <span class="knob"></span>
+</button>
+<span id="alerts-label">Email alerts</span>`,
+      pandaCode: `
+const switchOff = switchTrack()
+const switchOn = switchTrack({ on: true })`,
+    })}
+
+    ${specimen({
+      id: 'status-specimen',
+      title: 'Cards and status',
+      blurb: 'Sample scan cards stay obviously static. Icons and text communicate state together so the specimen does not rely on color alone.',
+      preview: `
+        <p class="${captionCss}">Sample scan results</p>
+        <div class="${gridCss}">
+          <div class="${cardCss}">
+            <p class="${captionCss}">Sample result</p>
+            <h3 class="${cardHeadingCss}">Homepage scan</h3>
+            <p class="${cardBodyCss}">18 checks passed, 2 warnings, 0 failures.</p>
+            <div class="${statusCss} ${statusPositiveCss}"><span aria-hidden="true">&#10003;</span><span>Passing sample</span></div>
+          </div>
+          <div class="${cardCss}">
+            <p class="${captionCss}">Sample result</p>
+            <h3 class="${cardHeadingCss}">Checkout flow</h3>
+            <p class="${cardBodyCss}">Render-blocking script appears on the payment step.</p>
+            <div class="${statusCss} ${statusCriticalCss}"><span aria-hidden="true">&#9888;</span><span>Needs attention</span></div>
+          </div>
+        </div>`,
+      states: [
+        stateTile('Passing', `
+          <div class="${cardCss}">
+            <h3 class="${cardHeadingCss}">Accessibility summary</h3>
+            <p class="${cardBodyCss}">Keyboard checks passed in this sample.</p>
+            <div class="${statusCss} ${statusPositiveCss}"><span aria-hidden="true">&#10003;</span><span>Passing sample</span></div>
+          </div>`),
+        stateTile('Needs attention', `
+          <div class="${cardCss}">
+            <h3 class="${cardHeadingCss}">Images review</h3>
+            <p class="${cardBodyCss}">One decorative image still needs an empty alt attribute.</p>
+            <div class="${statusCss} ${statusCriticalCss}"><span aria-hidden="true">&#9888;</span><span>Fix before publish</span></div>
+          </div>`),
+        stateTile('Informational', `
+          <div class="${cardCss}">
+            <h3 class="${cardHeadingCss}">Queue note</h3>
+            <p class="${cardBodyCss}">This card shows static copy only; no network request has been sent.</p>
+            <div class="${statusCss}"><span aria-hidden="true">&#9432;</span><span>Sample only</span></div>
+          </div>`),
+      ].join(''),
+      guidance: [
+        'Label examples as samples whenever the page is not showing live application data.',
+        'Pair status color with an icon or word so the meaning survives monochrome and high-contrast modes.',
+        'Keep the card body focused on the next action or takeaway instead of reproducing raw scanner output.',
+      ],
+      htmlCode: `
+<article class="card">
+  <h3>Homepage scan</h3>
+  <p>18 checks passed, 2 warnings, 0 failures.</p>
+  <p>✓ Passing sample</p>
+</article>`,
+      pandaCode: `
+const resultCard = card()
+const passingStatus = css({ color: 'positive' })
+const warningStatus = css({ color: 'critical' })`,
+    })}
+
+    ${specimen({
+      id: 'loading-specimen',
+      title: 'Loading patterns',
+      blurb: 'Loading feedback is bounded, labelled, and explicitly demo-only. Nothing animates until you ask, and reduced motion keeps it still.',
+      preview: `
+        <p class="${motionIntroCss}">Static by default. The preview runs four spinner turns and three skeleton pulses (about four seconds), then stops. With reduced motion requested, the examples stay still.</p>
+        <div class="${motionRowCss}">
+          <div class="${loadingFrameCss}">
+            <div class="${statusCss}">
+              <div id="demo-spinner" class="${spinnerCss}" aria-hidden="true"></div>
+              <span>Preparing sample scan results</span>
+            </div>
+            <p class="${captionCss}">Example only &mdash; this gallery does not start a backend scan.</p>
+          </div>
+          <div class="${loadingFrameCss}">
+            <div class="${motionGroupCss}">
+              <div id="demo-skeleton-wide" class="${skeletonWideCss}" aria-hidden="true"></div>
+              <div id="demo-skeleton-narrow" class="${skeletonNarrowCss}" aria-hidden="true"></div>
+            </div>
+            <p class="${captionCss}">Use skeletons for known layout while content is on the way.</p>
+          </div>
+        </div>
+        <div class="${motionControlsCss}">
+          <button class="${btnSecondary}" type="button" id="motion-preview">Preview loading motion</button>
+        </div>
+        <p class="${noteCss}" id="motion-preview-status" role="status" aria-live="polite">Static by default. Preview runs once, then stops automatically.</p>`,
+      states: [
+        stateTile('Spinner', `<div class="${statusCss}"><div class="${spinnerCss}" aria-hidden="true"></div><span>Loading sample data</span></div>`, 'Pair any indicator with text; the text carries the meaning.'),
+        stateTile('Skeleton', `<div class="${motionGroupCss}"><div class="${skeletonWideCss}" aria-hidden="true"></div><div class="${skeletonNarrowCss}" aria-hidden="true"></div></div>`, 'Decorative placeholders stay out of the accessibility tree.'),
+        stateTile('Disabled while loading', `<button class="${btnPrimary}" type="button" disabled>Preparing report</button>`, 'Reserve disabled loading buttons for actions already in progress.'),
+      ].join(''),
+      guidance: [
+        'Announce active work with text, not with motion alone.',
+        'Keep loading indicators inside the region they describe so users can tell what is pending.',
+        'If the layout is already known, skeletons can reduce surprise while content arrives.',
+      ],
+      htmlCode: `
+<div role="status" aria-label="Loading sample results"></div>
+<p>Preparing sample scan results</p>`,
+      pandaCode: `
+const busySpinner = spinner()
+const loadingSkeleton = skeleton()`,
+    })}
+
+  </div>
 </div>
 `
 
@@ -540,124 +975,220 @@ const notFoundBody = `
 <div class="${wrapCss} ${nfCss}">
   ${seedlingArt()}
   <h1 class="${compTitleCss}">Page not found</h1>
-  <p class="${ledeCss}">Nothing has grown here yet. <a class="${proseLinkCss}" href="/">Back to the overview</a>, or <a class="${proseLinkCss}" href="/components">browse the components</a>.</p>
+  <p class="${ledeCss}">Nothing has grown here yet. <a href="/">Back to the overview</a>, or <a href="${COMPONENTS_ROUTE}">browse the components</a>.</p>
 </div>`
 
 const offlineBody = `
 <div class="${wrapCss} ${nfCss}">
   ${seedlingArt()}
   <h1 class="${compTitleCss}">Offline for now</h1>
-  <p class="${ledeCss}">This route is not in the offline shell yet. Try <a class="${proseLinkCss}" href="/">the overview</a> or <a class="${proseLinkCss}" href="/components">the components gallery</a> again when you are back online.</p>
+  <p class="${ledeCss}">This page isn&rsquo;t cached yet, and the network is out of reach. You can still open the <a href="/">overview</a> or the <a href="${COMPONENTS_ROUTE}">component gallery</a>, which are saved for offline use after installation.</p>
 </div>`
 
 // ---- scripts ---------------------------------------------------------------------
 
-const siteUiJs = `(function () {
-  var KEY = ${JSON.stringify(themePreferenceStorageKey)};
-  var CONTROL = ${JSON.stringify(themePreferenceControlName)};
-  var PALETTES = ${JSON.stringify(explicitThemeVars)};
-  var PREF_ATTR = ${JSON.stringify(themePreferenceAttr)};
-  var RESOLVED_ATTR = ${JSON.stringify(themeResolvedAttr)};
+const themeToggleJs = `(function () {
+  var STORAGE_KEY = ${JSON.stringify(themePreferenceStorageKey)};
   var OVERRIDE_ATTR = ${JSON.stringify(themeOverrideAttr)};
-  var modes = { system: true, light: true, dark: true };
-  var root = document.documentElement;
-  var controls = Array.prototype.slice.call(document.querySelectorAll('[data-theme-preference], [name=\"' + CONTROL + '\"]'));
-  var scheme = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-  function clearTheme() {
-    Object.keys(PALETTES.light).forEach(function (key) { root.style.removeProperty(key); });
-    root.style.colorScheme = 'light dark';
-    root.removeAttribute(OVERRIDE_ATTR);
+  var PREFERENCE_ATTR = ${JSON.stringify(themePreferenceAttr)};
+  var RESOLVED_ATTR = ${JSON.stringify(themeResolvedAttr)};
+  var CONTROL_NAME = ${JSON.stringify(themePreferenceControlName)};
+  var SWITCH_OFF = ${JSON.stringify(switchOffCss)};
+  var SWITCH_ON = ${JSON.stringify(switchOnCss)};
+  var media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  function systemTheme() {
+    return media && media.matches ? "dark" : "light";
   }
-  function paint(mode) {
-    if (mode === 'system') return clearTheme();
-    var palette = PALETTES[mode];
-    Object.keys(palette).forEach(function (key) { root.style.setProperty(key, palette[key]); });
-    root.style.colorScheme = mode;
-    root.setAttribute(OVERRIDE_ATTR, mode);
-  }
-  function readMode() {
+  function readPreference() {
     try {
-      var value = window.localStorage.getItem(KEY) || 'system';
-      return modes[value] ? value : 'system';
-    } catch (_) {
-      return 'system';
-    }
+      var saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved === "light" || saved === "dark") return saved;
+    } catch (_) {}
+    return "system";
   }
-  function writeMode(mode) {
+  function persistPreference(value) {
     try {
-      if (mode === 'system') window.localStorage.removeItem(KEY);
-      else window.localStorage.setItem(KEY, mode);
+      if (value === "system") window.localStorage.removeItem(STORAGE_KEY);
+      else window.localStorage.setItem(STORAGE_KEY, value);
     } catch (_) {}
   }
-  function sync(mode) {
-    var resolved = mode === 'system' ? (scheme && scheme.matches ? 'dark' : 'light') : mode;
-    root.setAttribute(PREF_ATTR, mode);
-    root.setAttribute(RESOLVED_ATTR, resolved);
-    paint(mode);
-    controls.forEach(function (control) { control.value = mode; });
-  }
-  var mode = readMode();
-  sync(mode);
-  controls.forEach(function (control) {
-    control.addEventListener('change', function () {
-      mode = modes[control.value] ? control.value : 'system';
-      writeMode(mode);
-      sync(mode);
-    });
-  });
-  if (scheme) {
-    var refresh = function () { if (mode === 'system') sync(mode); };
-    if (scheme.addEventListener) scheme.addEventListener('change', refresh);
-    else if (scheme.addListener) scheme.addListener(refresh);
-  }
-
-  var button = document.querySelector('[data-motion-preview]');
-  var demo = document.querySelector('[data-motion-demo]');
-  var status = document.getElementById('motion-status');
-  var reduceMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
-  if (!button || !demo || !status) return;
-  var timer = null;
-  function setMotionEnabled(enabled) {
-    demo.dataset.running = enabled ? 'true' : 'false';
-    button.disabled = enabled;
-    button.textContent = enabled ? 'Previewing loading motion…' : 'Preview loading motion';
-    status.textContent = enabled ? 'Animating for a short preview.' : 'Animations stay still until you preview them.';
-  }
-  function syncMotionPreference() {
-    if (reduceMotion && reduceMotion.matches) {
-      clearTimeout(timer);
-      timer = null;
-      demo.dataset.running = 'false';
-      button.disabled = true;
-      button.textContent = 'Motion stays off when reduced motion is on';
-      status.textContent = 'Reduced motion is on, so the loading demos stay static.';
-      return;
+  var THEME_COLOR = ${JSON.stringify({ light: themeTokens['surface.100'].light, dark: themeTokens['surface.100'].dark })};
+  // Browser chrome follows the resolved theme: an explicit choice pins every
+  // theme-color meta to that theme; System restores the media-query fallbacks.
+  function syncThemeColor(value, resolved) {
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    for (var i = 0; i < metas.length; i += 1) {
+      var meta = metas[i];
+      if (!meta.hasAttribute("data-media")) {
+        meta.setAttribute("data-media", meta.getAttribute("media") || "");
+        meta.setAttribute("data-content", meta.getAttribute("content") || "");
+      }
+      if (value === "system") {
+        meta.setAttribute("media", meta.getAttribute("data-media"));
+        meta.setAttribute("content", meta.getAttribute("data-content"));
+      } else {
+        meta.removeAttribute("media");
+        meta.setAttribute("content", THEME_COLOR[resolved]);
+      }
     }
-    if (timer) return;
-    button.disabled = false;
-    button.textContent = 'Preview loading motion';
-    status.textContent = 'Animations stay still until you preview them.';
   }
-  button.addEventListener('click', function () {
-    if (reduceMotion && reduceMotion.matches) return;
-    clearTimeout(timer);
-    setMotionEnabled(true);
-    timer = window.setTimeout(function () {
-      timer = null;
-      setMotionEnabled(false);
-    }, 3200);
+  function applyPreference(value) {
+    var resolved = value === "system" ? systemTheme() : value;
+    var root = document.documentElement;
+    root.setAttribute(PREFERENCE_ATTR, value);
+    root.setAttribute(RESOLVED_ATTR, resolved);
+    if (value === "system") root.removeAttribute(OVERRIDE_ATTR);
+    else root.setAttribute(OVERRIDE_ATTR, value);
+    syncThemeColor(value, resolved);
+    return resolved;
+  }
+  function syncControls() {
+    var radios = document.querySelectorAll('input[name="' + CONTROL_NAME + '"]');
+    for (var i = 0; i < radios.length; i += 1) radios[i].checked = radios[i].value === currentPreference;
+  }
+  var currentPreference = readPreference();
+  applyPreference(currentPreference);
+  document.addEventListener("DOMContentLoaded", function () {
+    syncControls();
+    var radios = document.querySelectorAll('input[name="' + CONTROL_NAME + '"]');
+    for (var i = 0; i < radios.length; i += 1) {
+      radios[i].addEventListener("change", function (event) {
+        currentPreference = event.target.value;
+        persistPreference(currentPreference);
+        applyPreference(currentPreference);
+      });
+    }
+    var btn = document.getElementById("theme-switch");
+    if (btn) {
+      var specimenOn = btn.getAttribute("aria-checked") === "true";
+      var renderSwitch = function () {
+        btn.className = specimenOn ? SWITCH_ON : SWITCH_OFF;
+        btn.setAttribute("aria-checked", String(specimenOn));
+      };
+      renderSwitch();
+      btn.addEventListener("click", function () {
+        specimenOn = !specimenOn;
+        renderSwitch();
+      });
+    }
   });
-  if (reduceMotion) {
-    if (reduceMotion.addEventListener) reduceMotion.addEventListener('change', syncMotionPreference);
-    else if (reduceMotion.addListener) reduceMotion.addListener(syncMotionPreference);
+  // A page restored from the back/forward cache keeps its old DOM state:
+  // re-read the stored choice in case it changed on another page meanwhile.
+  window.addEventListener("pageshow", function (event) {
+    if (!event.persisted) return;
+    currentPreference = readPreference();
+    applyPreference(currentPreference);
+    syncControls();
+  });
+  if (media) {
+    var onSystemChange = function () {
+      if (currentPreference === "system") applyPreference("system");
+    };
+    if (typeof media.addEventListener === "function") media.addEventListener("change", onSystemChange);
+    else if (typeof media.addListener === "function") media.addListener(onSystemChange);
   }
-  syncMotionPreference();
+})();
+`
+
+const motionPreviewJs = `(function () {
+  var btn = document.getElementById("motion-preview");
+  if (!btn) return;
+  var status = document.getElementById("motion-preview-status");
+  var spinnerEl = document.getElementById("demo-spinner");
+  var skeletonWideEl = document.getElementById("demo-skeleton-wide");
+  var skeletonNarrowEl = document.getElementById("demo-skeleton-narrow");
+  var media = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  var timer = 0;
+  function setStatus(text) {
+    if (status) status.textContent = text;
+  }
+  function setStatic() {
+    if (spinnerEl) spinnerEl.className = ${JSON.stringify(spinnerCss)};
+    if (skeletonWideEl) skeletonWideEl.className = ${JSON.stringify(skeletonWideCss)};
+    if (skeletonNarrowEl) skeletonNarrowEl.className = ${JSON.stringify(skeletonNarrowCss)};
+  }
+  function restartAnimation(el, className) {
+    if (!el) return;
+    el.className = className.static;
+    void el.offsetWidth;
+    el.className = className.preview;
+  }
+  function syncReducedMotionStatus() {
+    window.clearTimeout(timer);
+    setStatic();
+    if (media && media.matches) {
+      setStatus("Reduced motion is enabled, so the loading preview stays still.");
+      return true;
+    }
+    setStatus("Static by default. Preview runs once, then stops automatically.");
+    return false;
+  }
+  btn.addEventListener("click", function () {
+    if (syncReducedMotionStatus()) return;
+    restartAnimation(spinnerEl, { static: ${JSON.stringify(spinnerCss)}, preview: ${JSON.stringify(spinnerPreviewCss)} });
+    restartAnimation(skeletonWideEl, { static: ${JSON.stringify(skeletonWideCss)}, preview: ${JSON.stringify(skeletonWidePreviewCss)} });
+    restartAnimation(skeletonNarrowEl, { static: ${JSON.stringify(skeletonNarrowCss)}, preview: ${JSON.stringify(skeletonNarrowPreviewCss)} });
+    setStatus("Preview running for about four seconds. It stops automatically.");
+    timer = window.setTimeout(function () {
+      setStatic();
+      setStatus("Preview finished. Loading demos are static again.");
+    }, 4200);
+  });
+  if (media) {
+    if (media.addEventListener) {
+      media.addEventListener("change", syncReducedMotionStatus);
+    } else if (media.addListener) {
+      media.addListener(syncReducedMotionStatus);
+    }
+  }
+  syncReducedMotionStatus();
 })();
 `
 
 const swRegisterJs = `if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/sw.js');
+    var prompt = document.getElementById('sw-update');
+    var apply = document.getElementById('sw-update-apply');
+    var dismiss = document.getElementById('sw-update-dismiss');
+    var waitingWorker = null;
+    var shouldRefresh = false;
+    var refreshing = false;
+    function showUpdate(worker) {
+      waitingWorker = worker;
+      if (prompt) prompt.hidden = false;
+    }
+    function hideUpdate() {
+      if (prompt) prompt.hidden = true;
+    }
+    if (dismiss) dismiss.addEventListener('click', hideUpdate);
+    if (apply) {
+      apply.addEventListener('click', function () {
+        if (!waitingWorker) return;
+        shouldRefresh = true;
+        hideUpdate();
+        waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+      });
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      waitingWorker = null;
+      hideUpdate();
+      if (!shouldRefresh || refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+    navigator.serviceWorker.register('/sw.js').then(function (registration) {
+      function watch(worker) {
+        if (!worker) return;
+        worker.addEventListener('statechange', function () {
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) showUpdate(worker);
+        });
+      }
+      if (registration.waiting) showUpdate(registration.waiting);
+      if (registration.installing) watch(registration.installing);
+      registration.addEventListener('updatefound', function () {
+        watch(registration.installing);
+      });
+    }).catch(function () {});
   });
 }
 `
@@ -669,18 +1200,18 @@ const swJs = `// Verdant — offline shell.
 // Pages: network first, so HTML is always the deployed version when online;
 // the cached copy is only a fallback. Assets: hashed filenames, so a cached
 // copy can never be stale — cache first is safe.
-var PREFIX = 'verdant-shell-';
-var CACHE = PREFIX + '__VERSION__';
+var CACHE_PREFIX = 'verdant-';
+var CACHE = CACHE_PREFIX + '__VERSION__';
 var SHELL = __SHELL__;
-self.__ROUTE_MAP__ = ${JSON.stringify(workerRouteMap)};
 self.addEventListener('message', function (event) {
-  if (event.data === 'verdant:skip-waiting') self.skipWaiting();
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
-function routeKey(url) {
-  var path = new URL(url).pathname;
-  path = path.replace(/\\/+$/, '') || '/';
-  if (self.__ROUTE_MAP__[path]) return self.__ROUTE_MAP__[path];
-  if (/\\.html$/.test(path)) return path;
+function normalizePage(pathname) {
+  if (pathname === '/' || pathname === '/index.html') return '/';
+  pathname = pathname.replace(/\\/+$/, '');
+  if (pathname === '${COMPONENTS_ROUTE}' || pathname === '${COMPONENTS_FILE}') return '${COMPONENTS_ROUTE}';
+  if (pathname === '/404' || pathname === '/404.html') return '/404.html';
+  if (pathname === '/offline' || pathname === '/offline.html') return '/offline.html';
   return null;
 }
 self.addEventListener('install', function (event) {
@@ -689,11 +1220,10 @@ self.addEventListener('install', function (event) {
   event.waitUntil(caches.open(CACHE).then(function (cache) {
     return cache.addAll(SHELL.map(function (u) { return new Request(u, { cache: 'reload' }); }));
   }));
-  self.skipWaiting();
 });
 self.addEventListener('activate', function (event) {
   event.waitUntil(caches.keys().then(function (keys) {
-    var old = keys.filter(function (k) { return k.indexOf(PREFIX) === 0 && k !== CACHE; });
+    var old = keys.filter(function (k) { return k.indexOf(CACHE_PREFIX) === 0 && k !== CACHE; });
     return Promise.all(old.map(function (k) { return caches.delete(k); }))
       .then(function () { return self.clients.claim(); });
   }));
@@ -702,13 +1232,19 @@ self.addEventListener('fetch', function (event) {
   var req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   if (req.mode === 'navigate') {
-    var key = routeKey(req.url);
+    var page = normalizePage(new URL(req.url).pathname);
     event.respondWith(fetch(req).then(function (res) {
-      if (res.ok && key) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(key, copy); }); }
+      if (res.ok && page) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(page, copy); }); }
       return res;
     }).catch(function () {
-      if (!key) return caches.match('/offline.html');
-      return caches.match(key).then(function (hit) { return hit || caches.match('/offline.html'); });
+      return caches.open(CACHE).then(function (cache) {
+        if (page) {
+          return cache.match(page).then(function (hit) {
+            return hit || cache.match('/offline.html');
+          });
+        }
+        return cache.match('/offline.html');
+      });
     }));
     return;
   }
@@ -720,39 +1256,43 @@ self.addEventListener('fetch', function (event) {
 // touches text content (and <pre> blocks are left alone), so copy stays intact.
 const minifyHtml = (html) => {
   const pres = []
-  const held = html.replace(/<pre[\s\S]*?<\/pre>/g, (m) => `\u0000${pres.push(m) - 1}\u0000`)
-  return held.replace(/>\s+</g, '><').replace(/\u0000(\d+)\u0000/g, (_, i) => pres[+i]).trim() + '\n'
+  const held = html.replace(/<pre[\s\S]*?<\/pre>/gu, (m) => `<!--pre:${pres.push(m) - 1}-->`)
+  const collapsed = held.replace(/>\s+</gu, '><').replace(/<!--pre:(\d+)-->/gu, (_, i) => pres[Number(i)])
+  return `${collapsed.trim()}\n`
 }
 
 // ---- write ---------------------------------------------------------------------
 
 mkdirSync('dist', { recursive: true })
-writeFileSync('dist/site-ui.js', siteUiJs)
+writeFileSync('dist/theme-toggle.js', themeToggleJs)
+// The gallery's motion preview needs the DOM, so it ships separately and deferred.
+writeFileSync('dist/gallery.js', motionPreviewJs)
 writeFileSync('dist/sw-register.js', swRegisterJs)
 writeFileSync('dist/sw.js', swJs)
 copyDir('public', 'dist')
 
 writeFileSync('dist/index.html', minifyHtml(page({
   title: 'Verdant — Sustainable Defaults for the Green Web',
-  description: 'Verdant is a small design system where every default satisfies the W3C Web Sustainability Guidelines. Built with PandaCSS.',
+  description: 'Verdant is a lightweight design-system starter with defaults aligned to selected Web Sustainability Guidelines. Built with PandaCSS.',
   path: '/',
   active: 'home',
   jsonLd: {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Verdant',
-    description: 'A small design system where every default satisfies the W3C Web Sustainability Guidelines.',
+    description: 'A lightweight design-system starter with defaults aligned to selected Web Sustainability Guidelines.',
     url: 'https://verdant-wsg-demo.netlify.app/',
   },
-  bodyHtml: heroHtml + statsHtml + stagesHtml + paletteHtml + scoreHtml + pandaHtml + ctaHtml,
+  bodyHtml: heroHtml + statsHtml + stagesHtml + paletteHtml + tokensHtml + scoreHtml + pandaHtml + ctaHtml,
 })))
 
 writeFileSync('dist/components.html', minifyHtml(page({
   title: 'Components — Verdant',
-  description: 'Live component gallery for the Verdant design system: buttons, cards, form fields, theme preferences, and motion patterns.',
-  path: '/components',
+  description: 'Documented component specimens for the Verdant design system: links, buttons, fields, switches, status cards, and loading patterns.',
+  path: COMPONENTS_ROUTE,
   active: 'components',
   bodyHtml: componentsBody,
+  scripts: ['/gallery.js'],
 })))
 
 writeFileSync('dist/404.html', minifyHtml(page({
@@ -765,8 +1305,8 @@ writeFileSync('dist/404.html', minifyHtml(page({
 
 writeFileSync('dist/offline.html', minifyHtml(page({
   title: 'Offline — Verdant',
-  description: 'A fallback page for routes that are not available offline yet.',
-  path: '/offline',
+  description: 'You are offline and this page is not available yet.',
+  path: '/offline.html',
   active: '',
   bodyHtml: offlineBody,
 })))
