@@ -38,6 +38,7 @@ const WSG_CHECK = 'https://github.com/ivanoats/wsg-check'
 const WSG = 'https://w3c.github.io/sustainableweb-wsg/'
 const COMPONENTS_ROUTE = '/components'
 const COMPONENTS_FILE = '/components.html'
+const evidenceRecord = JSON.parse(readFileSync('public/wsg-evidence.json', 'utf8'))
 
 // ---- shell ------------------------------------------------------------------
 
@@ -337,41 +338,56 @@ const tokensHtml = `
   </div>
 </section>`
 
-// ---- index: live scorecard -----------------------------------------------------
+// ---- index: saved WSG evidence --------------------------------------------------
 
 const scoreListCss = css({ display: 'grid', gridTemplateColumns: { base: '1fr', md: 'repeat(2, 1fr)' }, gap: '4', listStyle: 'none', margin: '0', padding: '0' })
 const scoreItemCss = card()
 const scoreHeadCss = flex({ justify: 'space-between', align: 'baseline', gap: '3', wrap: 'wrap' })
 const scoreTitleCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', margin: '0' })
 const scorePassCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'positive', margin: '0' })
-const scorePartCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'critical', margin: '0' })
+const scoreOpenCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'critical', margin: '0' })
+const scorePendingCss = css({ fontSize: 'label', lineHeight: 'label', fontWeight: '600', color: 'ink.muted', margin: '0' })
 const scoreBodyCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '8px 0 0' })
+const scoreMetaCss = css({ fontSize: 'label', lineHeight: 'label', color: 'ink.muted', margin: '8px 0 0' })
 const scoreNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', marginTop: '6', maxWidth: '70ch' })
+const scoreLinksCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink.muted', margin: '16px 0 0', maxWidth: '70ch' })
 
-const scores = [
-  ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, two small same-origin scripts, nothing third-party.'],
-  ['Semantic &amp; standards', true, 'Landmarks, a single h1 with ordered headings, canonical URL and structured data.'],
-  ['Sustainability-specific', true, 'Color-scheme and reduced-motion preferences are respected; decorative art stays inline so the baseline stays lightweight even where reduced-data is unsupported; no unused CSS shipped.'],
-  ['Security &amp; maintenance', true, 'CSP, HSTS, Permissions-Policy, nosniff and frame protection; robots.txt and a sitemap.'],
-  ['UX &amp; design', true, 'Labelled fields with autocomplete and inputmode, one visible focus ring, no autoplay, no web fonts.'],
-  ['Hosting &amp; infrastructure', false, 'Offline service worker, cache rules and a custom 404 pass. Green hosting isn&rsquo;t verified by the Green Web Foundation for this Netlify subdomain.'],
-]
+const statusCopy = {
+  verified: { label: '&#10003; Verified', word: 'verified', css: scorePassCss },
+  open: { label: '&#9888; Open', word: 'open', css: scoreOpenCss },
+  'not-assessed': { label: '&#9675; Not assessed', word: 'not assessed', css: scorePendingCss },
+  'not-applicable': { label: '&#8212; Not applicable', word: 'not applicable', css: scorePendingCss },
+}
+const statusOf = (entry) => statusCopy[entry.status] || statusCopy['not-assessed']
+const linkSummary = (records = []) => records.map((record) => `<a href="${record.href}">${record.label}</a>`).join(', ')
+// Every status the record can hold is counted, in a fixed order, so the
+// summary always adds up to the number of cards below it.
+const statusSummary = Object.keys(statusCopy)
+  .map((key) => [key, evidenceRecord.entries.filter((entry) => statusOf(entry) === statusCopy[key]).length])
+  .filter(([, count]) => count)
+  .map(([key, count]) => `${count} ${statusCopy[key].word}`)
+  .join(', ')
 const scoreHtml = `
 <section class="${wrapCss} ${sectionCss}" aria-labelledby="score-title">
-  <p class="${eyebrowCss}">Checked live</p>
-  <h2 id="score-title" class="${h2Css}">How the deployed site holds up.</h2>
-  <p class="${introCss}">Checked against the live deploy with <a href="${WSG_CHECK}">wsg-check</a>. Five categories pass; one still depends on hosting verification.</p>
+  <p class="${eyebrowCss}">Saved evidence record</p>
+  <h2 id="score-title" class="${h2Css}">Implementation checklist for selected WSG-aligned defaults.</h2>
+  <p class="${introCss}">${evidenceRecord.title} reviewed on ${evidenceRecord.reviewed_on} (${statusSummary}). This section is generated from a saved artifact, not a live deploy audit, and it documents selected evidence rather than full WSG conformance.</p>
+  <p class="${scoreLinksCss}">Linked records: ${linkSummary(evidenceRecord.related_records)}</p>
   <ul class="${scoreListCss}">
-    ${scores.map(([title, pass, body]) => `
+    ${evidenceRecord.entries.map((entry) => `
     <li class="${scoreItemCss}">
       <div class="${scoreHeadCss}">
-        <h3 class="${scoreTitleCss}">${title}</h3>
-        <p class="${pass ? scorePassCss : scorePartCss}">${pass ? '&#10003; Pass' : '&#9888; Partial'}</p>
+        <h3 class="${scoreTitleCss}">${entry.scanner_category}</h3>
+        <p class="${statusOf(entry).css}">${statusOf(entry).label}</p>
       </div>
-      <p class="${scoreBodyCss}">${body}</p>
+      <p class="${scoreBodyCss}">${entry.summary}</p>
+      <p class="${scoreMetaCss}">Reviewed ${entry.date} &middot; ${evidenceRecord.wsg_edition.label} &middot; ${entry.wsg_refs.length ? `WSG refs ${entry.wsg_refs.join(', ')}` : 'No WSG section claimed'}</p>
+      <p class="${scoreMetaCss}">Scope: ${entry.scope}</p>
+      <p class="${scoreMetaCss}">${entry.tool.version ? `Tool: ${entry.tool.name} (${entry.tool.version})` : `Tool: ${entry.tool.name}`} &middot; <a href="${entry.evidence_link}">Evidence link</a></p>
+      ${entry.linked_records?.length ? `<p class="${scoreMetaCss}">Linked records: ${linkSummary(entry.linked_records)}</p>` : ''}
     </li>`).join('')}
   </ul>
-  <p class="${scoreNoteCss}">Status is always a word plus a symbol, never color alone.</p>
+  <p class="${scoreNoteCss}">The card headings follow <a href="${WSG_CHECK}">wsg-check</a>'s scanner categories, not the WSG section structure. Status is always a word plus a symbol, never color alone, and the full record is also available as <a href="/wsg-evidence.json">JSON</a>.</p>
 </section>`
 
 // ---- index: PandaCSS ------------------------------------------------------------
@@ -493,7 +509,7 @@ const breadcrumb = (label) => `
 const footer = () => `
   <footer class="${footerCss}">
     <div class="${wrapCss} ${footerBarCss}">
-      <div class="${footerBrandCss}">${mark(20)}<p class="${footerTextCss}">Verdant &mdash; built by Ivan with PandaCSS, tuned to the W3C Web Sustainability Guidelines.</p></div>
+      <div class="${footerBrandCss}">${mark(20)}<p class="${footerTextCss}">Verdant &mdash; built by Ivan with PandaCSS, with defaults aligned to selected Web Sustainability Guidelines.</p></div>
       <ul class="${footerLinksCss}">
         <li><a href="${WSG_CHECK}">wsg-check</a></li>
         <li><a href="${REPO}">Source</a></li>
@@ -1257,14 +1273,14 @@ copyDir('public', 'dist')
 
 writeFileSync('dist/index.html', minifyHtml(page({
   title: 'Verdant — Sustainable Defaults for the Green Web',
-  description: 'Verdant is a small design system where every default satisfies the W3C Web Sustainability Guidelines. Built with PandaCSS.',
+  description: 'Verdant is a lightweight design-system starter with defaults aligned to selected Web Sustainability Guidelines. Built with PandaCSS.',
   path: '/',
   active: 'home',
   jsonLd: {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Verdant',
-    description: 'A small design system where every default satisfies the W3C Web Sustainability Guidelines.',
+    description: 'A lightweight design-system starter with defaults aligned to selected Web Sustainability Guidelines.',
     url: 'https://verdant-wsg-demo.netlify.app/',
   },
   bodyHtml: heroHtml + statsHtml + stagesHtml + paletteHtml + tokensHtml + scoreHtml + pandaHtml + ctaHtml,

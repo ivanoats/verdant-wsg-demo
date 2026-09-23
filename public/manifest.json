@@ -1,7 +1,7 @@
 {
-  "name": "Verdant — a sustainability-first design system",
+  "name": "Verdant — a WSG-aligned static site starter",
   "short_name": "Verdant",
-  "description": "A small, from-scratch design system built to satisfy the W3C Web Sustainability Guidelines.",
+  "description": "A lightweight design-system starter with defaults aligned to selected Web Sustainability Guidelines.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#faf8f3",

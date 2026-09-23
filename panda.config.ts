@@ -180,6 +180,6 @@ export default defineConfig({
   },
   // No staticCss block on purpose: every class in the generated stylesheet
   // comes from a real call in scripts/build.mjs. Force-generating a wide
-  // utility surface "just in case" is exactly the CSS-redundancy WSG 4.2/4.3
-  // checks flag — extraction only emits what's actually used.
+  // utility surface "just in case" is exactly the CSS-redundancy WSG 3.2/3.4
+  // guidance tries to avoid — extraction only emits referenced styles.
 })
