@@ -80,7 +80,7 @@ const heroHtml = `
 <section class="${wrapCss}" aria-labelledby="hero-title">
   <div class="${heroCss}">
     <div>
-      <p class="${eyebrowCss}">A design system for the W3C Web Sustainability Guidelines</p>
+      <p class="${eyebrowCss}">A design system for the <a href="${WSG}">W3C Web Sustainability Guidelines</a></p>
       <h1 id="hero-title" class="${heroTitleCss}">Verdant</h1>
       <p class="${heroTagCss}">Sustainable Defaults for the Green Web</p>
       <p class="${heroLedeCss}">Start with the parts teams usually add later: system fonts, OS-level dark mode, restrained motion, and only the CSS each page uses. Verdant gives a product page or docs site those lighter defaults from the first commit.</p>
