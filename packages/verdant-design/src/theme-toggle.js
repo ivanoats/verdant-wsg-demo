@@ -83,14 +83,18 @@
   currentPreference = readPreference();
   applyPreference(currentPreference);
 
+  // Declared once rather than per radio: every control shares one handler, and
+  // the chosen value comes from the event, not from the loop.
+  function handlePreferenceChange(event) {
+    currentPreference = event.target.value;
+    persistPreference(currentPreference);
+    applyPreference(currentPreference);
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     syncControls();
     for (const radio of document.querySelectorAll(RADIO_SELECTOR)) {
-      radio.addEventListener("change", function (event) {
-        currentPreference = event.target.value;
-        persistPreference(currentPreference);
-        applyPreference(currentPreference);
-      });
+      radio.addEventListener("change", handlePreferenceChange);
     }
   });
 
