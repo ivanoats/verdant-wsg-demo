@@ -357,7 +357,7 @@ const tokensHtml = `
     </section>
     <section class="${scopeCardCss}">
       <h3 class="${scopeTitleCss}">Typography</h3>
-      <p class="${scopeBodyCss}">System fonts plus six public size/line-height pairs.</p>
+      <p class="${scopeBodyCss}">System fonts plus six public size/line-height pairs. If a brand needs its own typeface, follow the <a href="${REPO}#custom-web-fonts-the-off-ramp">web-font off-ramp</a>: self-hosted, subset WOFF2 with a CI byte budget.</p>
       <ul class="${scopeListCss}">
         ${scopeList(publicTokenScope.typography.families.map(({ token, value }) => `<code class="${scopeCodeCss}">${token}</code> &mdash; ${value}`))}
         ${typographyList}
