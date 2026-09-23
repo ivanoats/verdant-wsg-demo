@@ -45,14 +45,13 @@ console.log(JSON.stringify(report, null, 2))
 
 if (process.argv[2]) {
   const url = process.argv[2]
-  let chromium
-  try {
-    ;({ chromium } = await import('playwright'))
-  } catch {
-    console.error('\nPlaywright is required for the optional CPU-throttled profile.')
-    console.error('Install it temporarily with: npm install --no-save --package-lock=false playwright')
-    process.exit(1)
-  }
+  const { chromium } = await import('playwright').catch((cause) => {
+    throw new Error(
+      'Playwright is required for the optional CPU-throttled profile. ' +
+      'Install it temporarily with: npm install --no-save --package-lock=false playwright',
+      { cause },
+    )
+  })
 
   const browser = await chromium.launch({ headless: true })
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
@@ -68,7 +67,9 @@ if (process.argv[2]) {
         }
       })
       observer.observe({ type: 'longtask', buffered: true })
-    } catch {}
+    } catch {
+      // Long Task API unsupported in this browser: report zero long tasks.
+    }
 
     let last = 0
     let start = 0

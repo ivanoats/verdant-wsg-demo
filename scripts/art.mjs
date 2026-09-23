@@ -248,16 +248,16 @@ export const stageGlyph = {
 const meadowA = css({ fill: 'foliage.bright', opacity: '0.35' })
 const meadowB = css({ fill: 'foliage.mid', opacity: '0.3' })
 export const leafRow = () => {
-  const L = 'mw'
+  const meadowLeaf = 'mw'
   const rand = rng(42)
-  let out = leafDefs(L)
+  let out = leafDefs(meadowLeaf)
   for (let x = 4; x < 600; x += 8.5) {
-    out += uleaf(L, { x: x + rand() * 3, y: 118, len: 20 + rand() * 30, angle: -90 + (rand() - 0.5) * 60, fill: rand() > 0.5 ? meadowA : meadowB })
+    out += uleaf(meadowLeaf, { x: x + rand() * 3, y: 118, len: 20 + rand() * 30, angle: -90 + (rand() - 0.5) * 60, fill: rand() > 0.5 ? meadowA : meadowB })
   }
   for (const [bx, sd] of [[120, 1], [330, 2], [520, 3]]) {
     const r = rng(sd)
     for (let i = 0; i < 9; i++) {
-      out += uleaf(L, { x: bx, y: 118, len: 40 + r() * 34, angle: -165 + i * 18.75 + (r() - 0.5) * 8, fill: i % 2 ? meadowA : meadowB })
+      out += uleaf(meadowLeaf, { x: bx, y: 118, len: 40 + r() * 34, angle: -165 + i * 18.75 + (r() - 0.5) * 8, fill: i % 2 ? meadowA : meadowB })
     }
   }
   return `<svg viewBox="0 0 600 120" width="600" height="120" aria-hidden="true" focusable="false">${out}</svg>`
