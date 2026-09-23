@@ -70,7 +70,7 @@ Tradeoffs:
 - Zero web fonts (`system-ui` stack)
 - System/Light/Dark theme preference from one token source, with `prefers-color-scheme` as the no-JS default and no separate stylesheet
 - Every animation gated behind `prefers-reduced-motion: no-preference`
-- Decorative image dropped under `prefers-reduced-data: reduce`
+- Decorative art stays inline, so the default page weight stays the same even in browsers that ignore `prefers-reduced-data`
 - Landmarks (`main`, `nav`, skip link), a labelled form field, one consistent focus ring
 - Security headers, caching directives, and an offline service worker in `public/` / `_headers`
 - Content-hashed CSS/JS under `/assets/` (`scripts/fingerprint.mjs`), cached for a year; pages are network-first in the service worker, so a deploy never mixes new HTML with old CSS

@@ -248,7 +248,7 @@ const scoreNoteCss = css({ fontSize: 'bodySm', lineHeight: 'bodySm', color: 'ink
 const scores = [
   ['Performance &amp; efficiency', true, 'Brotli on every response, one stylesheet, two small same-origin scripts, nothing third-party.'],
   ['Semantic &amp; standards', true, 'Landmarks, a single h1 with ordered headings, canonical URL and structured data.'],
-  ['Sustainability-specific', true, 'Color-scheme, reduced-motion and reduced-data queries all present; no unused CSS shipped.'],
+  ['Sustainability-specific', true, 'Color-scheme and reduced-motion preferences are respected; decorative art stays inline so the baseline stays lightweight even where reduced-data is unsupported; no unused CSS shipped.'],
   ['Security &amp; maintenance', true, 'CSP, HSTS, Permissions-Policy, nosniff and frame protection; robots.txt and a sitemap.'],
   ['UX &amp; design', true, 'Labelled fields with autocomplete and inputmode, one visible focus ring, no autoplay, no web fonts.'],
   ['Hosting &amp; infrastructure', false, 'Offline service worker, cache rules and a custom 404 pass. Green hosting isn&rsquo;t verified by the Green Web Foundation for this Netlify subdomain.'],
@@ -494,7 +494,6 @@ const skeletonNarrowCss = `${skeleton()} ${css({ width: '110px', height: '14px' 
 const skeletonNarrowPreviewCss = `${skeleton({ preview: true })} ${css({ width: '110px', height: '14px' })}`
 const motionIntroCss = css({ color: 'ink.muted', maxWidth: '62ch', margin: '0 0 16px' })
 const motionControlsCss = flex({ align: 'center', gap: '3', wrap: 'wrap', marginTop: '4' })
-const decorCss = css({ display: 'block' })
 
 const componentsBody = `
 <div class="${wrapCss} ${compMainCss}">
@@ -571,11 +570,6 @@ const componentsBody = `
     <p class="${noteCss}" id="motion-preview-status" role="status" aria-live="polite">Static by default. Preview runs once, then stops automatically.</p>
   </section>
 
-  <section class="${compSectionCss}">
-    <h2 class="${compH2Css}">A decorative image</h2>
-    <p class="${ledeCss}">The Verdant leaf, as a real file: purely decorative, so it carries <code class="${codeCss}">alt=""</code>, explicit dimensions, lazy loading, and drops out entirely for anyone who's asked to save data.</p>
-    <img class="${decorCss} decor" src="/favicon.svg" width="64" height="64" alt="" loading="lazy">
-  </section>
 </div>
 `
 
@@ -867,8 +861,9 @@ self.addEventListener('fetch', function (event) {
 // touches text content (and <pre> blocks are left alone), so copy stays intact.
 const minifyHtml = (html) => {
   const pres = []
-  const held = html.replace(/<pre[\s\S]*?<\/pre>/g, (m) => `\u0000${pres.push(m) - 1}\u0000`)
-  return held.replace(/>\s+</g, '><').replace(/\u0000(\d+)\u0000/g, (_, i) => pres[+i]).trim() + '\n'
+  const held = html.replace(/<pre[\s\S]*?<\/pre>/gu, (m) => `<!--pre:${pres.push(m) - 1}-->`)
+  const collapsed = held.replace(/>\s+</gu, '><').replace(/<!--pre:(\d+)-->/gu, (_, i) => pres[Number(i)])
+  return `${collapsed.trim()}\n`
 }
 
 // ---- write ---------------------------------------------------------------------
