@@ -57,7 +57,12 @@ export default defineConfig({
           },
           variants: {
             variant: {
-              primary: { background: 'accent', color: 'accent.ink', _hover: { background: 'accent.strong' } },
+              primary: {
+                background: 'accent', color: 'accent.ink', _hover: { background: 'accent.strong' },
+                // Toggle buttons: the pressed look follows aria-pressed, so the
+                // visual and announced state can't drift apart.
+                '&[aria-pressed=true]': { background: 'accent.strong' },
+              },
               secondary: { background: 'transparent', color: 'ink', borderColor: 'border.control', _hover: { borderColor: 'accent', color: 'accent' } },
             },
           },
@@ -74,10 +79,11 @@ export default defineConfig({
           className: 'fieldInput',
           base: {
             fontSize: 'body', lineHeight: 'body', fontFamily: 'sans',
-            minHeight: '44px', paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border.control',
+            width: '100%', minHeight: '44px', paddingBlock: '2', paddingInline: '3', border: '1px solid', borderColor: 'border.control',
             borderRadius: 'sm', background: 'surface.200', color: 'ink',
             _placeholder: { color: 'ink.placeholder', opacity: '1' },
             _focusVisible: { outline: '2px solid', outlineColor: 'focusRing', outlineOffset: '1px', borderColor: 'transparent' },
+            _readOnly: { background: 'surface.100', color: 'ink.muted' },
           },
         },
         switchTrack: {
