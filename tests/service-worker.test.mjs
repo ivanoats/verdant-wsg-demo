@@ -30,7 +30,7 @@ test('production service worker keeps cache ownership scoped and removes forced 
 test('generated pages include update controls and the offline fallback page', () => {
   const index = distFile('index.html')
   const components = distFile('components.html')
-  const register = distFile('assets/' + /\/assets\/(sw-register\.[^"]+\.js)/.exec(index)[1])
+  const register = distFile(`assets/${/\/assets\/(sw-register\.[^"]+\.js)/.exec(index)[1]}`)
   const offline = distFile('offline.html')
   const manifest = distJson('offline-cache.json')
   assert.deepEqual(manifest.publicRoutes, ['/', '/components'])
