@@ -35,7 +35,7 @@ In 2013, after a decade of managing servers, I made a conscious choice to pivot.
 
 Sustainability is as much about people and processes as it is about power usage. I founded [CodeFellows](https://www.codefellows.org/) to create a more sustainable model for technical education, moving away from the &ldquo;gig economy&rdquo; feel of adjunct professorship to build a lasting ecosystem for knowledge sharing.
 
-For the last six years, I have served as a Senior Software Engineer and Architect at [lululemon](https://shop.lululemon.com/). There, I&rsquo;ve worked at global scale, up to tens of million sessions a month at peak, learning how to optimize web development teams, streamline complex processes, and architect systems that serve millions.
+For the last six years, I have served as a Senior Software Engineer and Architect at [lululemon](https://shop.lululemon.com/). There, I&rsquo;ve worked at global scale, up to tens of millions of sessions a month at peak, learning how to optimize web development teams, streamline complex processes, and architect systems that serve millions.
 
 ## The New Standard: Beyond Offsets
 
