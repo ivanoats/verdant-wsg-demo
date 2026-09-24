@@ -6,6 +6,7 @@ import Ajv2020 from 'ajv/dist/2020.js'
 const report = JSON.parse(readFileSync('dist/measurements.json', 'utf8'))
 const schema = JSON.parse(readFileSync('dist/measurements.schema.json', 'utf8'))
 const offlineCache = JSON.parse(readFileSync('dist/offline-cache.json', 'utf8'))
+const greenWebHtml = readFileSync('dist/green-web.html', 'utf8')
 
 const includesSuffix = (urls, suffix) => urls.some((url) => url.endsWith(suffix))
 const ajv = new Ajv2020({ strict: false })
@@ -34,4 +35,10 @@ test('pretty routes are measured Brotli-compressed, as the host serves them', ()
   const request = report.metrics.localObservedTransfers.coldFirstSession.requests.find((entry) => entry.url === '/components')
   assert.ok(request, 'cold session should precache /components')
   assert.ok(request.transferBytes < statSync('dist/components.html').size / 2, 'the /components transfer should be compressed')
+})
+
+test('green web markdown keeps article class bindings in generated markup', () => {
+  assert.ok(!greenWebHtml.includes('<h2 class="">'))
+  assert.ok(!greenWebHtml.includes('<p class="">'))
+  assert.ok(!greenWebHtml.includes('<a class=""'))
 })

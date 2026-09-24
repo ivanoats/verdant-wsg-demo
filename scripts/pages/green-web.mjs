@@ -6,10 +6,12 @@ import { css } from '../../styled-system/css/index.mjs'
 import { REPO, WSG } from '../config.mjs'
 import { parseFrontmatter, renderMarkdown } from '../lib/markdown.mjs'
 import {
-  btnPrimary, btnRowCss, btnSecondary, compTitleCss, eyebrowCss, wrapCss,
+  btnPrimary, btnRowCss, btnSecondary, compTitleCss, eyebrowCss, h2Css, ledeCss, proseLinkCss, wrapCss,
 } from '../styles.mjs'
 
 const articleCss = css({ paddingBlock: { base: '8', md: '12' }, maxWidth: '68ch' })
+const articleParagraphCss = css({ margin: '0 0 16px', maxWidth: '62ch' })
+const articleLeadCss = css({ margin: '16px 0 0', maxWidth: '62ch' })
 
 /**
  * Metadata authored in content/green-web.md.
@@ -25,6 +27,12 @@ const { data: frontmatter, body } = parseFrontmatter(readFileSync('content/green
 const data = /** @type {GreenWebMetadata} */ (frontmatter)
 
 const prose = renderMarkdown(body, {
+  classes: {
+    h2: h2Css,
+    paragraph: articleParagraphCss,
+    lead: `${ledeCss} ${articleLeadCss}`,
+    link: proseLinkCss,
+  },
   vars: { REPO, WSG },
 })
 
