@@ -37,6 +37,20 @@ const themeState = (page) => page.evaluate(() => ({
 }))
 
 test.describe('published theme runtime', () => {
+  test('a runtime loaded after DOMContentLoaded initializes and wires controls', async ({ page }) => {
+    await page.route('**/__verdant-theme-fixture.html', (route) =>
+      route.fulfill({ contentType: 'text/html', body: FIXTURE.replace('<script src="/__verdant-theme-toggle.js"></script>', '') }))
+    await page.emulateMedia({ colorScheme: 'light' })
+    await page.goto(FIXTURE_URL)
+    await page.evaluate(() => localStorage.setItem('verdant-theme-preference', 'dark'))
+    await page.addScriptTag({ url: '/__verdant-theme-toggle.js' })
+    await expect(page.locator('#t-dark')).toBeChecked()
+    expect((await themeState(page)).override).toBe('dark')
+    await page.click('#t-light')
+    expect((await themeState(page)).override).toBe('light')
+    expect(await page.evaluate(() => localStorage.getItem('verdant-theme-preference'))).toBe('light')
+  })
+
   test('System follows prefers-color-scheme and sets no override', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'dark' })
     await page.goto(FIXTURE_URL)
