@@ -11,7 +11,9 @@ const MODES = [
   { name: 'contrast', colorScheme: 'light', contrast: 'more' },
 ]
 
-test.skip(!process.env.CI && !process.env.VISUAL, 'Screenshot baselines come from the CI runner; set VISUAL=1 to compare locally.')
+// VISUAL is also a standard shell editor variable (for example, "code --wait").
+// Only the documented opt-in value should enable local screenshot comparisons.
+test.skip(!process.env.CI && process.env.VISUAL !== '1', 'Screenshot baselines come from the CI runner; set VISUAL=1 to compare locally.')
 
 for (const mode of MODES) {
   test(`gallery specimens look unchanged in ${mode.name}`, async ({ page }) => {
