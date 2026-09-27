@@ -10,7 +10,7 @@
       "extra-files": [
         {
           "type": "json",
-          "path": "/package-lock.json",
+          "path": "package-lock.json",
           "jsonpath": "$.packages['packages/verdant-design'].version"
         }
       ]
