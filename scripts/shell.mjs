@@ -56,7 +56,7 @@ const breadcrumb = (label) => `
 const footer = () => `
   <footer class="${footerCss}">
     <div class="${wrapCss} ${footerBarCss}">
-      <div class="${footerBrandCss}">${mark(20)}<p class="${footerTextCss}">Verdant &mdash; built by Ivan with PandaCSS, with defaults aligned to selected Web Sustainability Guidelines.</p></div>
+      <div class="${footerBrandCss}">${mark(20)}<p class="${footerTextCss}">Verdant &mdash; built by <a href="https://www.sustainablewebsites.com">Sustainable Websites</a> with PandaCSS, with defaults aligned to selected Web Sustainability Guidelines.</p></div>
       <ul class="${footerLinksCss}">
         <li><a href="${WSG_CHECK}">wsg-check</a></li>
         <li><a href="${REPO}">Source</a></li>
