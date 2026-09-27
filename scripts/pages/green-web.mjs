@@ -6,19 +6,34 @@ import { css } from '../../styled-system/css/index.mjs'
 import { REPO, WSG } from '../config.mjs'
 import { parseFrontmatter, renderMarkdown } from '../lib/markdown.mjs'
 import {
-  btnPrimary, btnRowCss, btnSecondary, compTitleCss, eyebrowCss, proseLinkCss, wrapCss,
+  btnPrimary, btnRowCss, btnSecondary, compTitleCss, eyebrowCss, h2Css, ledeCss, proseLinkCss, wrapCss,
 } from '../styles.mjs'
 
 const articleCss = css({ paddingBlock: { base: '8', md: '12' }, maxWidth: '68ch' })
-const articleH2Css = css({ fontSize: 'displayMd', lineHeight: 'displayMd', fontWeight: '700', margin: '40px 0 12px' })
-const articlePCss = css({ margin: '0 0 16px' })
-const articleLeadCss = css({ fontSize: 'displaySm', lineHeight: 'displaySm', fontWeight: '600', color: 'accent', margin: '0 0 16px' })
+const articleParagraphCss = css({ margin: '0 0 16px', maxWidth: '62ch' })
+const articleLeadCss = css({ margin: '16px 0 0', maxWidth: '62ch' })
 
-const { data, body } = parseFrontmatter(readFileSync('content/green-web.md', 'utf8'))
+/**
+ * Metadata authored in content/green-web.md.
+ * @typedef {object} GreenWebMetadata
+ * @property {string} title
+ * @property {string} pageTitle
+ * @property {string} description
+ * @property {string} eyebrow
+ * @property {string} crumb
+ * @property {{ variant: 'primary' | 'secondary', href: string, label: string }[]} [actions]
+ */
+const { data: frontmatter, body } = parseFrontmatter(readFileSync('content/green-web.md', 'utf8'))
+const data = /** @type {GreenWebMetadata} */ (frontmatter)
 
 const prose = renderMarkdown(body, {
+  classes: {
+    h2: h2Css,
+    paragraph: articleParagraphCss,
+    lead: `${ledeCss} ${articleLeadCss}`,
+    link: proseLinkCss,
+  },
   vars: { REPO, WSG },
-  classes: { h2: articleH2Css, paragraph: articlePCss, lead: articleLeadCss, link: proseLinkCss },
 })
 
 const variants = { primary: btnPrimary, secondary: btnSecondary }

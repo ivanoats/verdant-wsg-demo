@@ -48,24 +48,28 @@ export const expandVars = (text, vars) =>
 
 // `classes` maps each block to the Panda class string the page already uses, so
 // the Markdown path emits byte-identical markup to hand-written templates.
-export const renderMarkdown = (body, { classes, vars = {} } = {}) => {
+/**
+ * @param {string} body
+ * @param {{ classes?: Record<string, string>, vars?: Record<string, string> }} [options]
+ */
+export const renderMarkdown = (body, { classes = {}, vars = {} } = {}) => {
   const md = new Marked({
     renderer: {
       heading({ tokens, depth }) {
-        return `<h${depth} class="${classes[`h${depth}`]}">${this.parser.parseInline(tokens)}</h${depth}>`
+        return `<h${depth} class="${classes[`h${depth}`] ?? ''}">${this.parser.parseInline(tokens)}</h${depth}>`
       },
       paragraph({ tokens }) {
-        return `<p class="${classes.paragraph}">${this.parser.parseInline(tokens)}</p>`
+        return `<p class="${classes.paragraph ?? ''}">${this.parser.parseInline(tokens)}</p>`
       },
       // A blockquote marks the article's lead statement — the one line set in
       // accent type. It renders as a paragraph, not a <blockquote>, because it
       // is the author speaking, not a quotation.
       blockquote({ tokens }) {
         const inner = tokens.flatMap((t) => t.tokens ?? [])
-        return `<p class="${classes.lead}">${this.parser.parseInline(inner)}</p>`
+        return `<p class="${classes.lead ?? ''}">${this.parser.parseInline(inner)}</p>`
       },
       link({ href, tokens }) {
-        return `<a class="${classes.link}" href="${href}">${this.parser.parseInline(tokens)}</a>`
+        return `<a class="${classes.link ?? ''}" href="${href}">${this.parser.parseInline(tokens)}</a>`
       },
     },
   })
