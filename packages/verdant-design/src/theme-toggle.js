@@ -91,12 +91,19 @@
     applyPreference(currentPreference);
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
+  function initializeControls() {
     syncControls();
     for (const radio of document.querySelectorAll(RADIO_SELECTOR)) {
       radio.addEventListener("change", handlePreferenceChange);
     }
-  });
+  }
+
+  // Async or dynamically imported scripts may run after DOMContentLoaded.
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeControls, { once: true });
+  } else {
+    initializeControls();
+  }
 
   // A page restored from the back/forward cache keeps its old DOM state:
   // re-read the stored choice in case it changed on another page meanwhile.
