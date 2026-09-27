@@ -1,0 +1,135 @@
+{
+    "ResourceRecordSets": [
+        {
+            "Name": "sustainablewebsites.com.",
+            "Type": "A",
+            "AliasTarget": {
+                "HostedZoneId": "Z2FDTNDATAQYW2",
+                "DNSName": "dlpegh0fs5yy5.cloudfront.net.",
+                "EvaluateTargetHealth": false
+            }
+        },
+        {
+            "Name": "sustainablewebsites.com.",
+            "Type": "MX",
+            "TTL": 300,
+            "ResourceRecords": [
+                {
+                    "Value": "0 sustainablewebsites-com.mail.protection.outlook.com."
+                }
+            ]
+        },
+        {
+            "Name": "sustainablewebsites.com.",
+            "Type": "NS",
+            "TTL": 172800,
+            "ResourceRecords": [
+                {
+                    "Value": "ns-336.awsdns-42.com."
+                },
+                {
+                    "Value": "ns-946.awsdns-54.net."
+                },
+                {
+                    "Value": "ns-1861.awsdns-40.co.uk."
+                },
+                {
+                    "Value": "ns-1132.awsdns-13.org."
+                }
+            ]
+        },
+        {
+            "Name": "sustainablewebsites.com.",
+            "Type": "SOA",
+            "TTL": 900,
+            "ResourceRecords": [
+                {
+                    "Value": "ns-336.awsdns-42.com. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400"
+                }
+            ]
+        },
+        {
+            "Name": "sustainablewebsites.com.",
+            "Type": "TXT",
+            "TTL": 60,
+            "ResourceRecords": [
+                {
+                    "Value": "\"MS=ms47320810\""
+                },
+                {
+                    "Value": "\"v=spf1 include:spf.protection.outlook.com -all\""
+                }
+            ]
+        },
+        {
+            "Name": "02742822.sustainablewebsites.com.",
+            "Type": "CNAME",
+            "TTL": 3600,
+            "ResourceRecords": [
+                {
+                    "Value": "ghs.google.com."
+                }
+            ]
+        },
+        {
+            "Name": "39f120fe8fbe.sustainablewebsites.com.",
+            "Type": "CNAME",
+            "TTL": 3600,
+            "ResourceRecords": [
+                {
+                    "Value": "cname.bit.ly."
+                }
+            ]
+        },
+        {
+            "Name": "default._domainkey.sustainablewebsites.com.",
+            "Type": "TXT",
+            "TTL": 3600,
+            "ResourceRecords": [
+                {
+                    "Value": "\"v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCs2BU6vHvU3p15QfC1MjCqON9SwY/Lx3wvVSuzX3R8HNEeNv/KJRsZh4KkycHGc5fcXFyMKfr6jlXv5XLiZ8M/U7m3gVpRAfhTWH3hOyCztiURSEbzolBL1gBmMAgGLMIN+mb1AgyoPDhmy7FC0TJPE+40S4mYmHva/UMi4+Ba0wIDAQAB\""
+                }
+            ]
+        },
+        {
+            "Name": "autodiscover.sustainablewebsites.com.",
+            "Type": "CNAME",
+            "TTL": 300,
+            "ResourceRecords": [
+                {
+                    "Value": "autodiscover.outlook.com."
+                }
+            ]
+        },
+        {
+            "Name": "emailrege3282749df33ccf5.sustainablewebsites.com.",
+            "Type": "CNAME",
+            "TTL": 3600,
+            "ResourceRecords": [
+                {
+                    "Value": "emailreg.com."
+                }
+            ]
+        },
+        {
+            "Name": "google9c765c4849f0991c.sustainablewebsites.com.",
+            "Type": "CNAME",
+            "TTL": 3600,
+            "ResourceRecords": [
+                {
+                    "Value": "google.com."
+                }
+            ]
+        },
+        {
+            "Name": "www.sustainablewebsites.com.",
+            "Type": "CNAME",
+            "TTL": 300,
+            "ResourceRecords": [
+                {
+                    "Value": "d1p71b5mswk6ut.cloudfront.net."
+                }
+            ]
+        }
+    ]
+}

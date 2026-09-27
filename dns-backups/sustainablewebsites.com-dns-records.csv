@@ -1,0 +1,17 @@
+Name,Type,TTL,Value,AliasHostedZoneId
+sustainablewebsites.com.,A (AWS alias),,dlpegh0fs5yy5.cloudfront.net.,Z2FDTNDATAQYW2
+sustainablewebsites.com.,MX,300,0 sustainablewebsites-com.mail.protection.outlook.com.,
+sustainablewebsites.com.,NS,172800,ns-336.awsdns-42.com.,
+sustainablewebsites.com.,NS,172800,ns-946.awsdns-54.net.,
+sustainablewebsites.com.,NS,172800,ns-1861.awsdns-40.co.uk.,
+sustainablewebsites.com.,NS,172800,ns-1132.awsdns-13.org.,
+sustainablewebsites.com.,SOA,900,ns-336.awsdns-42.com. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400,
+sustainablewebsites.com.,TXT,60,"""MS=ms47320810""",
+sustainablewebsites.com.,TXT,60,"""v=spf1 include:spf.protection.outlook.com -all""",
+02742822.sustainablewebsites.com.,CNAME,3600,ghs.google.com.,
+39f120fe8fbe.sustainablewebsites.com.,CNAME,3600,cname.bit.ly.,
+default._domainkey.sustainablewebsites.com.,TXT,3600,"""v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCs2BU6vHvU3p15QfC1MjCqON9SwY/Lx3wvVSuzX3R8HNEeNv/KJRsZh4KkycHGc5fcXFyMKfr6jlXv5XLiZ8M/U7m3gVpRAfhTWH3hOyCztiURSEbzolBL1gBmMAgGLMIN+mb1AgyoPDhmy7FC0TJPE+40S4mYmHva/UMi4+Ba0wIDAQAB""",
+autodiscover.sustainablewebsites.com.,CNAME,300,autodiscover.outlook.com.,
+emailrege3282749df33ccf5.sustainablewebsites.com.,CNAME,3600,emailreg.com.,
+google9c765c4849f0991c.sustainablewebsites.com.,CNAME,3600,google.com.,
+www.sustainablewebsites.com.,CNAME,300,d1p71b5mswk6ut.cloudfront.net.,

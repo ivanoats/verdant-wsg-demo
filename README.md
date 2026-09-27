@@ -8,6 +8,8 @@ The home page promotes the system; `/components` is the public component-gallery
 
 The design system is published as a PandaCSS preset. See **[`docs/INSTALL.md`](docs/INSTALL.md)** for installation, the token reference, the theme contract, and known gaps.
 
+Maintainers: see [Releasing the npm package](docs/RELEASING.md) for release-please and npm publishing setup.
+
 ```bash
 npm install -D @sustainablewebsites/verdant-design
 ```
