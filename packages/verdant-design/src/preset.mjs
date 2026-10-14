@@ -13,7 +13,9 @@ const important = (vars) =>
 export const verdantPreset = definePreset({
   name: 'verdant-design',
   conditions: {
-    dark: '@media (prefers-color-scheme: dark)',
+    extend: {
+      dark: '@media (prefers-color-scheme: dark)',
+    },
   },
 
   theme: {

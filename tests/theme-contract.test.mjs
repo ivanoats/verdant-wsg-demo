@@ -13,6 +13,7 @@ import {
   themeResolvedAttr,
   themeTokens,
 } from '../packages/verdant-design/src/theme.mjs'
+import { verdantPreset } from '../packages/verdant-design/src/preset.mjs'
 
 const runtime = readFileSync('packages/verdant-design/src/theme-toggle.js', 'utf8')
 const constant = (name) => {
@@ -36,4 +37,9 @@ test('published theme runtime uses the theme module surface colours', () => {
     light: themeTokens['surface.100'].light,
     dark: themeTokens['surface.100'].dark,
   })
+})
+
+test('Verdant extends Panda dark condition instead of replacing preset conditions', () => {
+  assert.equal(verdantPreset.conditions.dark, undefined)
+  assert.equal(verdantPreset.conditions.extend.dark, '@media (prefers-color-scheme: dark)')
 })
