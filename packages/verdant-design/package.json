@@ -20,9 +20,18 @@
     "accessibility"
   ],
   "exports": {
-    ".": "./src/preset.mjs",
-    "./tokens": "./src/tokens.mjs",
-    "./theme": "./src/theme.mjs",
+    ".": {
+      "types": "./src/preset.d.ts",
+      "import": "./src/preset.mjs"
+    },
+    "./tokens": {
+      "types": "./src/tokens.d.ts",
+      "import": "./src/tokens.mjs"
+    },
+    "./theme": {
+      "types": "./src/theme.d.ts",
+      "import": "./src/theme.mjs"
+    },
     "./theme-toggle.js": "./src/theme-toggle.js"
   },
   "files": [
