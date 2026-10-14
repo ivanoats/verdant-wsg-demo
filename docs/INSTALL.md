@@ -116,6 +116,8 @@ Every token carries a light and a dark value, so `_dark` is handled for you. **U
 
 17 foreground/background pairings are verified in both themes on every build. The worst text pairing measures **4.80:1** against a 4.5:1 floor, and the worst functional pairing (borders, focus rings) **4.35:1** against a 3:1 floor. Under `prefers-contrast: more` a stronger token set swaps in, verified at 7:1 for text and 4.5:1 for boundaries.
 
+Without an explicit theme override, both the standard and increased-contrast colours follow Panda's `dark` condition (a `prefers-color-scheme: dark` media query by default). If another preset or your configuration replaces it with a selector, both colour sets follow that selector. Explicit `data-theme-override` choices still take precedence.
+
 The `foliage.*` illustration colours are decorative and are **not** contrast-verified. Do not use them for text.
 
 ### Recipes

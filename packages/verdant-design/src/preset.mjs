@@ -197,14 +197,15 @@ export const verdantPreset = definePreset({
     // showing, plus thicker boundaries. Same !important reasoning as above;
     // these come later in the same layer, so they win over the plain theme.
     '@media (prefers-contrast: more)': {
-      [`html:not([${themeOverrideAttr}]), html[${themeOverrideAttr}="light"]`]: important(highContrastVars.light),
+      [`html:not([${themeOverrideAttr}])`]: {
+        ...important(highContrastVars.light),
+        _dark: important(highContrastVars.dark),
+      },
+      [`html[${themeOverrideAttr}="light"]`]: important(highContrastVars.light),
       [`html[${themeOverrideAttr}="dark"]`]: important(highContrastVars.dark),
       '.fieldInput, .btn--variant_secondary, .card': { borderWidth: '2px !important' },
       ':focus-visible': { outlineWidth: '3px !important' },
       'a': { textDecorationThickness: '0.12em' },
-    },
-    '@media (prefers-contrast: more) and (prefers-color-scheme: dark)': {
-      [`html:not([${themeOverrideAttr}])`]: important(highContrastVars.dark),
     },
     [`html[${themeResolvedAttr}="light"]`]: { colorScheme: 'light' },
     [`html[${themeResolvedAttr}="dark"]`]: { colorScheme: 'dark' },
