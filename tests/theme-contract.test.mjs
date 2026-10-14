@@ -13,6 +13,7 @@ import {
   themeResolvedAttr,
   themeTokens,
 } from '../packages/verdant-design/src/theme.mjs'
+import { verifiedPairings } from '../packages/verdant-design/src/tokens.mjs'
 
 const runtime = readFileSync('packages/verdant-design/src/theme-toggle.js', 'utf8')
 const constant = (name) => {
@@ -36,4 +37,17 @@ test('published theme runtime uses the theme module surface colours', () => {
     light: themeTokens['surface.100'].light,
     dark: themeTokens['surface.100'].dark,
   })
+})
+
+test('status ink tokens are paired with their solid status fills', () => {
+  const statusInkNames = ['positive.ink', 'info.ink', 'warning.ink', 'critical.ink']
+
+  for (const name of statusInkNames) {
+    assert.ok(themeTokens[name], `${name} is a public theme token`)
+    assert.ok(themeTokens[name].light)
+    assert.ok(themeTokens[name].dark)
+    assert.ok(verifiedPairings.some((pairing) => (
+      pairing.foreground === name && pairing.background === name.slice(0, -4)
+    )), `${name} is checked against its status fill`)
+  }
 })
