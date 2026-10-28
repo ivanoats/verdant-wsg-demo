@@ -29,7 +29,7 @@ Sources are cited by file and named section rather than line numbers, so they st
 - **R10** `scripts/fingerprint.mjs` and `public/offline-cache.json` — hashed asset names and the published offline-cache contract
 - **R11** Repository tree review on 2026-09-22: no `LICENSE`, `CONTRIBUTING.md` or Git tags were present in the checked-out repository.
 - **R12** `public/sitemap.xml` and the canonical `<link>` emitted by `page()` in `scripts/build.mjs` — the site's published origin, `https://verdant-wsg-demo.netlify.app`
-- **R13** `scripts/theme.mjs` and `scripts/tokens.mjs` — the single token source and the build-time contrast checks for every verified pairing
+- **R13** `packages/verdant-design/src/theme.mjs` and `packages/verdant-design/src/tokens.mjs` — the single token source; `scripts/pages/home.mjs` (using `scripts/lib/contrast.mjs`) — the build-time contrast checks for every verified pairing
 
 ### Public sources
 

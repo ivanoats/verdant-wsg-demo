@@ -1,6 +1,6 @@
 # Verdant — WSG-aligned demo site
 
-A small static site that puts the [Verdant design system](https://claude.ai/artifact/1hu6m4apzrfeM9s8nWcmxf) on the web as a lightweight implementation demo for the W3C [Web Sustainability Guidelines](https://w3c.github.io/sustainableweb-wsg/). The homepage scorecard is generated from the saved [`public/wsg-evidence.json`](public/wsg-evidence.json) record rather than presented as a live conformance audit; the dated evidence register, hosting-provenance notes, and unresolved owner decisions live in [`docs/wsg-evidence-register.md`](docs/wsg-evidence-register.md).
+A small static site that puts the [Verdant design system](https://verdant-design.org/) on the web as a lightweight implementation demo for the W3C [Web Sustainability Guidelines](https://w3c.github.io/sustainableweb-wsg/). The homepage scorecard is generated from the saved [`public/wsg-evidence.json`](public/wsg-evidence.json) record rather than presented as a live conformance audit; the dated evidence register, hosting-provenance notes, and unresolved owner decisions live in [`docs/wsg-evidence-register.md`](docs/wsg-evidence-register.md).
 
 The home page promotes the system; `/components` is the public component-gallery route, backed by the generated `components.html` file. Both are styled entirely with [PandaCSS](https://panda-css.com): the design system itself lives in the `@sustainablewebsites/verdant-design` package, and a small build script generates the HTML so Panda can statically extract the styles those pages reference — no browser-side CSS-in-JS runtime and no broad pre-generated utility bundle.
 
@@ -152,7 +152,7 @@ Verdant's default is the system font stack (`system-ui` for text, `ui-monospace`
    <link rel="preload" href="/assets/brand-subset.woff2" as="font" type="font/woff2" crossorigin>
    ```
 
-   Then add a token rather than hard-coding the family: `fonts.brand: "'Brand', 'Brand Fallback', system-ui, sans-serif"` in `scripts/tokens.mjs`, used only by heading styles.
+   Then add a token rather than hard-coding the family: `brand: "'Brand', 'Brand Fallback', system-ui, sans-serif"` in `fontFamilyTokens` in `packages/verdant-design/src/tokens.mjs` (the preset exposes it as `fonts.brand`), used only by heading styles.
 5. **Budget it.** Raise `thresholds.webFontsKiB` in `ci/budgets.json` in the same reviewed change, with a `rationale` entry saying why. `scripts/check-budgets.mjs` totals every `.woff2`, `.woff`, `.ttf`, `.otf` and `.eot` file in `dist/` and fails the build over the limit. As a guide, a Latin subset of one variable face is typically 20–40 KiB; stay under 30 KiB.
 6. **Respect the reader.** Under `prefers-reduced-data: reduce`, drop the web font and keep the fallback stack. It's cheap to do even though browser support is still limited.
 
@@ -192,9 +192,10 @@ See the site itself for the full decision-to-guideline mapping.
 
 ## Theme contract
 
-`scripts/theme.mjs` is the authoritative theme module. It exports:
+`packages/verdant-design/src/theme.mjs` is the authoritative theme module. It exports:
 
 - `themeTokens`, `semanticColorTokens`, `explicitThemeVars`, `themeVarName`
+- `highContrastTokens`, `highContrastVars`
 - `interfacePaletteOrder`, `illustrationPaletteOrder`, `themeTokenCount`
 - `themePreferenceStorageKey`
 - `themePreferenceControlName`
